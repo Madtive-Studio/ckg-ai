@@ -158,7 +158,7 @@ export default function GdpReportPage() {
     <div className="space-y-8">
       <PageHeader
         title="Kertas Kerja DM Terkendali"
-        description="ASIK NIKs cross-checked against EPUS over a date range. Monthly GDP per patient."
+        description="ASIK NIKs cross-checked against Medisy over a date range. Monthly GDP per patient."
         actions={<StartGdpDialog />}
       />
 
@@ -166,7 +166,7 @@ export default function GdpReportPage() {
         open={!!cancelTargetId}
         onOpenChange={(v) => !v && setCancelTargetId(null)}
         title="Cancel GDP report job?"
-        description="This stops the orchestrator and cancels its child ASIK / EPUS scrape jobs. Data already upserted is kept."
+        description="This stops the orchestrator and cancels its child ASIK / Medisy scrape jobs. Data already upserted is kept."
         confirmLabel="Cancel job"
         destructive
         loading={cancelJob.isPending}
@@ -194,7 +194,7 @@ export default function GdpReportPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Phase</TableHead>
                   <TableHead>Dates</TableHead>
-                  <TableHead>EPUS Jobs</TableHead>
+                  <TableHead>Medisy Jobs</TableHead>
                   <TableHead>Started</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -252,7 +252,7 @@ export default function GdpReportPage() {
         {jobs.data && jobs.data.items.length === 0 && (
           <EmptyState
             title="No GDP report jobs yet"
-            description="Click Start GDP Report to scrape ASIK + EPUS over a date range."
+            description="Click Start GDP Report to scrape ASIK + Medisy over a date range."
           />
         )}
       </section>
@@ -422,7 +422,7 @@ export default function GdpReportPage() {
                 Loading GDP dashboard…
               </div>
               <div className="text-xs">
-                First-time computation decrypts every EPUS record for this
+                First-time computation decrypts every Medisy record for this
                 puskesmas + year. Result is cached for 24 hours.
               </div>
             </div>

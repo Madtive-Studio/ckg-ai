@@ -212,7 +212,7 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
         open={runNowOpen}
         onOpenChange={setRunNowOpen}
         title="Jalankan cron sekarang?"
-        description={`Ini akan memulai scrape ASIK + EPUS${
+        description={`Ini akan memulai scrape ASIK + Medisy${
           cfg.merge_mode === "no_merge" ? "" : " dan Merge"
         } untuk ${
           cfg.target_offset_days === 0 ? "hari ini" : "kemarin"

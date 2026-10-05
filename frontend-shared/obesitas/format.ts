@@ -5,7 +5,7 @@
 // per-app copy would be exactly the duplication CLAUDE.md §11.2 warns about.
 
 /** Weight (kg) or height (cm) → display string. `null` renders as an em dash.
- * Trailing zeros are dropped rather than padded: ePuskesmas records a weight as
+ * Trailing zeros are dropped rather than padded: Medisy records a weight as
  * "78" far more often than "78.0", and padding makes the column look more
  * precise than the source is. */
 export function fmtAntro(v: number | null | undefined) {

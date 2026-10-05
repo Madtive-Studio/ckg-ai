@@ -92,8 +92,8 @@ export function ObesitasFormulaCard() {
               </p>
               <p>
                 Angka IMT ini <b>dihitung sendiri oleh sistem</b>, bukan diambil
-                dari ASIK maupun ePuskesmas: ASIK hanya menyimpan berat dan tinggi
-                badan untuk dewasa, dan ePuskesmas hanya menyimpan kategori
+                dari ASIK maupun Medisy: ASIK hanya menyimpan berat dan tinggi
+                badan untuk dewasa, dan Medisy hanya menyimpan kategori
                 teksnya. Di file Excel kolom IMT juga berupa rumus hidup — kalau BB
                 atau TB dikoreksi, IMT dan labelnya ikut berubah.
               </p>
@@ -185,7 +185,7 @@ export function ObesitasFormulaCard() {
                 Karena berat badan <b>jarang ditimbang ulang di kunjungan biasa</b>.
                 Saat skrining CKG hampir semua peserta diukur BB dan TB-nya, tapi
                 pada kunjungan berobat berikutnya sering tidak dicatat lagi di
-                ePuskesmas.
+                Medisy.
               </p>
               <p>
                 Kolom kosong berarti pengukurannya <b>tidak tercatat</b> — bukan
@@ -198,11 +198,11 @@ export function ObesitasFormulaCard() {
               <p>
                 <b>ASIK (skrining CKG) adalah sumber utama</b> untuk identitas,
                 berat badan, tinggi badan, dan kedua kolom Riwayat. Nilai dari
-                ePuskesmas dipakai untuk mengisi bagian yang kosong di ASIK — per
+                Medisy dipakai untuk mengisi bagian yang kosong di ASIK — per
                 kolom, bukan semua-atau-tidak.
               </p>
               <p>
-                <b>Follow Up selalu dari ePuskesmas</b>, karena kunjungan setelah
+                <b>Follow Up selalu dari Medisy</b>, karena kunjungan setelah
                 CKG dicatat di sana.
               </p>
               <p>
@@ -212,7 +212,7 @@ export function ObesitasFormulaCard() {
                 ke perhitungan.
               </p>
               <p>
-                Tanda kecil <b>ASIK</b> / <b>ePus</b> di panel detail menunjukkan
+                Tanda kecil <b>ASIK</b> / <b>Medisy</b> di panel detail menunjukkan
                 sumber tiap nilai. IMT tidak punya tanda sumber karena dihitung
                 sendiri.
               </p>

@@ -74,7 +74,7 @@ export function StartGdpDialog() {
         <DialogHeader>
           <DialogTitle>Start Kertas Kerja DM Terkendali</DialogTitle>
           <DialogDescription>
-            Walks ASIK + EPUS for every date in the range. Then aggregates GD
+            Walks ASIK + Medisy for every date in the range. Then aggregates GD
             Puasa per month per NIK on the dashboard below.
           </DialogDescription>
         </DialogHeader>
@@ -122,7 +122,7 @@ export function StartGdpDialog() {
               <p className="text-xs text-[var(--muted-foreground)]">
                 ASIK still walks every date for NIK + Nama, but skips opening
                 Mandiri / Nakes SurveyJS forms. ~10x faster — recommended for
-                GDP report since GDP value comes from EPUS only.
+                GDP report since GDP value comes from Medisy only.
               </p>
             </div>
             <Switch

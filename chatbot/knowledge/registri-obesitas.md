@@ -57,8 +57,8 @@ Contoh: BB 78 kg, TB 165 cm = 1,65 m → 78 ÷ (1,65 × 1,65) = **28,7**. Dibula
 1 angka di belakang koma.
 
 Angka IMT ini **dihitung sendiri oleh sistem**, bukan diambil apa adanya dari
-ASIK maupun ePuskesmas: untuk pasien dewasa, ASIK hanya menyimpan berat dan
-tinggi badan (IMT-nya tidak dikirim balik), dan ePuskesmas hanya menyimpan
+ASIK maupun Medisy: untuk pasien dewasa, ASIK hanya menyimpan berat dan
+tinggi badan (IMT-nya tidak dikirim balik), dan Medisy hanya menyimpan
 kategori teksnya. Di file Excel, kolom IMT juga berupa rumus hidup — kalau BB
 atau TB dikoreksi, IMT dan labelnya ikut berubah otomatis.
 
@@ -69,7 +69,7 @@ berlabel Obesitas I, tidak pernah "25,0 tapi Normal".
 ## 2 · Siapa yang masuk daftar ini (Syarat)
 
 Pasien (per NIK) masuk daftar jika punya **minimal satu kunjungan CKG**
-(kunjungan yang tercatat di ePus DAN ASIK) pada tahun itu, **DAN** IMT-nya
+(kunjungan yang tercatat di Medisy DAN ASIK) pada tahun itu, **DAN** IMT-nya
 mencapai ambang berikut:
 
 - **Obesitas I** — IMT **25 sampai di bawah 30** (tepat 25,0 sudah masuk);
@@ -169,7 +169,7 @@ kunjungan, sedangkan kertas kerja ini dihitung per satu tahun pelaporan.
 
 Karena berat badan **jarang ditimbang ulang di kunjungan biasa**. Saat skrining
 CKG hampir semua peserta diukur BB dan TB-nya, tapi pada kunjungan berobat
-berikutnya sering tidak dicatat lagi di ePuskesmas.
+berikutnya sering tidak dicatat lagi di Medisy.
 
 Kolom kosong berarti pengukurannya **tidak tercatat** — bukan kesalahan sistem.
 Justru inilah yang perlu diperbaiki: makin rutin berat badan ditimbang dan
@@ -178,23 +178,23 @@ dicatat, makin berguna kertas kerja ini.
 ## 6 · Dari mana tiap angka diambil (sumber data)
 
 Untuk bagian **hasil pemeriksaan saat CKG**: **ASIK** (data skrining CKG) adalah
-sumber utama, **ePuskesmas** mengisi yang kosong — per kolom, jadi satu pasien
-bisa punya berat badan dari ASIK dan tinggi badan dari ePuskesmas. Di panel
-detail pasien ada label kecil **ASIK** / **ePus** yang menunjukkan sumbernya.
+sumber utama, **Medisy** mengisi yang kosong — per kolom, jadi satu pasien
+bisa punya berat badan dari ASIK dan tinggi badan dari Medisy. Di panel
+detail pasien ada label kecil **ASIK** / **Medisy** yang menunjukkan sumbernya.
 **IMT tidak punya label sumber** karena memang dihitung sendiri dari BB dan TB.
 
-Untuk bagian **Follow Up**: selalu dari **ePuskesmas** (kunjungan bulan-bulan
+Untuk bagian **Follow Up**: selalu dari **Medisy** (kunjungan bulan-bulan
 berikutnya memang tercatat di sana).
 
 Identitas (nama, jenis kelamin, tanggal lahir, no. telepon, alamat) juga ASIK
-dulu, ePuskesmas mengisi yang kosong.
+dulu, Medisy mengisi yang kosong.
 
 Tanggal Berkunjung = tanggal kunjungan CKG **paling awal** pada tahun itu.
 
 Kolom Riwayat HT dan Riwayat DM memakai catatan diagnosis yang sama persis dengan
 yang dipakai Registri Hipertensi dan Registri Diabetes Melitus, jadi artinya
 konsisten antar halaman: jawaban skrining CKG di ASIK, diagnosis pada tatalaksana
-di ASIK, atau diagnosis di ePuskesmas. Cukup salah satu; sekali tercatat, tetap
+di ASIK, atau diagnosis di Medisy. Cukup salah satu; sekali tercatat, tetap
 **Ya**.
 
 **Angka yang tidak masuk akal diabaikan:** berat badan di luar 20–400 kg atau

@@ -74,7 +74,7 @@ export function LlmRoleDialog({
         {
           key: "loop_agent",
           label: "Loop Agent",
-          description: "Agen perbaik scraper EPUS (GLM-5.3-Flash).",
+          description: "Agen pemelihara klien dan konverter Medisy (GLM-5.3-Flash).",
           held: config.is_active_loop_agent,
           activate: async () => {
             await activateLoopAgent.mutateAsync(config.id);

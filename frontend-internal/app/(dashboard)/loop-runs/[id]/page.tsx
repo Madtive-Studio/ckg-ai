@@ -201,7 +201,7 @@ function Meta({ label, value }: { label: string; value: string }) {
 
 const COVERAGE_LABEL: Record<string, string> = {
   mapped: "Terpetakan",
-  absent: "Tidak ada di portal",
+  absent: "Tidak ada di Medisy",
   candidate: "Kandidat",
 };
 

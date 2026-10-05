@@ -40,7 +40,7 @@ export default function VisitSummaryPage() {
     <div className="space-y-8">
       <PageHeader
         title="Ringkasan Kunjungan"
-        description="Cakupan data ASIK dan ePuskesmas per kunjungan. Kunjungan yang sama yang tercatat di tanggal berbeda dihitung sebagai satu kunjungan."
+        description="Cakupan data ASIK dan Medisy per kunjungan. Kunjungan yang sama yang tercatat di tanggal berbeda dihitung sebagai satu kunjungan."
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -82,15 +82,15 @@ export default function VisitSummaryPage() {
             loading={loading}
           />
           <StatCard
-            title="Data di ePuskesmas"
+            title="Data di Medisy"
             value={d?.data_on_epus.toLocaleString()}
-            subtext="Total kunjungan yang ada di ePuskesmas"
+            subtext="Total kunjungan yang ada di Medisy"
             loading={loading}
           />
           <StatCard
             title="Cocok di Keduanya"
             value={d?.matched.toLocaleString()}
-            subtext="NIK ada di ASIK dan ePuskesmas"
+            subtext="NIK ada di ASIK dan Medisy"
             loading={loading}
           />
         </div>
@@ -102,7 +102,7 @@ export default function VisitSummaryPage() {
         </h2>
         <p className="text-xs text-[var(--muted-foreground)]">
           Hanya data CKG (sudah CKG). Yaitu saat kunjungan yang sama dimasukkan ke
-          ePuskesmas dan ASIK di hari yang berbeda.
+          Medisy dan ASIK di hari yang berbeda.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard

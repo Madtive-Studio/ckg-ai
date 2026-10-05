@@ -47,6 +47,8 @@ from app.schemas.hipertensi_report import (
     HipertensiReportRow,
 )
 from app.services.dashboard_scan import DashboardSpec, DecRows, scan_dashboard_payloads
+from app.services import medisy_accessors as _medisy
+from app.services.medisy_adapter import is_medisy_blob
 from app.schemas.report_summary import (
     TerkendaliDashboardOut,
     TerkendaliSummaryOut,
@@ -97,6 +99,9 @@ def _extract_bp(epus_entry: Any) -> tuple[Decimal | None, Decimal | None]:
     """
     if not isinstance(epus_entry, dict):
         return (None, None)
+    if is_medisy_blob(epus_entry):
+        sis, dia = _medisy.blood_pressure(epus_entry)
+        return (None if sis is None else Decimal(str(sis)), None if dia is None else Decimal(str(dia)))
     tabs = epus_entry.get("tabs") or {}
     fisik = ((tabs.get("Anamnesa") or {}).get("fields", {}) or {}).get(
         "Periksa Fisik"

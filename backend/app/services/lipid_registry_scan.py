@@ -90,6 +90,8 @@ from app.services.hipertensi_registry_scan import (
 from app.services.hipertensi_registry_scan import (
     _riwayat_epus_hit as _riwayat_ht_epus_hit,
 )
+from app.services import medisy_accessors as _medisy
+from app.services.medisy_adapter import is_medisy_blob
 
 # ── syarat thresholds (sheet B1) ───────────────────────────────────────────
 # Note the comparators: three are inclusive, Trigliserida alone is STRICT. The
@@ -183,6 +185,8 @@ def _extract_lipid_epus(epus: Any) -> dict[str, Any]:
     out = _empty_lipid()
     if not isinstance(epus, dict):
         return out
+    if is_medisy_blob(epus):
+        return {k: (None if v is None else float(v)) for k, v in _medisy.lipid(epus).items()}
     tabs = epus.get("tabs") or {}
     lipid = ((tabs.get("PTM") or {}).get("fields", {}) or {}).get("Profil Lipid")
     if isinstance(lipid, dict):
@@ -223,6 +227,8 @@ def _extract_obat(epus: Any) -> list[str]:
     dropped (the sheet's Jenis Obat columns are "List Obat Dislipidemia")."""
     if not isinstance(epus, dict):
         return []
+    if is_medisy_blob(epus):
+        return [n for n in _medisy.drug_names(epus) if _LIPID_DRUG_RE.search(n)]
     rows = (
         ((epus.get("tabs") or {}).get("Resep") or {}).get("tables", {}) or {}
     ).get("Resep")

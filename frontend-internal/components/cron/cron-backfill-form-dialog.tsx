@@ -242,7 +242,7 @@ export function CronBackfillFormDialog({
                 ? "Locked to ASIK for a Pemeriksaan Mandiri backfill."
                 : isNone
                   ? "No rescrape: merges any matched-but-unmerged patients from existing data, then pushes to ASIK. Requires ASIK sync on; runs alone (no other backfill for this puskesmas)."
-                  : "Pick one source to scrape it alone (e.g. re-scrape EPUS, then merge). An EPUS-only and an ASIK-only run can run at the same time for one puskesmas. To run both single-source over the same dates, set one side to “No merge” (or use non-overlapping ranges) so the two merges don’t collide."}
+                  : "Pick one source to scrape it alone (e.g. re-scrape Medisy, then merge). A Medisy-only and an ASIK-only run can run at the same time for one puskesmas. To run both single-source over the same dates, set one side to “No merge” (or use non-overlapping ranges) so the two merges don’t collide."}
             </p>
           </div>
 
@@ -291,7 +291,7 @@ export function CronBackfillFormDialog({
                 </Label>
                 <p className="text-xs text-[var(--muted-foreground)]">
                   After each date&apos;s merge, fill the ASIK exam for patients
-                  already in ASIK (NIK matched ePus + ASIK). Ignored when merge
+                  already in ASIK (NIK matched Medisy + ASIK). Ignored when merge
                   mode is No merge.
                   {isNone ? " Required (and can’t be off) for a sync-only run." : ""}
                 </p>
@@ -342,7 +342,7 @@ export function CronBackfillFormDialog({
                 Also create new patients in ASIK
               </Label>
               <p className="text-xs text-[var(--muted-foreground)]">
-                After syncing each date, register ePus-only patients marked
+                After syncing each date, register Medisy-only patients marked
                 Tandai-CKG that are not yet in ASIK — creating them from scratch,
                 then filling their exam. Requires &ldquo;fill exam&rdquo; on
                 and a default alamat set on the puskesmas.

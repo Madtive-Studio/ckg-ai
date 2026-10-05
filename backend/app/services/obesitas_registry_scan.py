@@ -100,6 +100,8 @@ from app.services.hipertensi_registry_scan import (
 from app.services.hipertensi_registry_scan import (
     _riwayat_epus_hit as _riwayat_ht_epus_hit,
 )
+from app.services import medisy_accessors as _medisy
+from app.services.medisy_adapter import is_medisy_blob
 
 # ── syarat thresholds (sheet B1) ───────────────────────────────────────────
 # "Obesitas 1 : IMT 25-29.9 / Obesitas II : IMT >= 30". Both bounds inclusive at
@@ -191,6 +193,11 @@ def _extract_antro_epus(epus: Any) -> dict[str, Any]:
     """
     out = _empty_antro()
     if not isinstance(epus, dict):
+        return out
+    if is_medisy_blob(epus):
+        bb_, tb_ = _medisy.weight_height(epus)
+        out["bb"] = _plausible_bb(None if bb_ is None else float(bb_))
+        out["tb"] = _plausible_tb(None if tb_ is None else float(tb_))
         return out
     tabs = epus.get("tabs") or {}
     fisik = ((tabs.get("Anamnesa") or {}).get("fields", {}) or {}).get(

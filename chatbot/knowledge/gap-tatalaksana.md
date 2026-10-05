@@ -26,7 +26,7 @@ itu isi dari jarak yang memang terlihat di grafik.
 Seorang pasien muncul di sini kalau **dua-duanya** benar:
 
 1. **Dia ada di Registri Hipertensi CKG.** Artinya punya kunjungan CKG yang
-   terpadan (data ePuskesmas + ASIK cocok) dan memenuhi syarat hipertensi —
+   terpadan (data Medisy + ASIK cocok) dan memenuhi syarat hipertensi —
    punya riwayat hipertensi, atau rerata tensinya masuk band **Hipertensi**
    (≥ 140 atau ≥ 90) atau **Pre-Hipertensi** (≥ 130 atau ≥ 85). Pasien dengan
    tensi Normal tanpa riwayat tidak masuk registri, jadi juga tidak masuk sini.
@@ -38,7 +38,7 @@ Seorang pasien muncul di sini kalau **dua-duanya** benar:
 Sistem menganggap pasien **sudah** tertatalaksana kalau obat antihipertensi
 tercatat di salah satu dari dua tempat ini:
 
-- **Resep ePuskesmas** pada kunjungan mana pun (bukan hanya kunjungan CKG), atau
+- **Resep Medisy** pada kunjungan mana pun (bukan hanya kunjungan CKG), atau
 - **Peresepan pada tatalaksana Tekanan Darah di ASIK** pada kunjungan CKG-nya.
 
 Yang dihitung adalah nama obat golongan antihipertensi (amlodipin, kaptopril,
@@ -49,7 +49,7 @@ obat — kapan pun, di bulan mana pun — dia keluar dari daftar ini dan tidak
 kembali lagi, walaupun bulan-bulan berikutnya tidak ada resep baru.
 
 **Penting:** "belum tertatalaksana" berarti **belum tercatat**, bukan pasti
-belum diobati. Kalau obat diberikan tetapi tidak dicatat di resep ePuskesmas
+belum diobati. Kalau obat diberikan tetapi tidak dicatat di resep Medisy
 atau di tatalaksana ASIK, pasiennya tetap muncul di sini. Perbaikannya ada di
 pencatatan.
 
@@ -84,17 +84,17 @@ registri paling lama** lebih dulu.
 | Masuk Registri | Bulan dan tahun pasien masuk registri |
 
 Identitas diambil dari sumber yang sama dengan Registri Hipertensi CKG: data
-ASIK dipakai lebih dulu per kolom, data ePuskesmas mengisi yang kosong. Karena
+ASIK dipakai lebih dulu per kolom, data Medisy mengisi yang kosong. Karena
 itu nama, no telp, dan alamat di dua halaman ini tidak akan berbeda.
 
 ## 6 · Kalau no telp atau alamat kosong
 
 Kolom yang kosong ditandai tanda strip (**—**). Itu berarti datanya memang tidak
-ada di ePuskesmas maupun di ASIK, bukan gagal dimuat.
+ada di Medisy maupun di ASIK, bukan gagal dimuat.
 
 Pasien tanpa no telp **tetap ditampilkan** dan tetap dihitung dalam total —
 justru pasien itulah yang paling sulit ditindaklanjuti, jadi sengaja tidak
-disembunyikan. Untuk melengkapinya, perbaiki identitas pasien di ePuskesmas;
+disembunyikan. Untuk melengkapinya, perbaiki identitas pasien di Medisy;
 laporan ikut benar setelah data diperbarui (paling lambat besok pagi).
 
 ## 7 · Export Excel

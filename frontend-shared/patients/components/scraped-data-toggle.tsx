@@ -130,7 +130,7 @@ export function ScrapedDataToggle({
             : "px-4 py-1.5 text-xs font-semibold rounded-md text-[var(--muted-foreground)] hover:text-[var(--foreground)] disabled:opacity-40 disabled:cursor-not-allowed"
         }
       >
-        ePus
+        Medisy
       </button>
     </div>
   );

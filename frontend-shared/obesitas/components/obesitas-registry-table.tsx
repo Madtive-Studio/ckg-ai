@@ -33,7 +33,7 @@ function fmtDate(iso: string | null | undefined) {
   }
 }
 
-// Tiny provenance pill: ASIK (blue) is the source of truth, ePuskesmas (emerald)
+// Tiny provenance pill: ASIK (blue) is the source of truth, Medisy (emerald)
 // the fallback. Null source (field absent) renders nothing.
 function SourceTag({ src }: { src: string | null }) {
   if (!src) return null;
@@ -44,7 +44,7 @@ function SourceTag({ src }: { src: string | null }) {
         asik ? "bg-blue-100 text-blue-900" : "bg-emerald-100 text-emerald-900"
       }`}
     >
-      {asik ? "ASIK" : "ePus"}
+      {asik ? "ASIK" : "Medisy"}
     </span>
   );
 }
@@ -187,7 +187,7 @@ export function ObesitasRegistryTable({
       <div className="p-6">
         <EmptyState
           title="Belum ada pasien"
-          description="Tidak ada pasien obesitas dengan kunjungan CKG (EPUS+ASIK) untuk puskesmas + tahun ini."
+          description="Tidak ada pasien obesitas dengan kunjungan CKG (Medisy+ASIK) untuk puskesmas + tahun ini."
         />
       </div>
     );
@@ -310,10 +310,9 @@ export function ObesitasRegistryTable({
                               />
                             </div>
                             <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
-                              ASIK = data skrining CKG (sumber utama); ePus =
-                              ePuskesmas (pelengkap). IMT tidak punya tanda
+                              ASIK = data skrining CKG (sumber utama); Medisy (pelengkap). IMT tidak punya tanda
                               sumber — dihitung sendiri dari BB dan TB. Follow Up
-                              selalu dari ePuskesmas.
+                              selalu dari Medisy.
                             </p>
                           </div>
                         </div>

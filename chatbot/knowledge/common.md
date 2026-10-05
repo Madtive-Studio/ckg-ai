@@ -10,7 +10,7 @@ data di sini.
 
 ## Dua sumber data
 
-1. **ePuskesmas (ePus)** — rekam medis elektronik puskesmas. Dari sini diambil:
+1. **Medisy** — rekam medis elektronik puskesmas. Dari sini diambil:
    data kunjungan, identitas pendaftaran (NIK, nama, tanggal lahir, alamat,
    no. HP), tanda vital (termasuk tekanan darah dari pemeriksaan fisik),
    diagnosis (kode ICD-10 dan penyakit khusus), resep obat, dan formulir PTM.
@@ -22,28 +22,28 @@ data di sini.
    yang diisi sendiri oleh pasien).
 
 Keduanya kemudian **digabung (merge)** dengan aturan tetap: untuk nilai
-pemeriksaan/kuesioner, bila nilainya berbeda **nilai ePuskesmas yang dipakai**
+pemeriksaan/kuesioner, bila nilainya berbeda **nilai Medisy yang dipakai**
 dan ASIK mengisi bagian yang kosong. **Khusus identitas pasien** (NIK, nama,
 tanggal lahir, tempat lahir, jenis kelamin, alamat) justru sebaliknya: **nilai
-ASIK yang dipakai**, ePuskesmas hanya mengisi bila ASIK kosong. Hasil gabungan
+ASIK yang dipakai**, Medisy hanya mengisi bila ASIK kosong. Hasil gabungan
 inilah yang menjadi dasar laporan.
 
 ## Apa arti pasien "CKG" di laporan
 
 Seorang pasien dihitung sebagai **pasien CKG** ketika kunjungan yang sama
-ditemukan di **kedua** sumber (ePuskesmas DAN ASIK) — artinya dia benar-benar
+ditemukan di **kedua** sumber (Medisy DAN ASIK) — artinya dia benar-benar
 menjalani skrining CKG dan hasilnya tercatat lengkap. Registri (kertas kerja)
 hanya dibangun dari pasien CKG. **Pengecualian:** registri **Bayi Kuning
-(ikterus)** murni dari ePuskesmas dan **tidak** mensyaratkan pasien CKG — bayi
+(ikterus)** murni dari Medisy dan **tidak** mensyaratkan pasien CKG — bayi
 masuk berdasarkan adanya penilaian ikterus MTBM, bukan keanggotaan CKG.
 
-Akibatnya, pasien yang datanya **hanya ada di salah satu sumber** (ePus saja
+Akibatnya, pasien yang datanya **hanya ada di salah satu sumber** (Medisy saja
 atau ASIK saja, belum cocok) **tidak muncul** di registri/laporan CKG — ini
 sebab paling umum kalau "pasien saya kok tidak ada di daftar".
 
 ## Bagaimana data masuk ke sini
 
-- Sistem mengambil data dari portal ePuskesmas dan ASIK untuk tiap puskesmas
+- Sistem mengambil data dari portal Medisy dan ASIK untuk tiap puskesmas
   secara berkala (otomatis/terjadwal), memakai akun resmi puskesmas yang
   tersimpan **terenkripsi**.
 - Laporan **tidak** membaca portal secara langsung saat halaman dibuka —
@@ -54,7 +54,7 @@ sebab paling umum kalau "pasien saya kok tidak ada di daftar".
 - Hasil perhitungan laporan disimpan sementara (**cache sekitar 30 jam**) agar
   halaman cepat dibuka, dan **dihitung ulang otomatis setiap pagi sekitar
   pukul 05.00 WIB** dari data terbaru.
-- Akibatnya: perbaikan data di ePuskesmas/ASIK baru terlihat di laporan
+- Akibatnya: perbaikan data di Medisy/ASIK baru terlihat di laporan
   setelah pengambilan data dan perhitungan berikutnya — **paling lambat besok
   pagi**.
 - Di halaman registri ada keterangan **"Computed <waktu> · cached/fresh"** =
@@ -70,12 +70,12 @@ sebab paling umum kalau "pasien saya kok tidak ada di daftar".
 ## Memperbaiki data yang salah
 
 - **Identitas salah** (nama, tanggal lahir, alamat, no. HP): identitas mengikuti
-  data **ASIK** (ePuskesmas hanya mengisi bila ASIK kosong) → perbaiki di ASIK;
-  bila fieldnya memang hanya ada di ePuskesmas, perbaiki di ePuskesmas. Laporan
+  data **ASIK** (Medisy hanya mengisi bila ASIK kosong) → perbaiki di ASIK;
+  bila fieldnya memang hanya ada di Medisy, perbaiki di Medisy. Laporan
   akan ikut benar setelah data diperbarui (paling lambat besok pagi).
 - **Tensi / gula darah / obat tidak muncul**: laporan hanya bisa menampilkan
-  yang tercatat di ePuskesmas pada kunjungan itu. Pastikan hasil ukur dan resep
-  dicatat di ePuskesmas.
+  yang tercatat di Medisy pada kunjungan itu. Pastikan hasil ukur dan resep
+  dicatat di Medisy.
 
 ## Halaman yang tersedia
 
@@ -91,7 +91,7 @@ punya beberapa sub-halaman):
   dipilih (Diabetes Melitus 2 Tahun Berturut-turut dan Diabetes Melitus CKG
   2026).
 - **Patients › CKG Umum** — daftar dan detail data pasien per orang (gabungan
-  ePuskesmas + ASIK), hanya untuk dilihat. Bisa dicari dan disaring (nama/NIK,
+  Medisy + ASIK), hanya untuk dilihat. Bisa dicari dan disaring (nama/NIK,
   tanggal, status pencocokan, umur, puskesmas).
 - **Patients › CKG Sekolah** — daftar dan detail siswa hasil pemeriksaan kesehatan
   anak sekolah (dari modul anak sekolah ASIK), ditata per sekolah × kelas, hanya
@@ -120,7 +120,7 @@ punya beberapa sub-halaman):
   diexport ke Excel.
 - **Registri PJB-K › Bayi Kuning - Ikterus** — daftar bayi baru lahir dengan
   klasifikasi ikterus MTBM "Ikterus" atau "Ikterus berat" (hanya dari
-  ePuskesmas, bukan syarat CKG), lengkap dengan pemantauan kunjungan berikutnya;
+  Medisy, bukan syarat CKG), lengkap dengan pemantauan kunjungan berikutnya;
   bisa diexport ke Excel.
 - **Registri PJB-K › Bayi Kuning - Ikterus Berat** — sama, tetapi hanya bayi
   dengan klasifikasi "Ikterus berat" (kuning < 24 jam, atau > 14 hari, atau
@@ -133,5 +133,5 @@ punya beberapa sub-halaman):
   puskesmas, daftar pasien). Asisten ini sengaja tidak diberi akses data apa pun
   (demi privasi & sesuai perannya); angka konkret ada di dashboard/registri di
   layar. Yang bisa dijawab hanya aturan, rumus, dan cara membacanya.
-- **Mengubah / memperbaiki data** — lakukan di ePuskesmas/ASIK.
+- **Mengubah / memperbaiki data** — lakukan di Medisy/ASIK.
 - **Saran medis atau diagnosis** — tanyakan ke tenaga kesehatan.

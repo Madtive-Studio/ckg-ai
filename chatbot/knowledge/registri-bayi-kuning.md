@@ -21,38 +21,42 @@ kuning ("Tidak ada ikterus") tidak ditampilkan.
 
 ## Aturan klasifikasi (MTBM)
 
-Diambil dari kuesioner "Memeriksa Ikterus" pada pemeriksaan MTBM:
+Diambil dari isian **klasifikasi ikterus** pada pemeriksaan MTBM di Medisy:
 
-- **Tidak ada ikterus** — "Apakah bayi kuning" = Tidak.
+- **Tidak ada ikterus** — bayi tidak kuning.
 - **Ikterus** — kuning, tanpa kriteria berat.
-- **Ikterus berat** — kuning DAN salah satu: kuning timbul **< 24 jam**, ATAU
-  **> 14 hari**, ATAU kuning sampai **telapak tangan/kaki**.
+- **Ikterus berat** — kuning berat (misalnya kuning timbul < 24 jam, > 14 hari,
+  atau sampai telapak tangan/kaki), sebagaimana dinilai nakes saat mengisi.
 
-## Tanda sumber: EPUS vs Hitung
+Medisy hanya menyimpan klasifikasi akhirnya, bukan jawaban kuesioner satu per
+satu, jadi sistem **tidak menghitung sendiri** klasifikasi. Bila klasifikasi
+tidak diisi di Medisy, bayi itu tidak masuk daftar.
 
-Setiap nilai klasifikasi diberi tanda kecil, mirip tanda (ePus)/(ASIK) di
-registri lain — tapi di sini artinya berbeda:
+## Tanda sumber: Medisy vs Hitung
 
-- **EPUS** — klasifikasi diambil langsung dari isian field klasifikasi di EPUS.
-- **Hitung** — klasifikasi **dihitung sistem** dari kuesioner "Memeriksa
-  Ikterus" (aturan di atas), karena field klasifikasi EPUS-nya kosong.
+Setiap nilai klasifikasi diberi tanda kecil, mirip tanda Medisy/ASIK di registri
+lain — tapi di sini artinya berbeda:
 
-Saat ini hampir semua bertanda **Hitung**, karena field klasifikasi EPUS
-umumnya belum terisi. Diagnosis dan Rujuk Eksternal selalu dari EPUS.
+- **Medisy** — klasifikasi diambil langsung dari isian klasifikasi di Medisy.
+  Untuk data Medisy, tandanya selalu ini.
+- **Hitung** — klasifikasi yang dihitung sistem dari kuesioner. Hanya muncul
+  pada data lama (dari ePuskesmas) yang belum tergantikan.
+
+Diagnosis selalu dari catatan klinik di Medisy.
 
 ## Kolom
 
 - **Tanggal Berkunjung** — kunjungan pertama (skrining) tempat ikterus dinilai.
-- **Ikterus** — klasifikasi pada kunjungan itu (dengan tanda EPUS/Hitung).
-- **Diagnosis** — diagnosis yang tercatat di EPUS pada kunjungan itu.
-- **Rujuk Eksternal** — faskes tujuan rujukan pada kunjungan itu (dari tabel
-  "Data Rujukan External" EPUS); kosong bila tidak dirujuk.
+- **Ikterus** — klasifikasi pada kunjungan itu (dengan tanda Medisy/Hitung).
+- **Diagnosis** — diagnosis yang tercatat di Medisy pada kunjungan itu.
+- **Rujuk Eksternal** — faskes tujuan bila kunjungan itu dirujuk **eksternal**
+  di Medisy; kosong bila tidak dirujuk atau hanya dirujuk internal.
 - **Pemantauan** (hanya sheet Ikterus) — kunjungan ikterus berikutnya, masing-
   masing dengan tanggal, klasifikasi, diagnosis, dan rujukannya sendiri.
 
 ## Beda dengan registri lain (penting)
 
-- Registri ini **hanya dari ePuskesmas (EPUS)**, tidak digabung dengan ASIK, dan
+- Registri ini **hanya dari Medisy**, tidak digabung dengan ASIK, dan
   **tidak** disyaratkan "pasien CKG" (kunjungan cocok di kedua sumber). Sebabnya:
   di lapangan, penilaian ikterus MTBM dicatat pada kunjungan yang tidak ditandai
   CKG, sehingga syarat CKG akan mengosongkan daftar. Jadi bayi masuk daftar
@@ -63,6 +67,7 @@ umumnya belum terisi. Diagnosis dan Rujuk Eksternal selalu dari EPUS.
 ## Yang belum tersedia
 
 - Sheet **PJBK** (skrining jantung bawaan / pulse-oksimetri) belum tersedia di
-  aplikasi — datanya belum terekam di EPUS.
-- Kolom "Rujuk Eksternal" hanya berisi bila rujukan tercatat di EPUS pada
-  kunjungan itu; sering kosong.
+  aplikasi. Datanya sudah ada di Medisy (saturasi tangan dan kaki, kesimpulan
+  Lolos/Gagal), tetapi sheet-nya belum dibuat.
+- Kolom "Rujuk Eksternal" sering kosong: hanya terisi bila kunjungan itu
+  dirujuk eksternal dan tujuannya tercatat.

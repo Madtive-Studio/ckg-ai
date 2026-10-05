@@ -3,9 +3,9 @@ import { z } from "zod";
 // Self-contained (not imported from an app's @/lib/api/types) so the shared Bayi
 // Kuning registry works in both apps — same convention as frontend-shared/dm etc.
 
-// Per-value provenance: "EPUS" (EPUS's own klasifikasi field) | "Hitung" (derived
-// by the backend from the MTBM questionnaire) | null. Unlike the HT/DM ASIK/EPUS
-// pill, here the distinction is isian-EPUS vs backend-computed.
+// Per-value provenance: "Medisy" (Medisy's own klasifikasi field) | "Hitung" (derived
+// by the backend from the MTBM questionnaire) | null. Unlike the HT/DM ASIK/Medisy
+// pill, here the distinction is isian-Medisy vs backend-computed.
 export const BayiRegistrySources = z.object({
   klasifikasi: z.string().nullable().default(null),
   diagnosis: z.string().nullable().default(null),

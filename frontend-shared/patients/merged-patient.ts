@@ -19,7 +19,7 @@ export interface MergedItem {
   reasoning?: string | null;
   is_same_answer?: boolean;
   is_conflict: boolean;
-  /** True when merged_value followed ASIK because the EPUS value was judged
+  /** True when merged_value followed ASIK because the Medisy value was judged
    *  physically/clinically implausible (e.g. a 2 kg adult weight). */
   epus_implausible?: boolean;
   sub_section_slug?: string | null;

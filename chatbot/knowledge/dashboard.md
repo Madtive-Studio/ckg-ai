@@ -2,7 +2,7 @@
 
 Halaman **Dashboard** menampilkan **8 grafik analisis Registri Hipertensi CKG**
 untuk **satu puskesmas** yang dipilih. Grafik 1–6 hanya menghitung **pasien
-CKG** — pasien yang kunjungannya cocok di **ePuskesmas DAN ASIK** dan memenuhi
+CKG** — pasien yang kunjungannya cocok di **Medisy DAN ASIK** dan memenuhi
 **syarat hipertensi** (punya riwayat diagnosis hipertensi **ATAU** rerata tensi
 di atas normal saat skrining CKG) — persis populasi yang sama dengan halaman
 **Registri Hipertensi CKG**.
@@ -27,7 +27,7 @@ kursor ke titik untuk melihat tooltip rinciannya.
 - **Pasien Hipertensi** = pasien di Registri Hipertensi CKG (unik per NIK).
 - **Tertatalaksana** = pasien yang **pernah diberi obat antihipertensi** — kapan
   saja sejak 2025, baik pada kunjungan CKG (kolom Jenis Obat) maupun pada
-  kunjungan bulanan berikutnya (sumber: resep ePuskesmas / peresepan tatalaksana
+  kunjungan bulanan berikutnya (sumber: resep Medisy / peresepan tatalaksana
   ASIK, hanya obat darah tinggi).
 - **Terkendali (bulan tertentu)** = pada bulan itu ada **minimal satu** hasil
   pemeriksaan tensi dengan **sistolik < 140 DAN diastolik < 90**. Kalau ada
@@ -204,7 +204,7 @@ Tiga batang:
 
 - **"Computed <tanggal jam> · cached/fresh"** = kapan angka grafik terakhir
   dihitung. Hasil disimpan sementara (**cache ~30 jam**) dan dihitung ulang
-  otomatis tiap pagi ~05.00 WIB, jadi perubahan data ePuskesmas/ASIK baru
+  otomatis tiap pagi ~05.00 WIB, jadi perubahan data Medisy/ASIK baru
   terlihat paling lambat besok pagi.
 - **"Pilih puskesmas untuk menampilkan grafik."** = belum ada puskesmas dipilih.
 - **"Menghitung…"** = angka puskesmas itu sedang dihitung di latar belakang
@@ -216,8 +216,8 @@ Tiga batang:
 
 ## Catatan penting
 
-- Grafik hanya menghitung **pasien CKG** (terpadan ePuskesmas + ASIK). Pasien
+- Grafik hanya menghitung **pasien CKG** (terpadan Medisy + ASIK). Pasien
   yang datanya hanya di salah satu sumber tidak ikut terhitung — sama seperti
   Registri Hipertensi CKG.
-- Angka **obat** hanya sebesar yang tercatat di ePuskesmas/ASIK. Kalau resep
+- Angka **obat** hanya sebesar yang tercatat di Medisy/ASIK. Kalau resep
   tidak dicatat, pasien tidak terhitung "tertatalaksana".

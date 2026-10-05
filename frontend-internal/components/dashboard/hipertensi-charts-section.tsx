@@ -27,7 +27,7 @@ export function HipertensiChartsSection() {
       <div>
         <h2 className="text-lg font-semibold">Dashboard Hipertensi</h2>
         <p className="text-sm text-[var(--muted-foreground)]">
-          Analisis registri Hipertensi CKG (pasien terpadan ASIK + ePuskesmas) per
+          Analisis registri Hipertensi CKG (pasien terpadan ASIK + Medisy) per
           puskesmas.
         </p>
       </div>

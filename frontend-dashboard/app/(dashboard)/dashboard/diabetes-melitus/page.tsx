@@ -19,7 +19,7 @@ export default function DashboardDiabetesMelitusPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard Diabetes Melitus"
-        description="Analisis registri Diabetes Melitus CKG (pasien terpadan ASIK + ePuskesmas) per puskesmas."
+        description="Analisis registri Diabetes Melitus CKG (pasien terpadan ASIK + Medisy) per puskesmas."
       />
 
       <div className="max-w-sm space-y-2">

@@ -5,7 +5,7 @@ import { z } from "zod";
 // convention as frontend-shared/dm/types.ts.
 
 // One kunjungan in a follow-up month. Expect most of these to be sparse: ASIK's
-// lipid form is gated to ≥40 yrs AND HT/DM patients, and ePuskesmas records a
+// lipid form is gated to ≥40 yrs AND HT/DM patients, and Medisy records a
 // lipid panel far less often than a blood pressure. Empty is the normal case,
 // not an error.
 export const LipidFollowUpReading = z.object({
@@ -20,7 +20,7 @@ export const LipidFollowUpReading = z.object({
 export type LipidFollowUpReading = z.infer<typeof LipidFollowUpReading>;
 
 // Per-field source of each baseline value: "ASIK" | "EPUS" | null (absent).
-// ASIK is the source of truth; ePuskesmas (EPUS) is the per-field fallback.
+// ASIK is the source of truth; Medisy is the per-field fallback.
 // `lipid` is one tag for the whole panel — the four analytes are merged per
 // field, so a per-slot tag would be misleading.
 export const LipidRegistrySources = z.object({

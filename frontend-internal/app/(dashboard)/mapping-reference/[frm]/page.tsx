@@ -132,7 +132,7 @@ export default function MappingFormDetailPage({
               </CardTitle>
               <CardDescription>
                 Ketuk pertanyaan untuk membuka. Tiap baris menampilkan opsi ASIK
-                live, kode PPV Padanan, dan jalur sumber EPUS yang diambil
+                live, kode PPV Padanan, dan jalur sumber Medisy yang diambil
                 converter.
               </CardDescription>
             </CardHeader>
@@ -140,7 +140,7 @@ export default function MappingFormDetailPage({
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
                 <Input
-                  placeholder="Filter berdasarkan label, kode PPV, teks pilihan, atau jalur EPUS…"
+                  placeholder="Filter berdasarkan label, kode PPV, teks pilihan, atau jalur Medisy…"
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                   className="pl-9"
@@ -282,7 +282,7 @@ function QuestionRow({
               variant={q.covered_by_converter ? "success" : "outline"}
               className="text-[10px] font-normal"
             >
-              {q.covered_by_converter ? "EPUS terpetakan" : "Tanpa sumber EPUS"}
+              {q.covered_by_converter ? "Medisy terpetakan" : "Tanpa sumber Medisy"}
             </Badge>
             {total > 0 && (
               <span className="text-[10px] text-[var(--muted-foreground)]">
@@ -300,10 +300,10 @@ function QuestionRow({
 
       {open && (
         <div className="grid gap-4 border-t border-[var(--border)] p-4 text-sm md:grid-cols-2">
-          {/* EPUS source */}
+          {/* Medisy source */}
           <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/30 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-              Sumber EPUS
+              Sumber Medisy
             </p>
             {q.epus_source ? (
               <code className="mt-2 inline-block break-all rounded bg-[var(--background)] px-2 py-1 font-mono text-xs">

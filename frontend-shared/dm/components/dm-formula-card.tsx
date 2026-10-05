@@ -78,7 +78,7 @@ export function DmFormulaCard() {
               </p>
               <p>
                 <b>(1) Sudah tercatat sebagai pasien DM</b> — ada diagnosis diabetes di
-                ePuskesmas, atau pasien menjawab &quot;Ya&quot; saat ditanya &quot;pernah
+                Medisy, atau pasien menjawab &quot;Ya&quot; saat ditanya &quot;pernah
                 dinyatakan diabetes atau kencing manis oleh dokter?&quot; di skrining CKG
                 → kolom Riwayat DM = Ya.
               </p>
@@ -176,14 +176,14 @@ export function DmFormulaCard() {
 
             <Section title="6 · Kenapa banyak kolom Follow Up yang kosong?">
               <p>
-                Karena pemeriksaan gula darah <b>jarang dicatat di ePuskesmas</b>. Berbeda
+                Karena pemeriksaan gula darah <b>jarang dicatat di Medisy</b>. Berbeda
                 dengan tekanan darah yang hampir selalu diukur tiap kunjungan, gula darah
                 hanya tercatat pada sebagian kecil kunjungan.
               </p>
               <p>
                 Kolom kosong berarti pemeriksaannya <b>tidak tercatat</b> — bukan kesalahan
                 sistem. Justru inilah yang perlu diperbaiki: makin lengkap pencatatan gula
-                darah di ePuskesmas, makin berguna kertas kerja ini.
+                darah di Medisy, makin berguna kertas kerja ini.
               </p>
               <p>
                 <b>HbA1C paling sering kosong</b> — pemeriksaannya jarang tersedia di

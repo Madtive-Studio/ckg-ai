@@ -43,7 +43,7 @@ export default function PatientDetailPage({
   };
 
   const p = patient.data;
-  // Sync requires matched + AI-merged data. The EPUS-only fallback is disabled by
+  // Sync requires matched + AI-merged data. The Medisy-only fallback is disabled by
   // scope (kept behind this flag so it can be restored later; mirrors the backend
   // ALLOW_EPUS_ONLY_SYNC in tasks/sync.py).
   const ALLOW_EPUS_ONLY_SYNC = false;
@@ -76,7 +76,7 @@ export default function PatientDetailPage({
                 title={
                   p.has_merged_data
                     ? "Sync merged_data ke ASIK"
-                    : "Sync data EPUS-saja (dikonversi otomatis ke bentuk ASIK) ke ASIK"
+                    : "Sync data Medisy-saja (dikonversi otomatis ke bentuk ASIK) ke ASIK"
                 }
               >
                 <Upload className="h-4 w-4" />

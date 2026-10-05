@@ -36,7 +36,7 @@ import type { MatchStatus } from "@shared/patients/types";
 
 const MATCH_STATUS_LABEL: Record<MatchStatus, string> = {
   asik_only: "Hanya ASIK",
-  epus_only: "Hanya EPUS",
+  epus_only: "Hanya Medisy",
   matched: "Cocok",
 };
 

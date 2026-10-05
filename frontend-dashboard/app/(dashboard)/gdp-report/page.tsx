@@ -143,7 +143,7 @@ export default function GdpReportPage() {
     <div className="space-y-8">
       <PageHeader
         title="Kertas Kerja DM Terkendali"
-        description="ASIK NIKs cross-checked against EPUS over a date range. Monthly GDP per patient."
+        description="ASIK NIKs cross-checked against Medisy over a date range. Monthly GDP per patient."
       />
 
       <section className="space-y-4">
@@ -313,7 +313,7 @@ export default function GdpReportPage() {
                 Loading GDP dashboard…
               </div>
               <div className="text-xs">
-                First-time computation decrypts every EPUS record for this
+                First-time computation decrypts every Medisy record for this
                 puskesmas + year. Result is cached for 30 hours.
               </div>
             </div>

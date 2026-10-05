@@ -92,7 +92,7 @@ export function EpusSourceDetail({
                   {name}
                 </h2>
                 <span className="text-xs font-medium rounded-full px-2.5 py-0.5 bg-emerald-100 text-emerald-800">
-                  ePus
+                  Medisy
                 </span>
               </div>
               {nik && (
@@ -143,7 +143,7 @@ export function EpusSourceDetail({
       {blocks.length === 0 && built.tables.length === 0 && (
         <Card className="shadow-sm">
           <CardContent className="py-8 text-center text-sm text-[var(--muted-foreground)]">
-            No data available for ePus.
+            No data available for Medisy.
           </CardContent>
         </Card>
       )}

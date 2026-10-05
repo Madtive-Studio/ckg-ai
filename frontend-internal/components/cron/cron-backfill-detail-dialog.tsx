@@ -82,7 +82,7 @@ export function CronBackfillDetailDialog({
               )}
               {!backfill.mandiri_only &&
                 backfill.source_scope === "epus_only" && (
-                  <span>EPUS only</span>
+                  <span>Medisy only</span>
                 )}
               {!backfill.mandiri_only &&
                 backfill.source_scope === "asik_only" && (

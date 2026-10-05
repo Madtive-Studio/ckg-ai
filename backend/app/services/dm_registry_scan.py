@@ -46,6 +46,8 @@ from sqlalchemy.orm import Session
 from app.core.security import decrypt_json
 from app.models.patient import MatchStatus, Patient
 from app.services.epus_to_asik import _detect_chronic_flags
+from app.services import medisy_accessors as _medisy
+from app.services.medisy_adapter import is_medisy_blob
 
 # Diabetes diagnosis: ICD-10 E10–E14, or a diagnosis name mentioning diabetes in
 # ID/EN. Mirrors ``epus_to_asik._DM_ICDX_PREFIXES``.
@@ -134,6 +136,8 @@ def _extract_glucose_epus(epus: Any) -> dict[str, Any]:
     out = _empty_glucose()
     if not isinstance(epus, dict):
         return out
+    if is_medisy_blob(epus):
+        return {k: (None if v is None else float(v)) for k, v in _medisy.glucose(epus).items()}
     tabs = epus.get("tabs") or {}
     pem = ((tabs.get("PTM") or {}).get("fields", {}) or {}).get("Pemeriksaan")
     if isinstance(pem, dict):
@@ -184,6 +188,8 @@ def _riwayat_epus_hit(epus: Any) -> bool:
     with the merge/converter pipeline."""
     if not isinstance(epus, dict):
         return False
+    if is_medisy_blob(epus):
+        return _medisy.has_diabetes_record(epus)
     for item in epus.get("penyakit_khusus") or []:
         if not isinstance(item, dict):
             continue
@@ -203,6 +209,8 @@ def _extract_obat(epus: Any) -> list[str]:
     dropped (the sheet's Jenis Obat columns are "List_obat_dm")."""
     if not isinstance(epus, dict):
         return []
+    if is_medisy_blob(epus):
+        return [n for n in _medisy.drug_names(epus) if _DM_DRUG_RE.search(n)]
     rows = (
         ((epus.get("tabs") or {}).get("Resep") or {}).get("tables", {}) or {}
     ).get("Resep")
@@ -225,6 +233,8 @@ def _parse_birthdate(epus: Any) -> str | None:
     (or jaksel "Tempat & Tgl Lahir"). Anchors on the trailing ``DD-MM-YYYY``."""
     if not isinstance(epus, dict):
         return None
+    if is_medisy_blob(epus):
+        return _medisy.identity(epus)["tanggal_lahir"]
     dp = epus.get("data_pasien") or {}
     ttl = dp.get("Tempat/Tgl Lahir") or dp.get("Tempat & Tgl Lahir")
     if ttl in (None, ""):
@@ -244,6 +254,8 @@ def _extract_identitas(epus: Any) -> dict[str, Any]:
     """Identitas fields from EPUS ``data_pasien``."""
     if not isinstance(epus, dict):
         return {}
+    if is_medisy_blob(epus):
+        return _medisy.identity(epus)
     dp = epus.get("data_pasien") or {}
     jk_raw = (dp.get("Jenis Kelamin") or "").strip()
     jk = {"L": "Laki-Laki", "P": "Perempuan"}.get(jk_raw.upper(), jk_raw)

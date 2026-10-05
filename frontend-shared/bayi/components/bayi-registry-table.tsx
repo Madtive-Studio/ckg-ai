@@ -27,7 +27,7 @@ function fmtDate(iso: string | null | undefined) {
   }
 }
 
-// Provenance pill: "EPUS" (blue) = isian EPUS langsung; "Hitung" (violet) =
+// Provenance pill: "Medisy" (blue) = isian Medisy langsung; "Hitung" (violet) =
 // diturunkan backend dari kuesioner MTBM. Null source renders nothing.
 function SourceTag({ src }: { src: string | null }) {
   if (!src) return null;
@@ -38,7 +38,7 @@ function SourceTag({ src }: { src: string | null }) {
         epus ? "bg-blue-100 text-blue-900" : "bg-violet-100 text-violet-900"
       }`}
     >
-      {epus ? "EPUS" : "Hitung"}
+      {epus ? "Medisy" : "Hitung"}
     </span>
   );
 }
@@ -210,8 +210,8 @@ export function BayiRegistryTable({
                             <div>{row.alamat || "—"}</div>
                           </div>
                           <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
-                            Tanda <span className="font-medium">EPUS</span> =
-                            klasifikasi diambil dari isian EPUS; {" "}
+                            Tanda <span className="font-medium">Medisy</span> =
+                            klasifikasi diambil dari isian Medisy; {" "}
                             <span className="font-medium">Hitung</span> = diturunkan
                             dari kuesioner MTBM oleh sistem.
                           </p>

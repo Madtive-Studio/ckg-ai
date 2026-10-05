@@ -107,7 +107,7 @@ export function LoopSettingsDialog({
         <DialogHeader>
           <DialogTitle>Pengaturan Loop Agent</DialogTitle>
           <DialogDescription>
-            Mengatur cara kerja agent pemelihara scraper. Model & API key dipilih
+            Mengatur cara kerja agent pemelihara klien dan konverter Medisy. Model & API key dipilih
             per peran di menu Konfigurasi LLM.
           </DialogDescription>
         </DialogHeader>
@@ -158,8 +158,8 @@ export function LoopSettingsDialog({
               <Field
                 label="Maks siklus perbaikan"
                 htmlFor="loop-maxfix"
-                hint="Satu siklus = cek portal → agent perbaiki kode → cek
-                  ulang. Diulang sampai portal tercakup penuh. Angka ini batas
+                hint="Satu siklus = cek API → agent perbaiki kode → cek
+                  ulang. Diulang sampai puskesmas tercakup penuh. Angka ini batas
                   pengaman — loop selalu berhenti begitu hijau; naikkan untuk
                   mencoba lebih lama (keseluruhan run juga dibatasi timeout 4
                   jam). Habis = run gagal, laporan gap tetap tersimpan."

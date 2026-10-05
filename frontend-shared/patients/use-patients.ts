@@ -45,7 +45,7 @@ export function useDecryptedPatient(id: string, enabled: boolean) {
 }
 
 export function useAsikPreview(id: string, enabled: boolean) {
-  // Deterministic on EPUS source. Re-scraping mutates the patient cache, not
+  // Deterministic on Medisy source. Re-scraping mutates the patient cache, not
   // this preview cache, so a fresh scrape only triggers a refetch via gcTime
   // expiry or an explicit invalidate from the scrape pipeline.
   return useQuery({

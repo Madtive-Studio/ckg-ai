@@ -62,7 +62,7 @@ export function MergedDataDetail({
                   {name}
                 </h2>
                 <span className="text-xs font-medium rounded-full px-2.5 py-0.5 bg-violet-100 text-violet-800">
-                  ASIK + ePus
+                  ASIK + Medisy
                 </span>
               </div>
               {nik && (

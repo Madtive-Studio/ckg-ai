@@ -19,7 +19,7 @@ export default function DashboardHipertensiPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard Hipertensi"
-        description="Analisis registri Hipertensi CKG (pasien terpadan ASIK + ePuskesmas) per puskesmas."
+        description="Analisis registri Hipertensi CKG (pasien terpadan ASIK + Medisy) per puskesmas."
       />
 
       <div className="max-w-sm space-y-2">

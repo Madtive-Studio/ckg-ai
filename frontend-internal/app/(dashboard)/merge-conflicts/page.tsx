@@ -68,7 +68,7 @@ export default function MergeConflictsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Conflict Analysis"
-        description="Questions where the merged data shows a real disagreement between ePuskesmas and ASIK answers."
+        description="Questions where the merged data shows a real disagreement between Medisy and ASIK answers."
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -214,7 +214,7 @@ export default function MergeConflictsPage() {
                               </div>
                               <div className="bg-emerald-50 p-3">
                                 <div className="mb-1 text-xs font-bold uppercase tracking-wide text-emerald-700">
-                                  EPUS
+                                  Medisy
                                 </div>
                                 <div className="break-words text-xs leading-snug text-emerald-600">
                                   {c.epus_question ?? "—"}

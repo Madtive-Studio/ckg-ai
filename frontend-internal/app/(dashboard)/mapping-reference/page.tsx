@@ -69,7 +69,7 @@ export default function MappingReferencePage() {
     <div className="space-y-6">
       <PageHeader
         title="Referensi Pemetaan"
-        description="Metadata pertanyaan EPUS / ASIK. Cari form atau kode field mana pun, telusuri untuk debug pemetaan per-pertanyaan."
+        description="Metadata pertanyaan Medisy / ASIK. Cari form atau kode field mana pun, telusuri untuk debug pemetaan per-pertanyaan."
       />
 
       {/* Overview cards */}
@@ -96,7 +96,7 @@ export default function MappingReferencePage() {
           loading={overview.isLoading}
         />
         <StatCard
-          title="Jalur sumber EPUS"
+          title="Jalur sumber Medisy"
           value={overview.data?.epus_path_count}
           subtext="Bisa dipetakan balik"
           loading={overview.isLoading}
@@ -124,7 +124,7 @@ export default function MappingReferencePage() {
               />
               <p className="text-[11px] text-[var(--muted-foreground)]">
                 Cocok dengan nama paket, kode FRM, modul, layanan, plus
-                label pertanyaan, kode PPV/PPM, pilihan, jalur EPUS, dan
+                label pertanyaan, kode PPV/PPM, pilihan, jalur Medisy, dan
                 opsi ASIK live.
               </p>
             </div>

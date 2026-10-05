@@ -661,7 +661,7 @@ expected answers in ASIK; no unexplained `validation_error` in `sync_jobs`.
 > **Direction change:** nothing is flipped per puskesmas and there is **no way back to EPUS**. The cut-over replaces the data, then the code goes.
 
 1. **Back-fill from Medisy** for every puskesmas over the dates its EPUS rows cover (`merge_mode=normal`, `sync_mode=off`; keep `lookback_days=3`, or E5 `changes`).
-2. **Reconcile before anything is deleted:** per puskesmas and date, compare the EPUS rows with the Medisy rows (counts, NIK sets, `epus_only` / `matched`
+2. **Reconcile before anything is deleted** (read-only tool: `python -m scripts.reconcile_epus_medisy --puskesmas <UUID> --from … --to …` prints per-day counts of stored ePuskesmas rows vs Medisy visits, shared and no-NIK ones separated; `--show-niks` lists the differences): per puskesmas and date, compare the EPUS rows with the Medisy rows (counts, NIK sets, `epus_only` / `matched`
    counts). Every difference must be explained (a visit that exists only in the old system, a NIK-less visit, a placeholder NIK) or accepted by the owner.
 3. **Delete the EPUS rows — a script the owner runs, never the assistant** (irreversible; patient data; see `CLAUDE.md` §13/§14). Take a backup first,
    and do it puskesmas by puskesmas.

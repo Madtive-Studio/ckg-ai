@@ -1,18 +1,13 @@
 """One-time denormalization: populate Patient.epus_tandai_ckg from existing
 scraped_epus_data blobs WITHOUT a re-scrape.
 
-The CKG "sudah CKG" flag lives inside the encrypted EPUS blob at
-``blob["ckg"]["sudah_ckg"]`` (added by the scraper / backfill_ckg.py). The
-Visit Summary now counts it from a denormalized boolean column
-``patients.epus_tandai_ckg`` so it doesn't have to decrypt every blob. This
-script reads the flag straight from the blob and writes the column.
+The CKG flag lives inside the encrypted clinic blob: ``blob["ckg"]["is_ckg"]`` of a Medisy bundle, or
+``blob["ckg"]["sudah_ckg"]`` of a legacy ePuskesmas record (``crud.patient._extract_tandai_ckg`` reads both). The
+Visit Summary counts it from a denormalized boolean column ``patients.epus_tandai_ckg`` so it doesn't have to decrypt
+every blob. This script reads the flag straight from the blob and writes the column.
 
-DB-only — no EPUS network, no Playwright. For every live patient row with an
-EPUS blob it decrypts, reads ``ckg.sudah_ckg``, and updates the column.
-
-DEPENDS ON backfill_ckg.py: blobs scraped before the CKG feature have no
-``ckg`` key. Those rows are left with epus_tandai_ckg = NULL (counted under
-"no_ckg"). Run backfill_ckg.py first to populate the key, then this.
+DB-only — no network. For every live patient row with a clinic blob it decrypts, reads the flag, and updates the
+column. Rows whose blob has no ``ckg`` key are left with epus_tandai_ckg = NULL (counted under "no_ckg").
 
 Idempotent + resumable: re-running just rewrites the same column value.
 

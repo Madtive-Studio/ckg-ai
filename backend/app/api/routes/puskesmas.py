@@ -1,3 +1,4 @@
+import time
 import uuid
 from typing import Literal
 
@@ -13,10 +14,21 @@ from app.api.deps import (
     get_principal,
 )
 from app.api.pagination import Page, PageParams, page_params, paginate
-from app.core.rate_limit import enforce_decrypt_rate_limit
+from app.core.rate_limit import enforce_decrypt_rate_limit, enforce_medisy_test_rate_limit
 from app.crud import puskesmas as crud
+from app.integrations.medisy_client import MedisyClient, MedisyError
 from app.models.puskesmas import Puskesmas
-from app.schemas.puskesmas import CredIn, CredOut, PuskesmasCreate, PuskesmasDetailOut, PuskesmasOut, PuskesmasUpdate
+from app.schemas.puskesmas import (
+    CredIn,
+    CredOut,
+    MedisyConnectionTestOut,
+    MedisyCredIn,
+    MedisyCredOut,
+    PuskesmasCreate,
+    PuskesmasDetailOut,
+    PuskesmasOut,
+    PuskesmasUpdate,
+)
 
 CredKind = Literal["epus", "asik"]
 
@@ -125,11 +137,14 @@ def delete_puskesmas(
 def set_puskesmas_cred(
     id: uuid.UUID,
     kind: CredKind,
-    data: CredIn,
+    data: CredIn | MedisyCredIn,
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_principal),
 ) -> None:
     _authorize_cred_access(principal, id)
+    # Medisy is the clinic-record source: its slot ("epus") takes a bearer token, ASIK still email + password.
+    if kind == "asik" and isinstance(data, MedisyCredIn):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "ASIK credentials need an email and a password")
     cred_col = Puskesmas.epus_cred if kind == "epus" else Puskesmas.asik_cred
     obj = db.scalar(
         select(Puskesmas).options(load_only(Puskesmas.id, cred_col)).where(Puskesmas.id == id)
@@ -156,13 +171,13 @@ def clear_puskesmas_cred(
     crud.clear_cred(db, obj, kind)
 
 
-@router.post("/{id}/credentials/{kind}/decrypt", response_model=CredOut)
+@router.post("/{id}/credentials/{kind}/decrypt", response_model=CredOut | MedisyCredOut)
 def get_puskesmas_cred_decrypted(
     id: uuid.UUID,
     kind: CredKind,
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_principal),
-) -> CredOut:
+) -> CredOut | MedisyCredOut:
     _authorize_cred_access(principal, id)
     enforce_decrypt_rate_limit(principal.id, id)
     cred_col = Puskesmas.epus_cred if kind == "epus" else Puskesmas.asik_cred
@@ -174,4 +189,48 @@ def get_puskesmas_cred_decrypted(
     plain = crud.get_cred_decrypted(obj, kind)
     if plain is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Credential not set")
+    if "token" in plain:
+        return MedisyCredOut(token=plain["token"])
     return CredOut(**plain)
+
+
+@router.post("/{id}/test-connection", response_model=MedisyConnectionTestOut)
+def test_medisy_connection(
+    id: uuid.UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
+) -> MedisyConnectionTestOut:
+    """Call Medisy's ``/ping`` with the stored URL + token. Always HTTP 200 once authorised:
+    a Medisy-side failure comes back as ``ok=false`` + a message (never the token), like the LLM test."""
+    _authorize_cred_access(principal, id)
+    enforce_medisy_test_rate_limit(principal.id)
+    obj = db.scalar(
+        select(Puskesmas)
+        .options(load_only(Puskesmas.id, Puskesmas.epus_url, Puskesmas.epus_cred))
+        .where(Puskesmas.id == id)
+    )
+    if obj is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+    if not obj.epus_url:
+        return MedisyConnectionTestOut(ok=False, error="Medisy URL is not set")
+    plain = crud.get_cred_decrypted(obj, "epus")
+    if plain is None:
+        return MedisyConnectionTestOut(ok=False, error="Medisy token is not set")
+    token = plain.get("token")
+    if not token:
+        return MedisyConnectionTestOut(ok=False, error="The stored credential is not a Medisy token; enter the token again")
+
+    started = time.monotonic()
+    try:
+        with MedisyClient(obj.epus_url, token, max_retries=1) as client:
+            ping = client.ping()
+    except (MedisyError, ValueError) as exc:
+        return MedisyConnectionTestOut(ok=False, error=str(exc))
+    return MedisyConnectionTestOut(
+        ok=True,
+        clinic_name=ping.clinic_name,
+        api_version=ping.api_version,
+        timezone=ping.timezone,
+        server_time=ping.server_time,
+        latency_ms=round((time.monotonic() - started) * 1000),
+    )

@@ -84,7 +84,7 @@ export function PuskesmasFormDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Puskesmas" : "Puskesmas Baru"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "Perbarui nama dan URL dasar puskesmas ini." : "Daftarkan puskesmas baru dengan domain dasar EPUS dan ASIK."}
+            {isEdit ? "Perbarui nama dan URL dasar puskesmas ini." : "Daftarkan puskesmas baru dengan domain dasar Medisy dan ASIK."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -98,10 +98,10 @@ export function PuskesmasFormDialog({
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="epus_url">EPUS URL (domain) *</Label>
+            <Label htmlFor="epus_url">Medisy URL (domain) *</Label>
             <Input
               id="epus_url"
-              placeholder="epuskesmas.example.id"
+              placeholder="medisy.example.id"
               {...form.register("epus_url")}
             />
             {form.formState.errors.epus_url && (

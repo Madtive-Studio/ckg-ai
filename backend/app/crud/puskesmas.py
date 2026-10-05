@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import decrypt_cred, encrypt_cred
 from app.models.puskesmas import Puskesmas
-from app.schemas.puskesmas import CredIn, PuskesmasCreate, PuskesmasUpdate
+from app.schemas.puskesmas import CredIn, MedisyCredIn, PuskesmasCreate, PuskesmasUpdate
 
 CredKind = Literal["epus", "asik"]
 
@@ -38,7 +38,7 @@ def soft_delete(db: Session, obj: Puskesmas) -> None:
     db.commit()
 
 
-def set_cred(db: Session, obj: Puskesmas, kind: CredKind, data: CredIn) -> None:
+def set_cred(db: Session, obj: Puskesmas, kind: CredKind, data: CredIn | MedisyCredIn) -> None:
     encrypted = encrypt_cred(data.model_dump())
     if kind == "epus":
         obj.epus_cred = encrypted

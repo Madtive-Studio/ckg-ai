@@ -1,13 +1,16 @@
-"""ASIK coverage hunt list: which ASIK questions still have no EPUS source.
+"""ASIK coverage hunt list: which ASIK questions still have no clinic-source (Medisy) field.
 
 Joins three static, in-repo sources — no DB, no network, no Settings import:
 
 1. ``backend/app/data/asik_form_mapping.json`` — the canonical ASIK target
    (119 forms / 565 questions, per question: label + status_2026).
-2. ``EPUS_BREADCRUMBS`` in ``epus_to_asik.py`` — the question labels the
-   converter already maps, keyed by the form name it emits them under.
+2. ``MEDISY_BREADCRUMBS`` in ``medisy_to_asik.py`` — the question labels the
+   converter already maps (a label with a source path), keyed by the form name
+   it emits them under.
 3. ``backend/app/data/coverage_ledger.json`` — HUMAN-edited documented
-   sourceless / no-target / lead entries (the loop agent never writes it).
+   sourceless / no-target / lead entries (the loop agent never writes it). An
+   entry with a ``source`` other than the one being hunted (the sourceless / lead
+   entries are ``"epus"``) is ignored.
 
 Per-question bucket, first match wins:
 
@@ -33,23 +36,26 @@ import sys
 from datetime import datetime, UTC
 from pathlib import Path
 
-from app.services.epus_to_asik import EPUS_BREADCRUMBS
+from app.services.medisy_to_asik import MEDISY_BREADCRUMBS
 
 _DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 MAPPING_PATH = _DATA_DIR / "asik_form_mapping.json"
 LEDGER_PATH = _DATA_DIR / "coverage_ledger.json"
 
 _DELETED = "Dihapus"
+SOURCE = "medisy"
 
 
 def _norm(s: str | None) -> str:
     return " ".join((s or "").split()).casefold()
 
 
-def _load_ledger() -> dict:
+def _load_ledger(source: str = SOURCE) -> dict:
     data = json.loads(LEDGER_PATH.read_text())
     entries = []
     for e in data.get("entries", []):
+        if e.get("source", source) != source:
+            continue
         entries.append({
             "id": e.get("id", ""),
             "status": e.get("status", ""),
@@ -74,9 +80,9 @@ def _entry_matches(entry: dict, form_name: str, label: str) -> bool:
 
 def _breadcrumb_index() -> dict[str, set[str]]:
     index: dict[str, set[str]] = {}
-    for form_key, fmap in EPUS_BREADCRUMBS.items():
+    for form_key, fmap in MEDISY_BREADCRUMBS.items():
         labels = index.setdefault(_norm(form_key), set())
-        labels.update(_norm(lbl) for lbl in fmap)
+        labels.update(_norm(lbl) for lbl, path in fmap.items() if path)
     return index
 
 
@@ -90,8 +96,8 @@ def _form_breadcrumb_labels(paket_name: str, audit_title: str) -> set[str]:
     return labels
 
 
-def build() -> dict:
-    ledger = _load_ledger()
+def build(ledger_source: str = SOURCE) -> dict:
+    ledger = _load_ledger(ledger_source)
     forms = json.loads(MAPPING_PATH.read_text())["forms"]
 
     totals = {
@@ -178,7 +184,7 @@ def render_markdown(result: dict) -> str:
         "# ASIK coverage hunt list",
         "",
         f"Generated {result['generated_at']} from asik_form_mapping.json + "
-        f"EPUS_BREADCRUMBS + coverage_ledger.json (ledger updated {result['ledger_updated']}).",
+        f"MEDISY_BREADCRUMBS + coverage_ledger.json (ledger updated {result['ledger_updated']}).",
         "",
         f"{result['total_questions']} canonical questions | "
         f"{t['mapped']} mapped (source known) | {t['open']} OPEN — hunt these | "
@@ -187,12 +193,12 @@ def render_markdown(result: dict) -> str:
         f"{t['asik_label_drift']} ASIK-side label drift (skip, developer fixes) | "
         f"{t['deleted']} deleted from the 2026 form (skipped).",
         "",
-        "Your coverage job this run: while you are live in the portal, look for an",
-        "EPUS question — in a tab you already capture or a NEW tab/question — that",
-        "answers one OPEN question below. Found one: map it additively in",
-        "epus_to_asik.py, keep it on the hunt-list form it answers, and record it in",
-        "coverage_findings. If a form family below has nothing on this portal, record",
-        "ONE absent entry for the FORM (not per question) listing the tabs you checked.",
+        "Your coverage job this run: while you read the live Medisy bundles, look for",
+        "a field — in a table you already read or a NEW one — that answers one OPEN",
+        "question below. Found one: map it additively in medisy_to_asik.py, keep it on",
+        "the hunt-list form it answers, and record it in coverage_findings. If a form",
+        "family below has nothing in this puskesmas's Medisy, record ONE absent entry",
+        "for the FORM (not per question) listing the bundle sections you checked.",
         "Questions NOT below but on no list: map them too and flag them off_list.",
         "",
         "## OPEN questions",

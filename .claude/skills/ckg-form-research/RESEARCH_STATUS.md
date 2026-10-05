@@ -209,6 +209,18 @@ backend/.venv/bin/python .claude/skills/ckg-form-research/scripts/audit_uncovere
 | Source | Converter | Coverage | Last audited | Status |
 |---|---|---|---|---|
 | **EPUS** (ePuskesmas) | `app/services/epus_to_asik.py` | adult clinical battery + dental + **under-18 battery** (growth/vitals/glucose/dental/TB-cough) + **Laboratorium-tab labs** (Albumin Urin/Trombosit/Hb, added 2026-06-03); lansia-instrument/skin + pediatric newborn/immunization/development are EPUS-less shells | 2026-06-03 | ✅ shipped, 0 name/label drift, 0 hallucination across 3 regions |
+| **Medisy** (himed-app API) — *the clinic-record source going forward* | `app/services/medisy_to_asik.py` (+ `clinic_source.py` dispatch) | adult battery, lab forms, screening battery (PUMA/SKILAS/Barthel/SPPB/MNA/kanker paru/EKG/dental/tetanus), under-18 battery; many forms are shells (R-NOMATCH) — see `app/services/MEDISY_TO_ASIK_RULES.md` | 2026-10-05 | ⚠️ 0 name/label drift, 0 exceptions on 786 real bundles; **NOT yet verified against ASIK values** (no patient has both blobs); run with `--source medisy --column scraped_epus_data` |
+
+### Medisy — setup notes for the tooling (2026-10-05)
+- Blobs are stored in `patients.scraped_epus_data` (column not renamed) → always pass `--column scraped_epus_data`; `_regions.py`
+  maps `medisy` to that column, to `puskesmas.epus_url`, and reads age from `patient.age.years`.
+- `audit_uncovered.py --source medisy` flattens the bundle (screenings → one leaf per `question_code`); a leaf counts as consumed
+  when its name appears as an identifier in a `MEDISY_BREADCRUMBS` path (heuristic, like the EPUS one).
+- `verify_converter.py` now merges with the converter's own `<SOURCE>_BREADCRUMBS` table (was hard-wired to EPUS).
+- No ASIK blob ⇒ `audit_uncovered`/`verify_converter` skip the patient. For a dry run on a scratch DB, rows can be marked `matched`
+  and given an empty ASIK blob (never on a real DB); `verify_converter` still needs real ASIK data and LLM keys.
+- Known unverified: the form/label list was generated from the repo's canonical mapping, not a fresh live ASIK dump.
+- Open clinical questions and the "not mapped" list: `backend/app/services/MEDISY_TO_ASIK_RULES.md` §4–5.
 
 ### EPUS — known gaps (EPUS has no source for these; emitted as shells or null)
 

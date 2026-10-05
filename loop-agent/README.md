@@ -1,14 +1,16 @@
 # loop-agent
 
-The self-maintaining agent that keeps the ePuskesmas **scraper** and
-**`epus_to_asik.py`** converter correct as puskesmas are onboarded (~5,000
-target). One OpenCode session (GLM-5.3-Flash) per run: it logs into the live
-portal, captures what the site truly serves, runs the real scraper on the same
-day, compares the two, and judges — because any script-encoded assumption goes
-stale the moment EPUS updates or a new portal variant appears. On a gap the
-agent fixes the code and re-proves it in the same session; an in-container
-reviewer (GLM-5.3) then checks the diff before a PR opens. It **never deploys**
-and **never writes to ASIK**.
+The self-maintaining agent that keeps the **Medisy client, adapter and
+`medisy_to_asik.py`** converter correct as puskesmas are onboarded (~5,000
+target). One OpenCode session (GLM-5.3-Flash) per run: it calls the puskesmas's
+live Medisy API with plain HTTP, captures what the API truly serves, runs our
+code on the same day, compares the two, and judges — because any
+script-encoded assumption goes stale the moment Medisy changes or a puskesmas
+uses a form we have not seen. On a gap the agent fixes the code and re-proves it
+in the same session; an in-container reviewer (GLM-5.3) then checks the diff
+before a PR opens. It **never deploys**, **never writes to ASIK** and **never
+writes to Medisy** (the Medisy API is a separate project; a missing field is a
+finding).
 
 Full design + rationale: **`.claude/plan/loop-agent/PLAN.md`**. This folder holds
 everything the container runs; the orchestration code lives in
@@ -20,11 +22,10 @@ everything the container runs; the orchestration code lives in
 | File | What it is |
 |---|---|
 | `run.sh` | Entrypoint + scaffolding: prepare workspace → one agent session → reviewer → PR → LOOP_RESULT. Never judges coverage. |
-| `PROMPT.md` | The fixed per-run checker prompt (`{name}` / `{region_url}` / `{region}` / `{detail_n}` / `{max_fix}`). The agent follows the ckg-form-research skill. |
+| `PROMPT.md` | The fixed per-run checker prompt (`{name}` / `{region_url}` / `{region}` / `{detail_n}` / `{max_fix}`). The agent follows the ckg-form-research skill and `MEDISY_TO_ASIK_RULES.md`. |
 | `render_prompt.py` | Substitutes the placeholders in `PROMPT.md` for one run. |
 | `reviewer.py` | One-shot LLM review of the fix diff → `.review_result.json` (approve / request_changes / error). |
 | `notes_lint.py` | Enforces the LOOP_NOTES.md rules: format, dedupe (`xN`), 50-line cap + archive, PII strip. |
-| `screenshot.py` | Playwright screenshot helper (logs in with the run's portal creds) — the agent looks at pages. |
 | `format_stream.py` | Pipes the session stream into readable lines (drops OpenCode's JSON firehose; tool calls become one-liners). |
 | `AGENTS.md` | The agent's operating rules — identity + the NEVER list. OpenCode reads this. |
 | `LOOP_NOTES.md` | The agent's working memory: bug records + Known-empty registry. Clean runs write NOTHING. |
@@ -38,7 +39,7 @@ everything the container runs; the orchestration code lives in
 - Changing HOW the agent behaves → edit only this folder (mostly `PROMPT.md`).
 - Changing WHEN/WHY runs happen → `backend/app/tasks/loop_agent.py` + routes + config.
 - Changing what the dashboard shows → `frontend-internal` loop files.
-- The image almost never needs rebuilding: the agent reads the scraper +
+- The image almost never needs rebuilding: the agent reads the client +
   converter + skill scripts from the cloned repo at runtime. Rebuild only when
   `run.sh`, the pinned opencode version, or the base image changes.
 
@@ -55,9 +56,9 @@ everything the container runs; the orchestration code lives in
 | `LOOP_LLM_ROUTE_ORDER` / `LOOP_REVIEWER_ROUTE_ORDER` | OpenRouter provider-order locks (e.g. `z-ai`) |
 | `DATABASE_URL` / `CRED_ENCRYPTION_KEY` / `JWT_SECRET` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` | app-config env the agent's DB reads + regression check need; DATABASE_URL should be a READ-ONLY role in prod |
 
-EPUS credentials are NOT in env: the agent decrypts them from the DB by
-`epus_url` into a temp config file (never printed), the same way production
-scrapes do. The verdict protocol back is the LAST stdout line:
+The Medisy token is NOT in env: the agent decrypts it from the DB by
+`epus_url` (the column holds the Medisy host) into a temp file (never
+printed), the same way production scrapes do. The verdict protocol back is the LAST stdout line:
 `LOOP_RESULT:{json}` with `decision` (covered / no_data / bad_login / gap /
 fixed), `test_date`, `live_count`, `scraped_count`, `gap_summary`,
 `branch_name`, `pr_url`, `review_verdict`, `review_comments`. The decision
@@ -72,16 +73,18 @@ comes from the agent's own `loop-agent/.check_result.json`.
    with the env contract above; the repo is bind-mounted read-only at `/seed`.
 3. `run.sh` clones `/seed` to `/work`, (optionally) pins a git ref, overlays the
    current tooling, generates `opencode.json`, and starts ONE agent session.
-4. The session (PROMPT.md): log in live → pick a recent weekday with patients →
-   capture the site's truth (full list + every tab of `LOOP_DETAIL_LIMIT`
-   patients + screenshots) → run the real scraper on the same date → compare →
-   judge. On a gap: fix `scrapers/epus/**` / `epus_to_asik.py`, re-run the whole
-   check, up to `LOOP_MAX_FIX_ITERS` passes — then the converter regression check
-   (`verify_converter --all-regions`) must pass before the fix is done.
+4. The session (PROMPT.md): read the token → pick a recent weekday with CKG
+   visits (`GET /visits`) → capture the API's truth with plain HTTP (the full day
+   list + the bundles of `LOOP_DETAIL_LIMIT` visits) → run our client, adapter
+   and converter on the same date (no database writes) → compare → judge. On a
+   gap: fix the Medisy client / adapter / converter files listed in PROMPT.md
+   STEP 7, re-run the whole check, up to `LOOP_MAX_FIX_ITERS` passes — then the
+   `tests/test_medisy_*.py` suite (and `verify_converter --source medisy` when
+   patients with both a Medisy and an ASIK record exist) must pass.
 5. The reviewer (GLM-5.3, optional) reviews the diff; a PR opens for a human to
    merge (auto-merge only when config=auto + reviewer approve + agent verdict
    covered). The worker streams stdout to the dashboard (Redis ring + SSE) and
    parses LOOP_RESULT to finalize the run.
 
-Every run is a real agent session: expect minutes + tokens per portal, even
+Every run is a real agent session: expect minutes + tokens per puskesmas, even
 when it comes back covered on the first pass.

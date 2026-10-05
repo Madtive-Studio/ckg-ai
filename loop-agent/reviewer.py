@@ -26,24 +26,27 @@ OUT = HERE / ".review_result.json"
 
 BASE_REF = os.environ.get("LOOP_BASE_REF", "master")
 
-CHECKLIST = """You are reviewing an automated fix to the CKG ePuskesmas scraper/converter.
+CHECKLIST = """You are reviewing an automated fix to the CKG Medisy client/converter.
 The fix was written by an AI agent from a deterministic gap report. Judge ONLY the
 diff. Checklist — each item is a possible request_changes reason:
 
-1. REGRESSION RISK: could the change alter behavior for portals/regions that work
-   today? Additive changes (new module keys, new parsers, new allowlist entries)
-   are safe; changes to existing parsing paths need scrutiny.
-2. READ-ONLY DISCIPLINE: the scraper must never write to the portal. Allowed:
-   GET requests, the /login POST, and the production scraper's own read-only
-   lookups (POST /klaster_siklushidup/{pid}/getlist via its helpers). Flag any
-   other POST/PUT/DELETE, any navigation that could trigger the portal's
-   on-load writes, any write endpoint added to the fetch set.
-3. SCOPE: the diff must only touch scrapers/epus/** and/or
-   backend/app/services/epus_to_asik.py (plus the notes file). Anything else ->
+1. REGRESSION RISK: could the change alter behavior for puskesmas that work
+   today? Additive changes (new aliases, new keys read with .get(), new options
+   in a mapping table) are safe; changes to existing mapping paths need scrutiny.
+2. READ-ONLY DISCIPLINE: the client must never write to Medisy. Allowed: GET
+   requests and the two read-only POSTs (/visits/batch, /patients/lookup). Flag
+   any other POST/PUT/DELETE, any new endpoint that is not a read, and any code
+   that follows redirects, disables TLS verification or sends the token anywhere
+   but the configured host.
+3. SCOPE: the diff must only touch backend/app/integrations/medisy_client.py,
+   backend/app/services/{medisy_adapter,medisy_accessors,medisy_to_asik,
+   asik_form_labels}.py, backend/app/services/MEDISY_TO_ASIK_RULES.md,
+   backend/tests/test_medisy_*.py (plus the notes file). Anything else ->
    request_changes.
 4. NO PATIENT DATA: no patient names, NIKs (16-digit numbers), or record dumps
-   may appear in the diff. Field labels and structure are fine.
-5. SANITY: no obvious dead code, no secrets/keys, no debugging debris.
+   may appear in the diff, tests included (tests use hand-built fictional
+   bundles). Field labels and structure are fine.
+5. SANITY: no obvious dead code, no secrets/keys/tokens, no debugging debris.
 6. COMMENT GATE: every added or modified comment must record a DECISION the code
    cannot show (why this approach over the obvious alternative) or a WARNING (a
    constraint that bites later). Flag comments that justify a workaround or
@@ -53,12 +56,16 @@ diff. Checklist — each item is a possible request_changes reason:
    "addresses comment N"). Such a comment means the code is wrong: request
    changes and require the underlying code to be fixed, not the comment reworded.
 7. COVERAGE CLAIMS: when the diff adds ASIK question mappings to
-   epus_to_asik.py (coverage work), every new breadcrumb must name a real EPUS
-   tab/field the run actually captured, and every mapped value must trace to
-   scraped source data — an invented or assumed value is a hallucination.
-   Flag mappings whose EPUS source is vague ("somewhere in PTM"), whose value
-   coercion invents data the source does not show, or whose change is not
-   additive (alters behavior for portals that already work).
+   medisy_to_asik.py (coverage work), every new breadcrumb must name a real
+   bundle path the run actually captured, every mapped value must trace to that
+   bundle field, and the mapping must obey the rules in MEDISY_TO_ASIK_RULES.md
+   (R-ZERO: a stored 0 is not a "No"; R-UNIFORM: ignore "check to all" rows;
+   R-DIAG: a diagnosis only turns a result ON; R-NOMATCH: no mapping where the
+   two systems ask different questions). An invented or assumed value is a
+   hallucination. Flag mappings whose source is vague, whose value coercion
+   invents data the bundle does not show, whose ASIK label is not proven live,
+   or whose change is not additive. A new mapping must come with a test that
+   uses a hand-built bundle.
 
 Respond with STRICT JSON only (no prose outside the JSON):
 {"verdict": "approve" | "request_changes",

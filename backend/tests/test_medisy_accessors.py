@@ -80,6 +80,7 @@ def test_identity_block_matches_the_registry_shape():
 def test_tertatalaksana_is_a_proxy_on_chronic_drugs_and_an_education_note():
     assert acc.tertatalaksana(bundle(prescriptions=[{"drug": "Amlodipin 5 mg"}], general={"edukasi": "diet"})) == (True, True)
     assert acc.tertatalaksana(bundle(prescriptions=[{"drug": "Paracetamol"}])) == (False, False)
+    assert acc.tertatalaksana(bundle(general={"edukasi_term": "ED000002"})) == (False, True)       # the education type select alone counts
 
 
 # ── the extractors route Medisy bundles here, and leave the EPUS shape alone ──

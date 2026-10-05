@@ -155,14 +155,14 @@ def tertatalaksana(b: dict) -> tuple[bool, bool]:
 
     ePuskesmas has two explicit PTM checkboxes for this; Medisy does not expose them, so these are PROXIES (open clinical
     question Q7 in ``MEDISY_TO_ASIK_RULES.md``): a drug counts when a chronic-disease drug (antihypertensive / antidiabetic /
-    lipid-lowering) was prescribed at the visit; education counts when the physical exam records an education note."""
+    lipid-lowering) was prescribed at the visit; education counts when the education form of the examination (type select ``edukasi_term`` or the free text ``edukasi``) is filled."""
     from app.services.dm_registry_scan import _DM_DRUG_RE
     from app.services.hipertensi_registry_scan import _HT_DRUG_RE
     from app.services.lipid_registry_scan import _LIPID_DRUG_RE
 
     obat = any(_HT_DRUG_RE.search(n) or _DM_DRUG_RE.search(n) or _LIPID_DRUG_RE.search(n) for n in drug_names(b))
     general = (b.get("physical_exam") or {}).get("general") or {}
-    edukasi = bool(_clean(general.get("edukasi")))
+    edukasi = bool(_clean(general.get("edukasi_term")) or _clean(general.get("edukasi")))
     return obat, edukasi
 
 

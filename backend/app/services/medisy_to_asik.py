@@ -134,6 +134,18 @@ def _screens(b: dict) -> dict[str, dict[str, Any]]:
     return {k: v[2] for k, v in best.items()}
 
 
+def _was_resaved(b: dict, key: str) -> bool:
+    """True when the LATEST entry of instrument ``key`` was updated after it was created (``updated_at`` > ``performed_at``)."""
+    best: tuple[str, int, dict] | None = None
+    for i, sc in enumerate(b.get("screenings") or []):
+        if sc.get("key") == key and (best is None or (sc.get("performed_at") or "", i) >= best[:2]):
+            best = (sc.get("performed_at") or "", i, sc)
+    if best is None:
+        return False
+    made, saved = _clean(best[2].get("performed_at")), _clean(best[2].get("updated_at"))
+    return bool(made and saved and saved > made)
+
+
 def _program_rows(b: dict, program: str, alias: str) -> list[dict]:
     block = (b.get("programs") or {}).get(program)
     rows = block.get(alias) if isinstance(block, dict) else None
@@ -343,13 +355,14 @@ _PUMA_YN = (("question4", "Apakah Anda pernah merasa napas pendek"),
 _PUMA_PACKYEAR = {0: "<20 bungkus per tahun", 1: "20-30 bungkus per tahun", 2: ">30 bungkus per tahun"}
 
 
-def _map_ppok(scr: dict) -> dict[str, Any]:
+def _map_ppok(scr: dict, resaved: bool = False) -> dict[str, Any]:
     p = scr.get("puma") or {}
     if not p:
         return {}
     smoking_cols = ("question_child_3_average", "question_child_3_year", "question_child_3_3")
     answered_cols = ("question4", "question5", "question6", "question7", *smoking_cols)
-    active = any(_positive(p.get(c)) for c in answered_cols)       # R-ZERO: evidence the row was really filled
+    # R-ZERO: evidence the row was really filled — a positive answer, or (sign-off 2026-10-05) a row saved again after it was created
+    active = resaved or any(_positive(p.get(c)) for c in answered_cols)
     out: dict[str, Any] = {}
     for col, prefix in _PUMA_YN:
         n = _num(p.get(col))
@@ -442,12 +455,15 @@ _NO_COUGH = {"Faktor Risiko TB - Dewasa & Lansia": "Tidak\xa0batuk",            
              "Faktor Risiko dan Skrining X-Ray TB (Dewasa & Lansia)": "Tidak batuk"}  # ...and a plain space here
 
 
+_COUGH_YES = "Ya, lebih dari 2 minggu"
+
+
 def _map_tb_risk(scr: dict) -> dict[str, dict[str, Any]]:
-    """Cough question. Only "no cough" is sourceable: Medisy records Ya/Tidak WITHOUT a duration, and ASIK asks for
-    <2 / >2 weeks, so a "Ya" cannot be placed (R-NOMATCH)."""
+    """Cough question. Medisy records Ya/Tidak WITHOUT a duration; clinical sign-off (2026-10-05): a "Ya" means more than
+    2 weeks, so it becomes the ASIK option "Ya, lebih dari 2 minggu"."""
     t = _tbc(scr)
-    no_cough = _yatidak(t.get("batuk")) == "Tidak"
-    out = {form: ({_q(form, "Apakah Anda pernah atau sedang mengalami batuk"): _NO_COUGH[form]} if no_cough else {})
+    cough = {"Tidak": _NO_COUGH, "Ya": dict.fromkeys(_F_TB_RISK, _COUGH_YES)}.get(_yatidak(t.get("batuk")) or "", {})
+    out = {form: ({_q(form, "Apakah Anda pernah atau sedang mengalami batuk"): cough[form]} if cough else {})
            for form in _F_TB_RISK}
     # the X-Ray form also asks the three TB symptoms and whether a chest X-ray was done; Medisy records the same questions
     xray = out[_F_TB_RISK[1]]
@@ -772,6 +788,14 @@ _F_SPPB = "Mobilisasi - Pemeriksaan Lanjutan (SPPB)"
 _F_MNA = "Skrining Malnutrisi - Pemeriksaan Lanjutan (MNA-SF)"
 
 
+# Medisy's own nutrition screening (`gizi`, MST-like) asks nearly the same two SKILAS questions. Sign-off 2026-10-05: map only the
+# unambiguous answers, SKILAS's own answer wins. "Weight loss in 6 months": none -> Tidak; "not sure (clothes loose)" matches
+# SKILAS's "or clothes became looser" -> Ya; 6 kg or more -> Ya; "1-5 kg" straddles SKILAS's 3 kg line -> blank.
+# "Intake reduced by lack of appetite": Ya -> Ya; Tidak stays blank (SKILAS also asks about difficulty eating).
+_GIZI_WEIGHT_LOSS = {_norm("tidak"): "Tidak", _norm("tidak yakin"): "Ya", _norm("6-10 kg"): "Ya", _norm("11-15 kg"): "Ya", _norm(">15 kg"): "Ya"}
+_GIZI_APPETITE = {_norm("ya"): "Ya"}
+
+
 def _map_skilas(scr: dict) -> dict[str, dict[str, Any]]:
     s = scr.get("skilas") or {}
     out: dict[str, dict[str, Any]] = {}
@@ -785,8 +809,9 @@ def _map_skilas(scr: dict) -> dict[str, dict[str, Any]]:
     if dep:
         out[_SKILAS_DEPRESI] = dep
     mal: dict[str, Any] = {}
-    _put(mal, _q(_SKILAS_MALNUTRISI, "Apakah berat badan Anda berkurang"), yn("question3a"))
-    _put(mal, _q(_SKILAS_MALNUTRISI, "Apakah Anda hilang nafsu makan"), yn("question3b"))
+    gizi = scr.get("gizi") or {}
+    _put(mal, _q(_SKILAS_MALNUTRISI, "Apakah berat badan Anda berkurang"), yn("question3a") or _GIZI_WEIGHT_LOSS.get(_norm(gizi.get("penurunan_bb"))))
+    _put(mal, _q(_SKILAS_MALNUTRISI, "Apakah Anda hilang nafsu makan"), yn("question3b") or _GIZI_APPETITE.get(_norm(gizi.get("asupan_makanan"))))
     _put(mal, _q(_SKILAS_MALNUTRISI, "Apakah ukuran lingkar lengan atas"), yn("question3c"))
     if mal:
         out[_SKILAS_MALNUTRISI] = mal
@@ -1026,7 +1051,7 @@ def medisy_to_asik(bundle: dict) -> ASIK_Result:
     out[gizi_form] = gizi
 
     if years >= 40:
-        out[_F_PPOK] = _map_ppok(scr)
+        out[_F_PPOK] = _map_ppok(scr, _was_resaved(bundle, "puma"))
 
     demo_form, demo = _map_demografi(bundle, gender, years)
     out[demo_form] = demo
@@ -1152,8 +1177,8 @@ for _f, _p, _path in (
     (_F_MINICOG, "Mintalah pasien untuk MENGULANG", "screenings[pemeriksaan_cog].instruction1"),
     (_SKILAS_DEPRESI, "Apakah dalam 2 minggu terakhir Anda merasa sedih", "screenings[skilas].question6a"),
     (_SKILAS_DEPRESI, "Apakah dalam 2 minggu terakhir Anda sedikit minat", "screenings[skilas].question6b"),
-    (_SKILAS_MALNUTRISI, "Apakah berat badan Anda berkurang", "screenings[skilas].question3a"),
-    (_SKILAS_MALNUTRISI, "Apakah Anda hilang nafsu makan", "screenings[skilas].question3b"),
+    (_SKILAS_MALNUTRISI, "Apakah berat badan Anda berkurang", "screenings[skilas].question3a / screenings[gizi].penurunan_bb (unambiguous answers only)"),
+    (_SKILAS_MALNUTRISI, "Apakah Anda hilang nafsu makan", "screenings[skilas].question3b / screenings[gizi].asupan_makanan (Ya only)"),
     (_SKILAS_MALNUTRISI, "Apakah ukuran lingkar lengan atas", "screenings[skilas].question3c"),
     (_SKILAS_MOBILISASI, "Tes Berdiri di kursi", "screenings[skilas].question2"),
     (_SKILAS_KOGNITIF, "Apakah dapat mengingat tiga kata", "screenings[skilas].question1 (recall outcome)"),
@@ -1179,7 +1204,7 @@ for _f in _TELMAT_ADULT:
     _bc(_f, "Apa Hasil Pemeriksaan Telinga Luar (infeksi telinga)?", "programs.ptm.fase_pendengaran.omsk_congek_right_ear/left_ear")
     _bc(_f, "Hasil pemeriksaan tajam pendengaran", "programs.ptm.fase_pendengaran.tajam_pendengaran_right/left")
 for _f in _F_TB_RISK:
-    _bc(_f, "Apakah Anda pernah atau sedang mengalami batuk", "screenings[tbc].batuk (only 'Tidak': Medisy has no duration)")
+    _bc(_f, "Apakah Anda pernah atau sedang mengalami batuk", "screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)")
 _bc(_F_TB_EXAM, "Apakah anda ada kontak dengan pasien Tuberkulosis", "screenings[tbc].kontak_tbc (only 'Tidak Ada')")
 _bc("Pemeriksaan Tuberkulosis Anak", "Apakah anda ada kontak", "screenings[tbc].kontak_tbc (only 'Tidak Ada')")
 for _f in ("Skrining Fungsi Ginjal Laki-Laki (hanya untuk =>40 tahun dengan risiko HT DM)",

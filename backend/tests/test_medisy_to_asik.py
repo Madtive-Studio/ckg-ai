@@ -239,14 +239,17 @@ def test_lab_forms_are_40_plus_and_the_kidney_form_carries_the_age():
 # ───────────────────────────── TB / dental / heart ───────────────────────────
 
 
-def test_tb_cough_only_the_negative_is_sourceable_and_each_form_uses_its_own_nbsp_variant():
+def test_tb_cough_answers_and_each_form_uses_its_own_nbsp_variant():
     out = medisy_to_asik(bundle(screenings=[scr("tbc", batuk="Tidak", kontak_tbc="Tidak Ada")]))
     q = "Apakah Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh?"
     assert out["Faktor Risiko TB - Dewasa & Lansia"][q] == "Tidak\xa0batuk"
     assert out["Faktor Risiko dan Skrining X-Ray TB (Dewasa & Lansia)"][q] == "Tidak batuk"
     assert out["Pemeriksaan Tuberkulosis (Dewasa & Lansia)"] == {"Apakah anda ada kontak dengan pasien Tuberkulosis (TBC)?": "Tidak ada"}
-    yes = medisy_to_asik(bundle(screenings=[scr("tbc", batuk="Ya", kontak_tbc="TBC paru bakteriologis")]))   # R-NOMATCH
-    assert yes["Faktor Risiko TB - Dewasa & Lansia"] == {} and yes["Pemeriksaan Tuberkulosis (Dewasa & Lansia)"] == {}
+    # clinical sign-off 2026-10-05: Medisy has no duration, a "Ya" means more than 2 weeks
+    yes = medisy_to_asik(bundle(screenings=[scr("tbc", batuk="Ya", kontak_tbc="TBC paru bakteriologis")]))
+    assert yes["Faktor Risiko TB - Dewasa & Lansia"] == {q: "Ya, lebih dari 2 minggu"}
+    assert yes["Faktor Risiko dan Skrining X-Ray TB (Dewasa & Lansia)"][q] == "Ya, lebih dari 2 minggu"
+    assert yes["Pemeriksaan Tuberkulosis (Dewasa & Lansia)"] == {}                      # the contact type is still not mapped
 
 
 def test_adult_dental_questions_3_and_4():
@@ -531,3 +534,33 @@ def test_adult_xray_tb_form_takes_the_symptom_and_radiograph_answers_medisy_also
     assert out["Apakah Anda mengalami berkeringat di malam hari tanpa kegiatan?"] == "Ya"
     assert out["Apakah dilakukan pemeriksaan radiografi toraks?"] == "Ya"
     assert "Apakah pasien memiliki pembesaran kelenjar getah bening?" not in out          # Medisy has no such column
+
+
+def test_an_all_zero_puma_row_saved_again_after_creation_counts_as_answered():
+    row = scr("puma", **PUMA_ZERO)
+    row["updated_at"] = "2026-09-02T10:05:00+07:00"                                       # performed_at is 10:00
+    out = medisy_to_asik(bundle(screenings=[row]))[PPOK]
+    assert out and set(out.values()) == {"Tidak"}
+    untouched = scr("puma", **PUMA_ZERO)
+    untouched["updated_at"] = untouched["performed_at"]
+    assert medisy_to_asik(bundle(screenings=[untouched]))[PPOK] == {}
+
+
+SK_MAL = "SKILAS Malnutrisi"
+WEIGHT_Q = "Apakah berat badan Anda berkurang >3 kg dalam 3 bulan terakhir atau pakaian menjadi lebih longgar?"
+APPETITE_Q = "Apakah Anda hilang nafsu makan Atau mengalami kesulitan makan (misal batuk atau tersedak saat makan, menggunakan selang makan/sonde)?"
+
+
+def test_medisy_nutrition_screening_fills_skilas_malnutrition_only_where_unambiguous():
+    def mal(**gizi):
+        return medisy_to_asik(bundle(years=70, screenings=[scr("gizi", **gizi)]))[SK_MAL]
+
+    assert mal(penurunan_bb="tidak", asupan_makanan="ya") == {WEIGHT_Q: "Tidak", APPETITE_Q: "Ya"}
+    assert mal(penurunan_bb="tidak yakin")[WEIGHT_Q] == "Ya"                               # "clothes feel looser"
+    assert mal(penurunan_bb="11-15 kg")[WEIGHT_Q] == "Ya"
+    assert mal(penurunan_bb="1-5 kg", asupan_makanan="tidak") == {}                         # straddles 3 kg; "no" misses difficulty eating
+
+
+def test_skilas_own_answer_wins_over_the_nutrition_screening():
+    out = medisy_to_asik(bundle(years=70, screenings=[scr("skilas", question3a="Tidak"), scr("gizi", penurunan_bb=">15 kg")]))
+    assert out[SK_MAL][WEIGHT_Q] == "Tidak"

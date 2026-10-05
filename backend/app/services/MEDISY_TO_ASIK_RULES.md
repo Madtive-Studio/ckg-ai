@@ -3,7 +3,7 @@
 Reference for `medisy_to_asik.py` (the deterministic converter for the clinic-record source after the ePuskesmas → Medisy migration; see `MEDISY_MIGRATION.md`). Input: one stored Medisy visit bundle (`scraped_epus_data`, shape from himed-app `GET /medisy_api/ckg/visits/{id}` / `/visits/batch`). Output: `{asik_form: {asik_label: value}}`.
 
 > **Validation status (2026-10-05) — read before relying on it.**
-> - Verified: 0 form/label drift against the canonical mapping (`audit_coverage.py --source medisy`), 0 converter exceptions and 0 emitted fields without a breadcrumb over 786 real UAT bundles, 51 converter unit tests.
+> - Verified: 0 form/label drift against the canonical mapping (`audit_coverage.py --source medisy`), 0 converter exceptions and 0 emitted fields without a breadcrumb over 786 real UAT bundles, 51 converter test functions.
 > - **Not verified:** value-for-value agreement with what ASIK actually holds for the same patient (`verify_converter.py`). It needs patients that have BOTH a Medisy blob and an ASIK blob, and none exist yet (the UAT Medisy data is not in ASIK). Run `verify_converter.py --source medisy --column scraped_epus_data` once real matched patients exist.
 > - The ASIK label list (`asik_form_labels.py`) was generated from the repo's canonical mapping, not from a fresh live ASIK dump (no ASIK access during this work).
 > - UAT data is thin: most screenings are empty, so the screening mappings (PUMA, SKILAS, Barthel, SPPB, MNA, kanker paru…) are exercised mainly by synthetic bundles built from Medisy's own templates, not by real answers.
@@ -43,15 +43,16 @@ An eligible form that Medisy cannot fill is an empty `{}` shell so the convert p
 See the generated table in §6 for the field-by-field source. Rules that need explaining:
 
 - **Tekanan Darah / Gula Darah (adult):** BP and GDS/GDP from `anamnesis.vitals` first, the screening row as fallback. "History of hypertension/diabetes" comes from the hipertensi / diabetes questionnaire (R-UNIFORM applies).
-- **PUMA:** questions from `screenings[puma]`; smoking pack-years bucketed to ASIK's options; R-ZERO.
+- **PUMA:** questions from `screenings[puma]`; smoking pack-years bucketed to ASIK's options; R-ZERO, with one addition (sign-off 2026-10-05): an all-zero row whose `updated_at` is later than its `performed_at` (saved again after it was created) counts as answered and becomes "Tidak". On UAT that is 9 of 1,727 rows; the other all-zero rows stay blank.
 - **Telinga:** the hearing phase of the PTM program (`programs.ptm.fase_pendengaran`).
 - **Mata** (`screenings[ptm_mata]`, the "Pemeriksaan Fisik" eye card): visus is entered as a Snellen fraction (`visus_<side>` / `visus_<side>_denominator`). The ratio decides: 6/12 (0.5) or better in every measured eye = Normal; worse in any eye = Curiga. Pupil: only Medisy's "Suspek Katarak" (`OV000393`) becomes "Curiga Katarak"; any other pupil entry or none stays blank (R-DIAG: no "Normal" is invented).
 - **PTM risk-factor questionnaire** (`programs.ptm_questionnaire`; the "Faktor Risiko Penyakit Tidak Menular" modal; SATUSEHAT Q0013 / Q0019 / Q0020, matched by answer CODE, the text is only a fallback): smoking status (1.4 Smoker → Ya, Non-smoker → Tidak; an ex-smoker counts as a non-smoker, as in the ePuskesmas converter; with no status, "never smoked" 1.1 = 0 → Tidak), exposure to smoke (1.5), lung-cancer questionnaire (Q0019 → the screening form, the table `screenings[kanker_paru]` wins on conflict, and 4 questions of "Penapisan Risiko Kanker Paru"), colorectal family history (Q0020 1.1), physical activity (1.10, **inherited rule**: insufficient → no moderate / vigorous exercise, sufficient → moderate "Ya", exactly what the ePuskesmas converter did with the same PTM question).
-- **TB:** only the negative answers are emitted ("Tidak" cough, "Tidak Ada" contact). Medisy has no cough duration, so a positive cough cannot be mapped to ASIK's duration options.
+- **TB:** cough "Tidak" → "Tidak batuk"; cough "Ya" → "Ya, lebih dari 2 minggu" (clinical sign-off 2026-10-05: Medisy has no duration column and a "Ya" means more than 2 weeks). Contact: only "Tidak Ada" is placed. The adult X-Ray form also takes BB turun, demam, berkeringat and the radiograph question.
 - **HIV / Sifilis / Hepatitis:** lab result first (`ANTI HIV`, `sifilis`, `HBsAg`, `Anti HCV`), else the ICD code → "Reaktif" (R-DIAG).
 - **Lab forms (≥ 40):** lipid, kidney (creatinine, urea, eGFR), microalbuminuria, SGOT + platelets; Hb only for the female catin form.
 - **Kanker paru:** `screenings[kanker_paru]` answers; option q5 only where the meaning is identical.
 - **EKG:** `risiko_jantung.kardiovaskular_ekg`.
+- **SKILAS malnutrition:** SKILAS's own answers first; Medisy's nutrition screening (`screenings[gizi]`) fills the two matching questions only where unambiguous (sign-off 2026-10-05): weight loss none → Tidak, "not sure (clothes loose)" / 6 kg or more → Ya, "1-5 kg" blank (straddles the 3 kg line; Medisy asks about 6 months, SKILAS about 3); reduced intake from lack of appetite Ya → Ya, Tidak stays blank (SKILAS also asks about difficulty eating).
 - **SKILAS / Barthel / Mini-Cog / SPPB / MNA-SF:** each from its own Medisy table; Barthel maps the item score to the ASIK option; SPPB and MNA-SF map option text through explicit tables.
 - **Tetanus:** only T2 or higher → "minimal dua kali". Below T2 stays blank (ASIK has no "belum" option).
 - **Dental:** `gigi_dewasa` question 3 / 4 → caries / missing-tooth. Periodontal stays blank.
@@ -68,20 +69,22 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 | Penapisan Risiko Kanker Paru: 15-year history, symptoms | asked differently in Medisy |
 | Inspekulo/IVA, Payudara, HPV-DNA, kanker usus, AD-8, skin diseases | no Medisy source (IVA/payudara only if data appears) |
 | KPSP, KMPE, GPPH, M-CHAT, imunisasi balita, talasemia, birth weight | no Medisy source |
-| SKILAS malnutrisi vs Medisy `gizi` screening | different instrument (MST-like: `penurunan_bb` kg buckets, `asupan_makanan`, `total_skor`). See Q5 |
+| SKILAS malnutrisi LiLA question | no Medisy source (the `gizi` screening covers the other two, see §3) |
 
 `kk_ckg_log` is ignored (decision D3). Visit-level data with no ASIK target (spo2, heart rate, temperature, prescriptions, procedures, religion, occupation, education, blood type) is unused.
 
-## 5. Open questions for clinical sign-off
+## 5. Clinical sign-off questions
 
 1. ~~Smoking status~~ **Resolved 2026-10-05** — the "Faktor Risiko PTM" modal (questionnaire Q0013) holds it; mapped.
 2. ~~Eyes~~ **Resolved 2026-10-05** — the eye card stores Snellen fractions and a coded pupil; mapped (ratio rule + suspected cataract only). Still to confirm: nothing in UAT proves the numerator/denominator order of real entries (the 4 UAT rows look like test data); the rule assumes a correct `6 / 12` entry.
-3. **TB "Ya" cough:** accept a positive cough with no duration? (ASIK asks duration options; a guess would be fabricated.)
-4. **PUMA evidence rule (R-ZERO):** is "a 0 counts as Tidak only if the row has a positive answer" acceptable, or should an all-zero row be sent as all "Tidak"?
-5. **Medisy `gizi` screening → SKILAS malnutrisi:** `penurunan_bb` of "6-10 / 11-15 / >15 kg" clearly means "> 3 kg" (Ya), "tidak" means No, but "1-5 kg" straddles the 3 kg line; `asupan_makanan` is close to, not identical to, "hilang nafsu makan". Map the unambiguous cases only, or leave blank?
-6. **Dashboard "tertatalaksana" flags (GD Puasa / Hipertensi dashboards)** — ePuskesmas has two explicit PTM checkboxes (Terapi Farmakologi = "Diberikan Obat", Edukasi = "Ya"); Medisy exposes neither. `medisy_accessors.tertatalaksana` uses PROXIES: drug = an antihypertensive / antidiabetic / lipid-lowering drug was prescribed at the visit; education = the physical exam has an education note. Accept, or leave the flags False for Medisy until Medisy exposes the real fields?
-7. **Newborn registry (bayi)** — Medisy's PJB conclusion options are Lolos / Gagal; "Gagal" is treated as a positive screen. The right-hand saturation is taken from Medisy's single `saturasi_tangan`. Ikterus is read from the child (MTBM) rows whose type mentions ikterus (no questionnaire to derive from, so no "Hitung"); Rujuk Eksternal is the facility name of an EXTERNAL referral decided at the visit (`visit.referral`, added to the API on 2026-10-05 from `kk_kunjungan.rujuk` / `tipe_rujuk` / `id_rujuk_external`); internal referrals are not shown. Confirm all three.
-8. **Shared / placeholder NIK** (e.g. "00" on 534 registrations; 149 of 467 CKG visits share a NIK): open decision in `MEDISY_MIGRATION.md` (options a/b/c).
+3. ~~TB "Ya" cough~~ **Resolved 2026-10-05** — "Ya" means more than 2 weeks → "Ya, lebih dari 2 minggu".
+4. ~~PUMA evidence rule~~ **Resolved 2026-10-05** — keep R-ZERO, plus: an all-zero row saved again after creation counts as answered.
+5. ~~Medisy `gizi` screening → SKILAS malnutrisi~~ **Resolved 2026-10-05** — unambiguous answers only (see §3).
+6. ~~Dashboard "tertatalaksana" flags~~ **Resolved 2026-10-05** — still PROXIES, with the education part pinned to Medisy's education form (`edukasi_term` select or `edukasi` text, `tambah_tindakan_tpl.php`): drug = an antihypertensive / antidiabetic / lipid-lowering drug was prescribed at the visit; education = that form is filled.
+7. ~~Newborn registry (bayi)~~ **Resolved 2026-10-05** — PJB "Gagal" is a positive screen and `saturasi_tangan` is taken as the right hand; ikterus from the child (MTBM) rows; the external-referral destination from `visit.referral`.
+8. ~~Shared / placeholder NIK~~ **Resolved** — decision D13 in `MEDISY_MIGRATION.md`: the API flags `shared`, ckg-ai skips those visits.
+
+Still open: the numerator/denominator order of real eye entries (Q2), and the questions beyond the converter (unmapped ASIK forms with no Medisy table found yet) which the loop agent hunts.
 
 ## 6. Field-by-field source (generated)
 
@@ -109,8 +112,8 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 
 | ASIK field | Medisy source |
 |---|---|
-| Apakah berat badan Anda berkurang >3 kg dalam 3 bulan terakhir atau pakaian menjadi lebih  | `screenings[skilas].question3a` |
-| Apakah Anda hilang nafsu makan Atau mengalami kesulitan makan (misal batuk atau tersedak s | `screenings[skilas].question3b` |
+| Apakah berat badan Anda berkurang >3 kg dalam 3 bulan terakhir atau pakaian menjadi lebih  | `screenings[skilas].question3a / screenings[gizi].penurunan_bb (unambiguous answers only)` |
+| Apakah Anda hilang nafsu makan Atau mengalami kesulitan makan (misal batuk atau tersedak s | `screenings[skilas].question3b / screenings[gizi].asupan_makanan (Ya only)` |
 | Apakah ukuran lingkar lengan atas (LiLA) <21 cm? | `screenings[skilas].question3c` |
 
 ### SKILAS Mobilisasi - Lansia
@@ -294,13 +297,17 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 
 | ASIK field | Medisy source |
 |---|---|
-| Apakah Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh? | `screenings[tbc].batuk (only 'Tidak': Medisy has no duration)` |
+| Apakah Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh? | `screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)` |
 
 ### Faktor Risiko dan Skrining X-Ray TB (Dewasa & Lansia)
 
 | ASIK field | Medisy source |
 |---|---|
-| Apakah Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh? | `screenings[tbc].batuk (only 'Tidak': Medisy has no duration)` |
+| Apakah Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh? | `screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)` |
+| Apakah berat badan Anda turun tanpa penyebab jelas/ BB tidak naik/ nafsu makan turun? | `screenings[tbc].bb_turun` |
+| Apakah Anda mengalami demam hilang timbul tanpa sebab yang jelas? | `screenings[tbc].demam` |
+| Apakah Anda mengalami berkeringat di malam hari tanpa kegiatan? | `screenings[tbc].berkeringat_malam` |
+| Apakah dilakukan pemeriksaan radiografi toraks? | `screenings[tbc].pemeriksaan_foto_toraks / abnormalitas_tbc` |
 
 ### Pemeriksaan Tuberkulosis (Dewasa & Lansia)
 

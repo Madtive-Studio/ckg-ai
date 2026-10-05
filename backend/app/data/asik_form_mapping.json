@@ -1190,7 +1190,7 @@
             "Tidak batuk"
           ],
           "live_name": "LPM000133|FRM000182|PPM00000694|text",
-          "epus_source": "screenings[tbc].batuk (only 'Tidak': Medisy has no duration)",
+          "epus_source": "screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)",
           "covered_by_converter": true
         },
         {
@@ -2716,7 +2716,7 @@
             "Tidak batuk"
           ],
           "live_name": "LPM000131|FRM000180|PPM00000477|text",
-          "epus_source": "screenings[tbc].batuk (only 'Tidak': Medisy has no duration)",
+          "epus_source": "screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)",
           "covered_by_converter": true
         }
       ],
@@ -12458,7 +12458,7 @@
             "Tidak"
           ],
           "live_name": "LPM000025|FRM000034|PPM00000126|text",
-          "epus_source": "screenings[skilas].question3a",
+          "epus_source": "screenings[skilas].question3a / screenings[gizi].penurunan_bb (unambiguous answers only)",
           "covered_by_converter": true
         },
         {
@@ -12483,7 +12483,7 @@
             "Tidak"
           ],
           "live_name": "LPM000025|FRM000034|PPM00000128|text",
-          "epus_source": "screenings[skilas].question3b",
+          "epus_source": "screenings[skilas].question3b / screenings[gizi].asupan_makanan (Ya only)",
           "covered_by_converter": true
         },
         {
@@ -16898,7 +16898,7 @@
       ]
     },
     {
-      "path": "screenings[skilas].question3a",
+      "path": "screenings[skilas].question3a / screenings[gizi].penurunan_bb (unambiguous answers only)",
       "destinations": [
         {
           "form_name": "SKILAS Malnutrisi",
@@ -16908,7 +16908,7 @@
       ]
     },
     {
-      "path": "screenings[skilas].question3b",
+      "path": "screenings[skilas].question3b / screenings[gizi].asupan_makanan (Ya only)",
       "destinations": [
         {
           "form_name": "SKILAS Malnutrisi",
@@ -16948,7 +16948,7 @@
       ]
     },
     {
-      "path": "screenings[tbc].batuk (only 'Tidak': Medisy has no duration)",
+      "path": "screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)",
       "destinations": [
         {
           "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak Sekolah, Dewasa & Lansia)",

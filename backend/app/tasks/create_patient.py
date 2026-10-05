@@ -16,7 +16,6 @@ reuses the ASIK subprocess machinery from `app.tasks.sync` / `app.tasks.scrape`
 import json
 import logging
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -43,7 +42,14 @@ from app.models.patient import MatchStatus, Patient
 from app.models.puskesmas import Puskesmas
 from app.models.scrape_job import ScrapeKind, TriggererType
 from app.models.sync_job import SyncJob, SyncStatus
-from app.services.epus_to_asik import _disabilitas, _status_perkawinan, epus_to_asik
+from app.services.clinic_source import (
+    clinic_address,
+    clinic_is_disabled,
+    clinic_marital_status,
+    clinic_name,
+    clinic_phone,
+    clinic_to_asik,
+)
 from app.tasks.scrape import (
     LOG_RING_MAX,
     LOG_TTL_SECONDS,
@@ -169,7 +175,7 @@ def _whatsapp_from_epus(epus: dict) -> tuple[str, bool]:
     Returns (whatsapp, used_default) — used_default=True is worth logging to
     asik_default_fills so a fabricated number is never mistaken for real data.
     """
-    raw = ((epus or {}).get("data_pasien") or {}).get("No Telp / HP")
+    raw = clinic_phone(epus)
     digits = "".join(ch for ch in str(raw or "") if ch.isdigit())
     if digits.startswith("0"):
         digits = digits[1:]
@@ -195,15 +201,9 @@ def _build_step2(patient: Patient, epus: dict, puskesmas: Puskesmas) -> dict[str
     alamat_cfg = puskesmas.asik_default_alamat
     if not alamat_cfg:
         return None
-    pasien = ((epus or {}).get("data_pasien")) or {}
-    status = _status_perkawinan(pasien.get("Status Perkawinan")) or _DEFAULT_STATUS_PERNIKAHAN
-    disabilitas = (
-        "Memiliki disablilitas"
-        if _disabilitas(epus or {}) == "Penyandang disabilitas"
-        else _DEFAULT_DISABILITAS
-    )
-    raw_alamat = pasien.get("Alamat")
-    detail_alamat = re.sub(r"\s+", " ", str(raw_alamat)).strip() if raw_alamat else ""
+    status = clinic_marital_status(epus) or _DEFAULT_STATUS_PERNIKAHAN
+    disabilitas = "Memiliki disablilitas" if clinic_is_disabled(epus) else _DEFAULT_DISABILITAS
+    detail_alamat = clinic_address(epus) or ""
     return {
         "status_pernikahan": status,
         "disabilitas": disabilitas,
@@ -241,7 +241,7 @@ def _build_register_config(
     path; the dry-run probe stops before step 2 and omits it.
     """
     birth_date, gender = _derive_from_nik(patient.nik)
-    nama_raw = ((epus or {}).get("data_pasien") or {}).get("Nama Pasien") or patient.nama
+    nama_raw = clinic_name(epus) or patient.nama
     whatsapp, _used_default = _whatsapp_from_epus(epus)
     register: dict[str, Any] = {
         "nik": patient.nik,
@@ -702,7 +702,7 @@ def create_one_patient(
         f"[create] registered (ticket={out.get('ticket')} hadir={out.get('hadir')}) "
         f"→ filling exam via sync",
     )
-    merged = epus_to_asik(epus)
+    merged = clinic_to_asik(epus)
     forms_total = sum(
         1 for v in (merged or {}).values()
         if isinstance(v, dict) and any(x is not None and x != "" for x in v.values())

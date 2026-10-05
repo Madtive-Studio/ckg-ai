@@ -17,7 +17,7 @@ from app.crud import patient as crud
 from app.models.patient import MatchStatus, Patient
 from app.models.scrape_job import ScrapeKind
 from app.schemas.patient import AsikPreviewOut, PatientDecryptedOut, PatientOut
-from app.services.epus_to_asik import epus_to_asik
+from app.services.clinic_source import clinic_to_asik
 
 router = APIRouter(prefix="/patients", tags=["patients"])
 
@@ -217,7 +217,7 @@ def asik_preview(
         )
     enforce_decrypt_rate_limit(principal.id, id)
     epus = crud.decrypt_field(obj, ScrapeKind.EPUS)
-    return AsikPreviewOut(id=obj.id, forms=epus_to_asik(epus or {}))
+    return AsikPreviewOut(id=obj.id, forms=clinic_to_asik(epus or {}))
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

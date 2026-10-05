@@ -36,7 +36,7 @@ from app.models.puskesmas import Puskesmas
 from app.models.scrape_job import ScrapeKind, TriggererType
 from app.models.sync_job import SyncJob, SyncStatus
 from app.services.asik_defaults import build_default_values_map
-from app.services.epus_to_asik import epus_to_asik
+from app.services.clinic_source import clinic_to_asik
 from app.tasks.merge import _values_equal
 from app.tasks.scrape import (
     STDOUT_DRAIN_JOIN_TIMEOUT_SECONDS,
@@ -719,7 +719,7 @@ def run_sync(self, job_id: str, headless: bool = True) -> None:
                 return
             # Pass the asik-preview output through as-is; the runner's
             # `_build_section_index` accepts both shapes natively.
-            merged = epus_to_asik(epus)
+            merged = clinic_to_asik(epus)
             forms_total = sum(
                 1 for v in (merged or {}).values()
                 if isinstance(v, dict) and any(x is not None and x != "" for x in v.values())

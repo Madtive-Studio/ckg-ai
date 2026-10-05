@@ -42,14 +42,7 @@ from app.models.patient import Patient
 log = logging.getLogger("backfill_epus_tandai_ckg")
 
 
-def _extract_tandai_ckg(blob: object) -> bool | None:
-    """ckg.sudah_ckg from a decrypted EPUS blob. None when no ckg key."""
-    if not isinstance(blob, dict):
-        return None
-    ckg = blob.get("ckg")
-    if not isinstance(ckg, dict) or "sudah_ckg" not in ckg:
-        return None
-    return bool(ckg.get("sudah_ckg"))
+from app.crud.patient import _extract_tandai_ckg  # noqa: E402  (one rule for both blob shapes: Medisy ckg.is_ckg / EPUS ckg.sudah_ckg)
 
 
 def _row_ids(db: Session, only: uuid.UUID | None, limit: int) -> list[uuid.UUID]:

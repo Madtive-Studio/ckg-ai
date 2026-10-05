@@ -37,7 +37,7 @@ from sqlalchemy.orm import Session, load_only
 from app.core.security import decrypt_json
 from app.database import SessionLocal
 from app.models.patient import Patient
-from app.services.birthdate import birth_date_from_asik, birth_date_from_epus
+from app.services.birthdate import birth_date_from_asik, birth_date_from_epus, birth_date_from_medisy
 
 log = logging.getLogger("backfill_patient_birth_date")
 
@@ -93,7 +93,7 @@ def main() -> None:
                 except Exception:
                     totals["errors"] += 1
                     continue
-                bd = birth_date_from_epus(epus)
+                bd = birth_date_from_epus(epus) or birth_date_from_medisy(epus)   # clinic source: legacy EPUS blob or Medisy bundle
                 source = "from_epus"
                 if bd is None:
                     bd = birth_date_from_asik(asik)

@@ -1,6 +1,7 @@
 # Scrapers + encrypted patient store
 
-The `asik/` and `epus/` scrapers can be invoked two ways:
+The `asik/` scrapers (CKG website) can be invoked two ways. The clinic-record source is **not** scraped any more: it is read from
+Medisy's JSON API (`backend/app/integrations/medisy_client.py`, `backend/app/tasks/medisy_scrape.py`), so there is no `epus/` scraper.
 
 1. **From the terminal**, as before — see `SCRAPE.md`.
 2. **Via the backend API**, dispatched to a Celery worker. The worker writes the
@@ -77,7 +78,7 @@ curl -X POST http://localhost:8000/scrape/jobs/$JOB_ID/cancel \
 ```
 
 A puskesmas can have at most **one active scrape job at a time** across both
-`asik` and `epus`. A second start while one is running returns `409`.
+`asik` and the clinic source (`epus`, now served by Medisy). A second start while one is running returns `409`.
 
 ## 4. Decrypt patient data via API
 
@@ -152,8 +153,7 @@ to `{"email": "...", "password": "..."}`.
   and screenshots. Concurrent scrapes for different puskesmas don't collide.
 - Path overrides into the scraper are passed via env vars
   (`SCRAPER_CONFIG`, `SCRAPER_OUTPUT_DIR`, `SCRAPER_SESSION_DIR`,
-  `SCRAPER_SCREENSHOT_DIR`) — see `asik/helpers/constants.py` and
-  `epus/helpers/constants.py`.
+  `SCRAPER_SCREENSHOT_DIR`) — see `asik/helpers/constants.py`.
 - The subprocess's `stdout` is streamed line-by-line into a Redis ringbuffer
   (`scrape:job:{id}:log`, last 500 lines, 24h TTL) and a pubsub channel
   (`scrape:job:{id}:stream`), exposed via `GET /scrape/jobs/{id}/log` and

@@ -12,9 +12,15 @@ Needs a valid saved ASIK session for the puskesmas (``scripts/seed_asik_session.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import uuid
 from datetime import date
+
+
+def _tail(error: object, n: int = 900) -> str:
+    """The end of a failure message (where the robot's last log lines are), with long digit strings (NIKs) masked."""
+    return re.sub(r"\d{9,}", "<num>", str(error or "")[-n:]).replace("\n", " | ")
 
 
 def main() -> int:
@@ -72,7 +78,7 @@ def main() -> int:
             out = cp._run_register(cfg=cfg, session_dir=session_dir, timeout=timeout)
             alamat = step2["alamat"]
             print(f"{masked}: outcome={out.get('outcome')} | domicile typed: {alamat['provinsi']} / {alamat['kota']} / "
-                  f"{alamat['kecamatan']} / {alamat['kelurahan']} | error={str(out.get('error') or '')[:160]}")
+                  f"{alamat['kecamatan']} / {alamat['kelurahan']} | error={_tail(out.get('error'))}")
     return 0
 
 

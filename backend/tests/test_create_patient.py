@@ -187,3 +187,20 @@ def test_place_name_variants_are_whole_name_spellings_only():
     assert _name_variants("Kabupaten Sukabumi") == ["Kabupaten Sukabumi", "KAB. Sukabumi"]
     assert _name_variants("KOTA BOGOR") == ["KOTA BOGOR"]
     assert _name_variants("Jawa  Barat") == ["Jawa Barat"]
+
+
+def test_closest_option_accepts_only_a_very_close_unambiguous_spelling():
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scrapers" / "asik_sync"))
+    from register import _closest_option, _norm_place
+
+    assert _norm_place("Pelabuhan-ratu") == _norm_place("pelabuhan ratu") == "PELABUHANRATU"
+    kec = ["CIEMAS", "CIKAKAK", "PALABUHANRATU", "SIMPENAN", "CISOLOK"]
+    assert _closest_option("Pelabuhanratu", kec) == "PALABUHANRATU"                       # one letter off, unique
+    assert _closest_option("Simpenan", kec) == "SIMPENAN"
+    assert _closest_option("Cibadak", kec) is None                                        # nothing close: refuse, never guess
+    assert _closest_option("Citarik", ["CITARIK", "CITARIKA"]) == "CITARIK"               # an identical spelling wins
+    assert _closest_option("Citarik", ["CITARIKI", "CITARIKU"]) is None                   # two equally close options: ambiguous
+    assert _closest_option("Pelabuhanratu", []) is None

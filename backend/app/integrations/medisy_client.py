@@ -34,6 +34,8 @@ from typing import Any
 
 import httpx
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 API_PATH = "/medisy_api/ckg"
@@ -43,6 +45,7 @@ _MAX_PAGES = 500         # E2 safety valve: 50k visits in one day is not a real 
 
 # Same shape the puskesmas form enforces (schemas/puskesmas.py ``BaseUrl``): dotted labels and an alphabetic TLD,
 # so a bare host such as "localhost" or an IP literal can never be used as the target.
+_LOCAL_DEV_RE = re.compile(r"^(?:localhost|127\.0\.0\.1):[0-9]{2,5}$")
 _HOST_RE = re.compile(r"^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}$")
 _MAX_RETRY_AFTER = 30.0  # never sleep longer than this because a server asked us to
 _RETRY_STATUSES = frozenset({502, 503, 504})
@@ -129,7 +132,10 @@ class MedisyClient:
     ) -> None:
         # ``host`` is a bare domain (validated when the puskesmas is saved); re-check here so a
         # malformed value can never turn into a request to another place.
-        if not _HOST_RE.match(host or ""):
+        local_dev = (
+            settings.MEDISY_ALLOW_INSECURE_LOCALHOST and settings.APP_ENV == "local" and bool(_LOCAL_DEV_RE.match(host or ""))
+        )
+        if not local_dev and not _HOST_RE.match(host or ""):
             raise ValueError("host must be a bare domain name such as 'clinic.medisy.id'")
         if not token or any(c.isspace() for c in token):
             raise ValueError("token must be a non-empty string without whitespace")
@@ -141,7 +147,7 @@ class MedisyClient:
         self._concurrency = concurrency
         self._sleep = sleep
         self._http = httpx.Client(
-            base_url=f"https://{host}{API_PATH}",
+            base_url=f"{'http' if local_dev else 'https'}://{host}{API_PATH}",
             headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
             timeout=timeout or httpx.Timeout(60.0, connect=10.0),
             follow_redirects=False,

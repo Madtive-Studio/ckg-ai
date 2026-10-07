@@ -439,3 +439,36 @@ def test_context_manager_closes_the_client():
         c.ping()
     with pytest.raises(RuntimeError):
         c.ping()                       # httpx refuses a closed client
+
+
+# ── local-testing escape hatch: plain http to localhost, guarded three ways ──
+
+
+def _client_for(host, monkeypatch, *, flag, env="local"):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "MEDISY_ALLOW_INSECURE_LOCALHOST", flag)
+    monkeypatch.setattr(settings, "APP_ENV", env)
+    return MedisyClient(host, "t" * 40)
+
+
+def test_localhost_with_a_port_uses_http_only_when_the_flag_is_on_and_env_is_local(monkeypatch):
+    with _client_for("localhost:62082", monkeypatch, flag=True) as c:
+        assert str(c._http.base_url).startswith("http://localhost:62082/")
+    with _client_for("127.0.0.1:8081", monkeypatch, flag=True) as c:
+        assert str(c._http.base_url).startswith("http://127.0.0.1:8081/")
+
+
+def test_localhost_is_refused_by_default_and_in_production(monkeypatch):
+    with pytest.raises(ValueError):
+        _client_for("localhost:62082", monkeypatch, flag=False)
+    with pytest.raises(ValueError):
+        _client_for("localhost:62082", monkeypatch, flag=True, env="production")
+
+
+def test_the_flag_never_opens_any_other_host_to_http(monkeypatch):
+    for host in ("clinic.example.id:8080", "localhost", "10.0.0.5:8080", "localhost:80/x"):
+        with pytest.raises(ValueError):
+            _client_for(host, monkeypatch, flag=True)
+    with _client_for("clinic.medisy.id", monkeypatch, flag=True) as c:      # a normal domain stays https
+        assert str(c._http.base_url).startswith("https://clinic.medisy.id/")

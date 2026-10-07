@@ -241,8 +241,7 @@ def _fill_field(page: Page, locator, value) -> None:
     loc = locator.first
     loc.scroll_into_view_if_needed(timeout=3000)
     loc.click(timeout=8000)
-    page.keyboard.press("Control+A")
-    page.keyboard.press("Delete")
+    loc.fill("")  # clears on every OS (Control+A only moves the caret to the line start on macOS, leaving the old text)
     page.keyboard.type(str(value), delay=20)
     page.wait_for_timeout(150)
 
@@ -997,8 +996,9 @@ def _visible_options(page: Page, search_placeholder: str, limit: int = 80) -> li
                 const skip = /^(memuat|tidak ada|data tidak|daftar |pilih lokasi|cari )/i;
                 const rows = [];
                 for (const el of document.querySelectorAll('body *')) {
-                    if (el.children.length || el.offsetParent === null) continue;
-                    const t = (el.innerText || '').trim();
+                    if (el.offsetParent === null) continue;
+                    // the element's OWN text (a row may also hold an icon or badge child, so it is not always a leaf)
+                    const t = Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').replace(/\s+/g, ' ').trim();
                     if (!t || t.length >= 60 || skip.test(t)) continue;
                     const r = el.getBoundingClientRect();
                     if (r.width > 0 && r.height > 0 && r.top >= box.bottom - 2 && r.left >= box.left - 40 && r.right <= box.right + 40)
@@ -1069,10 +1069,10 @@ def _pick_location_level(page: Page, search_placeholder: str, name: str, *, allo
     # (ASIK follows Dukcapil spelling, the clinic may not). Anything ambiguous stays an error.
     if allow_close:
         # ASIK searches server-side, so a differently spelled name finds nothing; search with short fragments instead
-        # (the start and the end of the name), gather the options that appear, then take the single closest one.
+        # (the first letters, which a prefix search lists, and the end of the name), gather the options that appear, then take the single closest one.
         compact = _norm_place(name)
         options: list[str] = []
-        for fragment in dict.fromkeys(q for q in (compact[:3], compact[-6:], compact[-4:]) if len(q) >= 3):
+        for fragment in dict.fromkeys(q for q in (compact[:1], compact[:2], compact[:3], compact[-6:], compact[-4:]) if q):
             _fill_field(page, search, fragment)
             page.wait_for_timeout(2000)
             options += _visible_options(page, search_placeholder)

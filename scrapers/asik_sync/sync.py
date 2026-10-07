@@ -189,9 +189,14 @@ def _fill_search_input(page: Page, nik: str) -> None:
         page.evaluate(
             f"() => {{ const i = document.querySelector('{sel}'); if (i) i.focus(); }}"
         )
-    # Clear via real selectAll + Delete (preserves Vue state)
+    # Clear via select-all + Delete (preserves Vue state); Control+A only moves the caret on macOS, so Meta+A too, then fill("") as the last resort
     page.keyboard.press("Control+A")
+    page.keyboard.press("Meta+A")
     page.keyboard.press("Delete")
+    try:
+        locator.fill("")
+    except Exception:
+        pass
     page.wait_for_timeout(100)
     # Type each digit; small delay lets per-keystroke validators run
     page.keyboard.type(nik, delay=15)

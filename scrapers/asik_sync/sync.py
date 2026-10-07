@@ -56,6 +56,9 @@ from helpers import (  # noqa: E402
     SCREENSHOT_DIR,
     SESSION_DIR,
     APIInterceptor,
+    install_decoded_list_hook,
+    read_decoded_list,
+    reset_decoded_list,
     launch_persistent_context,
     restore_saved_auth_state,
     save_auth_state,
@@ -273,6 +276,10 @@ def _read_active_tab_count(page: Page) -> int | None:
 # the right one), which is exactly the per-tab signal this loop needs.
 # ---------------------------------------------------------------------------
 _SEARCH_ENDPOINT_NEEDLE = "specific-search"
+# Current ASIK answers the NIK search through the same encoded list call as the page list (no `specific-search` any more);
+# the rows come from what the page itself decoded (helpers.browser observer). The NIK search covers a RECENT window only
+# (live 2026-10-07: a 2026-09 person is found by NIK, a 2025-07 one is not), which the ASIK-year gate below already expects.
+_LIST_ENDPOINT_NEEDLE = "list-kunjungan-umum"
 
 
 def _extract_search_rows(body) -> list[dict] | None:
@@ -342,16 +349,38 @@ def _wait_search_rows(
     a check on THIS search rather than on a stale response from a previous tab.
     """
     elapsed = 0
+    answered_at: int | None = None
     while True:
         found: list[dict] | None = None
+        answered = False
         for entry in interceptor.all_responses[since:]:
-            if _SEARCH_ENDPOINT_NEEDLE not in (entry.get("url") or ""):
+            url = entry.get("url") or ""
+            if _LIST_ENDPOINT_NEEDLE in url and entry.get("status") == 200:
+                answered = True
+            if _SEARCH_ENDPOINT_NEEDLE not in url:
                 continue
             rows = _extract_search_rows(entry.get("body"))
             if rows is not None:
                 found = rows  # keep scanning — we want the LAST one
         if found is not None:
             return found
+        # Encoded list answer: the rows are what the page decoded for THIS search (the caller resets the capture first).
+        decoded = read_decoded_list(page)
+        if decoded:
+            return [
+                {
+                    "nik": str(r.get("patient_nik")).strip() if r.get("patient_nik") is not None else "",
+                    "screening_date": str(r["screening_date"]).strip() if r.get("screening_date") else None,
+                    "name": str(r.get("patient_full_name") or "").strip(),
+                }
+                for r in decoded
+            ]
+        if answered and answered_at is None:
+            answered_at = elapsed
+        # The call was answered and, after a grace period for the page to decode it, produced no patient rows: an empty
+        # result. No answer at all stays None ("cannot verify") — the caller skips the tab, never guesses.
+        if answered_at is not None and elapsed - answered_at >= 1500:
+            return []
         if elapsed >= timeout_ms:
             return None
         page.wait_for_timeout(100)
@@ -1924,6 +1953,7 @@ def run(args) -> dict:
 
         interceptor = APIInterceptor(verbose=False)
         context.on("response", interceptor.on_response)
+        install_decoded_list_hook(context)
 
         try:
             if shared_session:
@@ -1987,6 +2017,7 @@ def run(args) -> dict:
 
             _select_nik_filter(page)
             _mark = len(interceptor.all_responses)
+            reset_decoded_list(page)
             _fill_search_input(page, nik)
             page.wait_for_timeout(2500)
             _wait_search_rows(page, interceptor, _mark)
@@ -2029,6 +2060,7 @@ def run(args) -> dict:
                 # and re-fire the search.
                 _select_nik_filter(page)
                 mark = len(interceptor.all_responses)
+                reset_decoded_list(page)
                 _fill_search_input(page, nik)
                 page.wait_for_timeout(2500)
                 search_rows = _wait_search_rows(page, interceptor, mark)

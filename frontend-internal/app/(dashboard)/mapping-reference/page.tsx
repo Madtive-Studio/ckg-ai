@@ -118,7 +118,7 @@ export default function MappingReferencePage() {
               <Label htmlFor="q">Cari</Label>
               <Input
                 id="q"
-                placeholder="mis. Sistolik, Tekanan Darah, FRM000180, PPM00000203, PTM > Periksa Fisik…"
+                placeholder="mis. Sistolik, Tekanan Darah, FRM000180, PPM00000203, anamnesis.vitals.systole…"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />

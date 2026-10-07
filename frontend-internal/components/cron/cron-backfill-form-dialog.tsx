@@ -231,8 +231,8 @@ export function CronBackfillFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="both">Both (EPUS + ASIK)</SelectItem>
-                <SelectItem value="epus_only">EPUS only</SelectItem>
+                <SelectItem value="both">Both (Medisy + ASIK)</SelectItem>
+                <SelectItem value="epus_only">Medisy only</SelectItem>
                 <SelectItem value="asik_only">ASIK only</SelectItem>
                 <SelectItem value="none">None (no rescrape — sync only)</SelectItem>
               </SelectContent>

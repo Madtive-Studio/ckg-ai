@@ -199,7 +199,7 @@ export function PatientList() {
             <SelectContent>
               <SelectItem value="all">Semua status</SelectItem>
               <SelectItem value="asik_only">Hanya ASIK</SelectItem>
-              <SelectItem value="epus_only">Hanya EPUS</SelectItem>
+              <SelectItem value="epus_only">Hanya Medisy</SelectItem>
               <SelectItem value="matched">Cocok</SelectItem>
             </SelectContent>
           </Select>

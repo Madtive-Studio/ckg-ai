@@ -87,7 +87,7 @@ export default function ScrapeJobsPage() {
               <SelectItem value="all">Semua</SelectItem>
               <SelectItem value="asik">CKG Pelayanan</SelectItem>
               <SelectItem value="asik_sekolah">CKG Sekolah</SelectItem>
-              <SelectItem value="epus">ePuskesmas</SelectItem>
+              <SelectItem value="epus">Medisy</SelectItem>
             </SelectContent>
           </Select>
         </div>

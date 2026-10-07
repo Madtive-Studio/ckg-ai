@@ -25,6 +25,9 @@ from .constants import (
 )
 from .browser import (
     APIInterceptor,
+    install_decoded_list_hook,
+    read_decoded_list,
+    reset_decoded_list,
     launch_persistent_context,
     restore_saved_auth_state,
     save_auth_state,
@@ -45,7 +48,7 @@ __all__ = [
     "EXPECTED_COLUMNS", "TARGET_TABS", "TAB_OPTIONS",
     "MONTH_ABBR_TO_NUM", "MONTH_NUM_TO_ABBR", "load_config",
     # browser
-    "APIInterceptor", "launch_persistent_context",
+    "APIInterceptor", "install_decoded_list_hook", "read_decoded_list", "reset_decoded_list", "launch_persistent_context",
     "restore_saved_auth_state", "save_auth_state",
     # auth
     "login", "navigate_to_pelayanan", "close_popups", "verify_session",

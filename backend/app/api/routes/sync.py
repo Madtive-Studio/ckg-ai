@@ -19,10 +19,12 @@ from app.api.pagination import Page, PageParams, page_params, paginate
 from app.celery_app import celery_app
 from app.config import settings
 from app.core.rate_limit import redis_client
+from app.crud import patient as patient_crud
 from app.crud import sync_job as crud
 from app.models.patient import MatchStatus, Patient
 from app.models.puskesmas import Puskesmas
-from app.models.scrape_job import TriggererType
+from app.models.scrape_job import ScrapeKind, TriggererType
+from app.services.clinic_source import clinic_domicile
 from app.models.sync_job import SyncJob, SyncStatus
 from app.schemas.sync_job import SyncJobLogOut, SyncJobOut, SyncStart
 from app.tasks.sync import ALLOW_EPUS_ONLY_SYNC
@@ -198,8 +200,7 @@ def start_create(
     """Register ONE `epus_only + tandai_ckg` patient into ASIK from scratch, then fill —
     the manual per-patient trigger for the ASIK create feature. Tracked on a SyncJob so it
     streams to the SAME sync-jobs log/history UI as a normal sync (celery `create.run_one`).
-    Requires the puskesmas to have a default ASIK alamat configured (the mandatory 4-level
-    domicile cascade the create flow fills)."""
+    Needs a 4-level domicile for the ASIK cascade: the patient's own (clinic record) or the puskesmas' default alamat."""
     patient = db.scalar(
         select(Patient)
         .options(load_only(
@@ -238,11 +239,11 @@ def start_create(
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, "asik_url not set for this puskesmas"
         )
-    if not default_alamat:
+    if not default_alamat and clinic_domicile(patient_crud.decrypt_field(patient, ScrapeKind.EPUS)) is None:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "puskesmas has no default ASIK alamat configured — set it in the "
-            "puskesmas form first",
+            "the patient has no complete domicile in the clinic record and the puskesmas has no default ASIK alamat "
+            "configured — set it in the puskesmas form first",
         )
 
     triggered_by_id, triggered_by_type = _trigger_kind(principal)

@@ -137,3 +137,53 @@ def test_wali_block_adult_mismatch_not_gated():
 
 def test_wali_block_missing_birth_date():
     assert _wali_block_reason("3275041505180001", None, _EXAM) is not None
+
+
+# --- the patient's own domicile (Medisy) is the source; the puskesmas default is only the fallback ---
+def _medisy(address):
+    return {"api_version": 1, "visit": {"id": 1, "date": "2026-02-03"},
+            "patient": {"name": "PASIEN FIKTIF", "address": address}}
+
+
+_FULL = {"province": " Jawa Barat ", "city": "KAB.  SUKABUMI", "district": "Pelabuhanratu", "village": "Citarik", "text": "JL X"}
+
+
+def test_clinic_domicile_needs_all_four_levels_and_collapses_whitespace():
+    from app.services.clinic_source import clinic_domicile
+
+    assert clinic_domicile(_medisy(_FULL)) == {
+        "provinsi": "Jawa Barat", "kota": "KAB. SUKABUMI", "kecamatan": "Pelabuhanratu", "kelurahan": "Citarik"}
+    assert clinic_domicile(_medisy({**_FULL, "village": None})) is None
+    assert clinic_domicile(_medisy({**_FULL, "district": "  "})) is None
+    assert clinic_domicile({"data_pasien": {"Alamat": "JL X"}}) is None                    # a legacy ePuskesmas blob has no levels
+
+
+def test_step2_prefers_the_patients_own_domicile_over_the_puskesmas_default():
+    pk = SimpleNamespace(asik_default_alamat=_ALAMAT_CFG)
+    s = _build_step2(None, _medisy(_FULL), pk)
+    assert s["alamat"]["kota"] == "KAB. SUKABUMI" and s["alamat"]["kelurahan"] == "Citarik"
+    assert s["detail_alamat"] == "JL X"
+
+
+def test_step2_works_without_any_puskesmas_default_when_the_patient_has_a_domicile():
+    s = _build_step2(None, _medisy(_FULL), SimpleNamespace(asik_default_alamat=None))
+    assert s is not None and s["alamat"]["provinsi"] == "Jawa Barat"
+
+
+def test_step2_falls_back_to_the_default_for_an_incomplete_domicile_and_skips_when_there_is_neither():
+    incomplete = _medisy({**_FULL, "village": ""})
+    assert _build_step2(None, incomplete, SimpleNamespace(asik_default_alamat=_ALAMAT_CFG))["alamat"]["kelurahan"] == "Pekayonjaya"
+    assert _build_step2(None, incomplete, SimpleNamespace(asik_default_alamat=None)) is None
+
+
+def test_place_name_variants_are_whole_name_spellings_only():
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scrapers" / "asik_sync"))
+    from register import _name_variants
+
+    assert _name_variants("KAB. SUKABUMI") == ["KAB. SUKABUMI", "KABUPATEN SUKABUMI"]
+    assert _name_variants("Kabupaten Sukabumi") == ["Kabupaten Sukabumi", "KAB. Sukabumi"]
+    assert _name_variants("KOTA BOGOR") == ["KOTA BOGOR"]
+    assert _name_variants("Jawa  Barat") == ["Jawa Barat"]

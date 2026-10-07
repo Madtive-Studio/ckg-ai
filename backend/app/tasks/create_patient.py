@@ -44,6 +44,7 @@ from app.models.scrape_job import ScrapeKind, TriggererType
 from app.models.sync_job import SyncJob, SyncStatus
 from app.services.clinic_source import (
     clinic_address,
+    clinic_domicile,
     clinic_is_disabled,
     clinic_marital_status,
     clinic_name,
@@ -187,9 +188,10 @@ def _whatsapp_from_epus(epus: dict) -> tuple[str, bool]:
 def _build_step2(patient: Patient, epus: dict, puskesmas: Puskesmas) -> dict[str, Any] | None:
     """Assemble the ASIK step-2 "Isi data pendukung" values for a live create.
 
-    Returns None when the puskesmas has NO configured default alamat — the caller
-    must then SKIP the patient, because the 4-level Alamat Domisili cascade is
-    required and we never guess a domicile.
+    The 4-level Alamat Domisili cascade comes from the PATIENT's own domicile in the clinic record (Medisy holds
+    province / city / district / village per patient); the puskesmas' configured default alamat is only the fallback for
+    a patient without a complete domicile. Returns None when neither exists — the caller must then SKIP the patient,
+    because the cascade is required and we never guess a domicile.
 
     Sourcing (FINDINGS.md §Step2): Status Pernikahan + disabilitas reuse the
     `epus_to_asik` converter (default when ePus lacks them); Pekerjaan has no
@@ -198,8 +200,9 @@ def _build_step2(patient: Patient, epus: dict, puskesmas: Puskesmas) -> dict[str
     Defaulted fields should be logged to `patient.asik_default_fills` by the live
     create task that commits the registration.
     """
+    own = clinic_domicile(epus)
     alamat_cfg = puskesmas.asik_default_alamat
-    if not alamat_cfg:
+    if own is None and not alamat_cfg:
         return None
     status = clinic_marital_status(epus) or _DEFAULT_STATUS_PERNIKAHAN
     disabilitas = "Memiliki disablilitas" if clinic_is_disabled(epus) else _DEFAULT_DISABILITAS
@@ -208,7 +211,7 @@ def _build_step2(patient: Patient, epus: dict, puskesmas: Puskesmas) -> dict[str
         "status_pernikahan": status,
         "disabilitas": disabilitas,
         "pekerjaan": _DEFAULT_PEKERJAAN,
-        "alamat": {
+        "alamat": own or {
             "provinsi": (alamat_cfg.get("provinsi") or {}).get("name"),
             "kota": (alamat_cfg.get("kota") or {}).get("name"),
             "kecamatan": (alamat_cfg.get("kecamatan") or {}).get("name"),
@@ -626,7 +629,7 @@ def create_one_patient(
 
     step2 = _build_step2(patient, epus, puskesmas)
     if step2 is None:
-        msg = "puskesmas has no ASIK default alamat configured — cannot register"
+        msg = "no domicile in the clinic record and no default ASIK alamat configured for the puskesmas — cannot register"
         _log_line(redis_client, log_key, chan, f"[create] {msg}")
         sync_job_crud.mark_failed(db, job, msg, datetime.now(UTC))
         try:
@@ -770,15 +773,8 @@ def create_batch(
     if not base_url:
         raise RuntimeError("asik_url not set for this puskesmas")
 
-    # No default alamat → the required 4-level domicile cascade can't be filled. Skip the
-    # WHOLE batch cleanly (one early return) rather than failing one job per patient.
-    if not puskesmas.asik_default_alamat:
-        log.info("create: puskesmas %s has no asik_default_alamat → batch skipped", puskesmas.name)
-        return {
-            "puskesmas_id": str(puskesmas_id), "puskesmas_name": puskesmas.name,
-            "candidates": 0, "tally": {}, "created_niks": [], "skipped_no_alamat_config": True,
-        }
-
+    # The required 4-level domicile cascade comes from each patient's own domicile (clinic record), falling back to
+    # the puskesmas' default alamat; a patient with neither is skipped below, one by one (no whole-batch skip).
     captcha_solver = _build_captcha_solver(db)
     redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
     trig_id = triggered_by_id or puskesmas_id
@@ -849,7 +845,7 @@ def create_batch(
     tally = {
         "created": 0, "filled": 0, "fill_failed": 0,
         "already_served": 0, "dukcapil_invalid": 0,
-        "cancelled": 0, "skipped_active_job": 0, "needs_wali": 0, "error": 0,
+        "cancelled": 0, "skipped_active_job": 0, "needs_wali": 0, "error": 0, "skipped_no_alamat": 0,
     }
     created_niks: list[str] = []
     total = len(patients)
@@ -866,6 +862,10 @@ def create_batch(
         if not epus:
             log.warning("create %d/%d NIK=%s: no scraped_epus_data", i, total, nik)
             tally["error"] += 1
+            continue
+        if _build_step2(patient, epus, puskesmas) is None:
+            log.info("create %d/%d NIK=%s: no domicile in the clinic record and no default alamat → skipped", i, total, nik)
+            tally["skipped_no_alamat"] += 1
             continue
 
         # Own-NIK / age gate — skip anyone needing the (unbuilt) wali flow BEFORE

@@ -56,6 +56,19 @@ def clinic_address(blob: dict | None) -> str | None:
     return re.sub(r"\s+", " ", str(raw)).strip() if raw else None
 
 
+def clinic_domicile(blob: dict | None) -> dict[str, str] | None:
+    """The patient's own four-level domicile (``provinsi`` / ``kota`` / ``kecamatan`` / ``kelurahan``) from a Medisy bundle,
+    or None unless ALL four levels are present. ePuskesmas kept only a free-text address, so a legacy blob has none."""
+    if not is_medisy_blob(blob):
+        return None
+    addr = (blob.get("patient") or {}).get("address") or {}
+    out = {
+        level: re.sub(r"\s+", " ", str(addr.get(key) or "")).strip()
+        for level, key in (("provinsi", "province"), ("kota", "city"), ("kecamatan", "district"), ("kelurahan", "village"))
+    }
+    return out if all(out.values()) else None
+
+
 def clinic_marital_status(blob: dict | None) -> str | None:
     """ASIK marital-status option (``Belum Menikah`` / ``Menikah`` / ``Cerai Hidup`` / ``Cerai Mati``), or None."""
     if is_medisy_blob(blob):

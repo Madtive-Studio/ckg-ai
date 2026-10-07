@@ -950,18 +950,50 @@ def _select_pekerjaan(page: Page, value: str) -> None:
     page.wait_for_timeout(300)
 
 
+def _name_variants(name: str) -> list[str]:
+    """The ways ASIK and the clinic record may spell the SAME place: the name as given, then the KAB. <-> KABUPATEN spelling.
+    Matching stays whole-name equality (case-insensitive) — never partial — because a wrong domicile is worse than a skip."""
+    n = " ".join(str(name).split())
+    out = [n]
+    up = n.upper()
+    if up.startswith("KAB. ") or up.startswith("KAB "):
+        out.append("KABUPATEN " + n.split(" ", 1)[1].strip())
+    elif up.startswith("KABUPATEN "):
+        out.append("KAB. " + n.split(" ", 1)[1].strip())
+    return list(dict.fromkeys(out))
+
+
+def _click_text_whole_ci(page: Page, text: str, *, prefer_last: bool = True, timeout: int = 5000) -> bool:
+    """Genuine-click the VISIBLE element whose whole text equals ``text``, ignoring case."""
+    loc = page.get_by_text(re.compile(rf"^\s*{re.escape(text)}\s*$", re.IGNORECASE))
+    n = loc.count()
+    for i in (range(n - 1, -1, -1) if prefer_last else range(n)):
+        el = loc.nth(i)
+        try:
+            if el.is_visible():
+                el.scroll_into_view_if_needed(timeout=2000)
+                el.click(timeout=timeout)
+                return True
+        except Exception:
+            continue
+    return False
+
+
 def _pick_location_level(page: Page, search_placeholder: str, name: str) -> None:
     """One level of the Alamat cascade: type the name into this level's search
-    box, wait for the async list, then click the exact-name option. prefer_last
-    picks the list row over the same-named breadcrumb of the parent selection."""
+    box, wait for the async list, then click the option whose whole text equals the name (case-insensitive; the KAB. /
+    KABUPATEN spelling is tried too). prefer_last picks the list row over the same-named breadcrumb of the parent
+    selection."""
     search = page.get_by_placeholder(search_placeholder)
     if not search.count():
         raise RuntimeError(f"location search box '{search_placeholder}' not found")
-    _fill_field(page, search, name)
-    page.wait_for_timeout(1200)  # per-level list is fetched async ("Memuat data..")
-    if not _click_text(page, name, exact=True, prefer_last=True):
-        raise RuntimeError(f"location '{name}' not found under '{search_placeholder}'")
-    page.wait_for_timeout(1000)
+    for variant in _name_variants(name):
+        _fill_field(page, search, variant)
+        page.wait_for_timeout(1200)  # per-level list is fetched async ("Memuat data..")
+        if _click_text(page, variant, exact=True, prefer_last=True) or _click_text_whole_ci(page, variant):
+            page.wait_for_timeout(1000)
+            return
+    raise RuntimeError(f"location '{name}' not found under '{search_placeholder}'")
 
 
 def _fill_alamat_cascade(page: Page, provinsi: str, kota: str, kecamatan: str, kelurahan: str) -> None:

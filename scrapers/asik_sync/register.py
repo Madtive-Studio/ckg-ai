@@ -998,7 +998,7 @@ def _visible_options(page: Page, search_placeholder: str, limit: int = 80) -> li
                 for (const el of document.querySelectorAll('body *')) {
                     if (el.offsetParent === null) continue;
                     // the element's OWN text (a row may also hold an icon or badge child, so it is not always a leaf)
-                    const t = Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').replace(/\s+/g, ' ').trim();
+                    const t = Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').replace(/\\s+/g, ' ').trim();
                     if (!t || t.length >= 60 || skip.test(t)) continue;
                     const r = el.getBoundingClientRect();
                     if (r.width > 0 && r.height > 0 && r.top >= box.bottom - 2 && r.left >= box.left - 40 && r.right <= box.right + 40)
@@ -1159,7 +1159,35 @@ def _step3_select_and_commit(page: Page, nik: str) -> str | None:
     Daftarkan click if any stage is missing, so a failure never half-commits."""
     console.print("[bold cyan]Step 10: Selanjutnya → List Data Individu[/bold cyan]")
     if not _click_selanjutnya(page):
-        raise RuntimeError("step-2 'Selanjutnya' (to step 3) not clickable")
+        # Current ASIK: the step-2 form ends in its own "Daftarkan" button that registers directly (no list/"Pilih" step).
+        final = page.get_by_role("button", name="Daftarkan", exact=True)
+        if final.count() == 1 and final.first.is_visible():
+            console.print("[bold cyan]Step 10-12: Daftarkan (COMMIT, step-2 form)[/bold cyan]")
+            final.first.scroll_into_view_if_needed(timeout=3000)
+            final.first.click(timeout=8000)
+            if not _wait_for_text(page, ["Berhasil Daftar", "No. Tiket"], timeout_ms=25000):
+                try:
+                    SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+                    page.screenshot(path=str(SCREENSHOT_DIR / "register_after_daftarkan.png"), full_page=True)
+                except Exception:
+                    pass
+                raise RuntimeError("clicked 'Daftarkan' but no 'Berhasil Daftar' confirmation appeared — check ASIK before retrying (the record may exist)")
+            ticket = _read_ticket(page)
+            console.print(f"    committed — ticket = [bold]{ticket}[/bold]")
+            _click_button_by_text(page, "Tutup", timeout=5000)  # never 'Bantu Isi Skrining Mandiri'
+            page.wait_for_timeout(1200)
+            return ticket
+        errs = page.evaluate(
+            """() => Array.from(document.querySelectorAll('*'))
+                .filter(e => e.children.length === 0 && e.offsetParent !== null && /wajib|tidak valid|harus|belum/i.test(e.textContent || ''))
+                .map(e => e.textContent.trim().slice(0, 60))"""
+        )
+        try:
+            SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(SCREENSHOT_DIR / "register_step2_selanjutnya_disabled.png"), full_page=True)
+        except Exception:
+            pass
+        raise RuntimeError(f"step-2 'Selanjutnya' (to step 3) not clickable; visible validation texts: {sorted(set(errs))[:8]}")
     if not _wait_for_text(page, ["List Data Individu"], timeout_ms=15000):
         raise RuntimeError("step-3 'List Data Individu' not shown after Selanjutnya")
     page.wait_for_timeout(800)

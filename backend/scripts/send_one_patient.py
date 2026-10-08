@@ -23,6 +23,7 @@ def main() -> int:
     ap.add_argument("--puskesmas", required=True, type=uuid.UUID)
     ap.add_argument("--confirm-nik-suffix", required=True, help="last 4-8 digits of the approved patient's NIK")
     ap.add_argument("--visit-date", required=True, type=date.fromisoformat, help="the approved visit's date (YYYY-MM-DD)")
+    ap.add_argument("--fill-only", action="store_true", help="the patient is already registered in ASIK: skip registration, only fill the forms")
     ap.add_argument("--visible", action="store_true", help="show the browser window instead of running headless")
     args = ap.parse_args()
     if not re.fullmatch(r"\d{4,8}", args.confirm_nik_suffix):
@@ -81,11 +82,26 @@ def main() -> int:
         )
         redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
         print(f"sending patient …{args.confirm_nik_suffix[-4:]} (visit {patient.filter_date}) — job {job.id}")
-        outcome, status = create_one_patient(
-            db, job=job, patient=patient, epus=epus, puskesmas=pk, base_url=f"https://{pk.asik_url}", creds=creds,
-            captcha_solver=_build_captcha_solver(db), headless=not args.visible, redis_client=redis_client,
-            cancel_key_str=_cancel_key(str(job.id)),
-        )
+        if args.fill_only:
+            from datetime import UTC, datetime
+            from app.services.clinic_source import clinic_to_asik
+            from app.tasks.sync import _execute_sync
+
+            sync_job_crud.mark_running(db, job, "", datetime.now(UTC), 0)
+            merged = clinic_to_asik(epus)
+            forms_total = sum(1 for v in (merged or {}).values() if isinstance(v, dict) and any(x not in (None, "") for x in v.values()))
+            status = _execute_sync(
+                db=db, redis_client=redis_client, job=job, patient=patient, base_url_full=f"https://{pk.asik_url}", creds=creds,
+                captcha_solver=_build_captcha_solver(db), merged=merged, forms_total=forms_total, headless=not args.visible,
+                celery_task_id="", cancel_key_str=_cancel_key(str(job.id)),
+            )
+            outcome = "fill_only"
+        else:
+            outcome, status = create_one_patient(
+                db, job=job, patient=patient, epus=epus, puskesmas=pk, base_url=f"https://{pk.asik_url}", creds=creds,
+                captcha_solver=_build_captcha_solver(db), headless=not args.visible, redis_client=redis_client,
+                cancel_key_str=_cancel_key(str(job.id)),
+            )
         db.refresh(job)
         print(f"register outcome={outcome} job status={status}")
         print(f"forms: total={job.forms_total} ok={job.forms_succeeded} failed={job.forms_failed} skipped={job.forms_skipped}")

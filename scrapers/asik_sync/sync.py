@@ -770,14 +770,19 @@ class _AnswerGate:
         # exactly where the 2025 backfill investigation stalled on 2026-07-27.
         self.observed = 0
         self.last_status: int | None = None
+        self.hosts_seen: dict[str, int] = {}  # failure diagnostics: form-host response paths (no query) -> count
         page.on("response", self._on_response)
 
     def _on_response(self, resp) -> None:
         try:
             url = resp.url
+            if "form.kemkes.go.id" in url and resp.request.resource_type in ("xhr", "fetch"):
+                key = f"{resp.request.method} {url.split('?')[0].split('form.kemkes.go.id')[-1][:90]} {resp.status}"
+                self.hosts_seen[key] = self.hosts_seen.get(key, 0) + 1
             # `submit/<program_code>/skrining-layanan` (the WRITE endpoint) also
             # contains the needle — only the read counts as "answers delivered".
-            if "skrining-layanan" not in url or "/submit/" in url:
+            # Since ASIK's form-engine update the answers come from `.../form-get-one`; the older `get/skrining-layanan` is kept for old records.
+            if ("skrining-layanan" not in url and "form-get-one" not in url) or "/submit/" in url:
                 return
             self.observed += 1
             self.last_status = resp.status
@@ -1718,6 +1723,7 @@ def _process_form_inner(
         record["error"] = (
             "existing answers never arrived (get/skrining-layanan not seen in "
             f"{_ANSWER_XHR_TIMEOUT_MS} ms; {detail}) — refusing to fill or submit"
+            + (f" [form-host XHRs seen: {sorted(gate.hosts_seen)[:8]}]" if gate.hosts_seen else " [no form-host XHR at all]")
         )
         console.print(f"          [red]{record['error']}[/red]")
         try:

@@ -59,9 +59,10 @@ def main() -> int:
         candidates = [
             p for p in db.scalars(
                 select(Patient).where(
-                    Patient.puskesmas_id == pk.id, Patient.match_status == MatchStatus.EPUS_ONLY,
-                    Patient.epus_tandai_ckg.is_(True), Patient.filter_date >= year_start,
-                    Patient.asik_synced_at.is_(None), Patient.scraped_epus_data.isnot(None),
+                    Patient.puskesmas_id == pk.id, Patient.epus_tandai_ckg.is_(True), Patient.filter_date >= year_start,
+                    Patient.scraped_epus_data.isnot(None),
+                    # a fill-only rerun targets a patient this script already registered (then synced/matched)
+                    *([] if args.fill_only else [Patient.match_status == MatchStatus.EPUS_ONLY, Patient.asik_synced_at.is_(None)]),
                 )
             ).all()
             if str(p.nik).endswith(args.confirm_nik_suffix) and p.filter_date == args.visit_date

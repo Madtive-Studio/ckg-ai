@@ -512,14 +512,14 @@ def _enumerate_forms(page: Page) -> list[dict]:
             }
             // Nakes: div.grid.grid-cols-5 rows whose anchor cell shows "Input Data"
             // (either as a real <button> or a <div class="cursor-not-allowed">).
-            // Nakes rows have exactly 4 children — col-span-2 layanan, Diperiksa,
-            // Status, Aksi. Match the Aksi cell (children[3]) text rather than
+            // Nakes rows have col-span-2 layanan, (older ASIK: Diperiksa,)
+            // Status, Aksi. Match the LAST cell (Aksi) text rather than
             // any text in the row, so the header row ("Aksi") and stray
             // grid-cols-5 elsewhere on the page are excluded.
             const nakesRows = Array.from(document.querySelectorAll('div.grid.grid-cols-5'))
                 .filter(r => {
                     if (r.offsetParent === null) return false;
-                    const aksi = r.children[3];
+                    const aksi = r.children[r.children.length - 1];  // last cell (ASIK dropped the 'Diperiksa' cell: now Layanan, Status, Aksi)
                     if (!aksi) return false;
                     return /input\\s*data/i.test((aksi.innerText || '').trim());
                 });
@@ -611,7 +611,7 @@ def _flip_diperiksa_toggle(page: Page, kind: str, idx: int) -> bool:
             const rows = Array.from(document.querySelectorAll('div.grid.grid-cols-5'))
                 .filter(r => {
                     if (r.offsetParent === null) return false;
-                    const aksi = r.children[3];
+                    const aksi = r.children[r.children.length - 1];  // last cell (ASIK dropped the 'Diperiksa' cell: now Layanan, Status, Aksi)
                     return aksi && /input\\s*data/i.test((aksi.innerText || '').trim());
                 });
             const row = rows[idx];
@@ -641,7 +641,7 @@ def _wait_input_data_button(page: Page, kind: str, idx: int, timeout_ms: int = 1
                 const rows = Array.from(document.querySelectorAll('div.grid.grid-cols-5'))
                     .filter(r => {
                         if (r.offsetParent === null) return false;
-                        const aksi = r.children[3];
+                        const aksi = r.children[r.children.length - 1];  // last cell (ASIK dropped the 'Diperiksa' cell: now Layanan, Status, Aksi)
                         return aksi && /input\\s*data/i.test((aksi.innerText || '').trim());
                     });
                 const row = rows[idx];
@@ -682,7 +682,7 @@ def _click_input_data(page: Page, kind: str, idx: int) -> bool:
             const rows = Array.from(document.querySelectorAll('div.grid.grid-cols-5'))
                 .filter(r => {
                     if (r.offsetParent === null) return false;
-                    const aksi = r.children[3];
+                    const aksi = r.children[r.children.length - 1];  // last cell (ASIK dropped the 'Diperiksa' cell: now Layanan, Status, Aksi)
                     return aksi && /input\\s*data/i.test((aksi.innerText || '').trim());
                 });
             const row = rows[idx];

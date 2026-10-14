@@ -992,7 +992,7 @@
       "in_audit": true,
       "audit_form_title": "Faktor Risiko dan Skrining X-Ray TB (Dewasa & Lansia)",
       "question_count": 18,
-      "covered_question_count": 5,
+      "covered_question_count": 6,
       "questions": [
         {
           "label": "Tuberkulosis - Gejala TB 01 - Batuk (Dewasa)",
@@ -1310,8 +1310,8 @@
             "Tidak"
           ],
           "live_name": "LPM000133|FRM000182|PPM00000483|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].pembesaran_kgb",
+          "covered_by_converter": true
         },
         {
           "label": "Risiko Tuberkulosis Dewasa",
@@ -4114,7 +4114,7 @@
       "in_audit": true,
       "audit_form_title": "Kanker Leher Rahim",
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Apakah pernah melakukan hubungan intim/seksual?",
@@ -4147,8 +4147,8 @@
             "Tidak"
           ],
           "live_name": "LPM000062|FRM000088|PPM00000171|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_serviks].pernah_hubungan_seksual",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -5530,7 +5530,7 @@
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Gula Darah Dewasa Lansia",
       "question_count": 9,
-      "covered_question_count": 3,
+      "covered_question_count": 6,
       "questions": [
         {
           "label": "Apakah Anda pernah dinyatakan diabetes atau kencing manis oleh Dokter?",
@@ -5588,8 +5588,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[diabetes_melitus].lama_diabetes_bulan (only when the history answer is Ya)",
+          "covered_by_converter": true
         },
         {
           "label": "Gula Darah Sewaktu (GDS) (mg/dl)",
@@ -5620,8 +5620,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000256|PPM00000732|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[diabetes_melitus].gds_2",
+          "covered_by_converter": true
         },
         {
           "label": "Gula Darah Puasa (GDP) (mg/dl)",
@@ -5652,8 +5652,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000256|PPM00000734|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[diabetes_melitus].gula_darah_2jam_pp",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Gula Darah Ke-1",
@@ -6286,7 +6286,7 @@
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Kadar CO (Hanya Diisi Apabila Merokok atau Terpapar Asap Rokok)",
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Kadar CO Pernapasan",
@@ -6299,8 +6299,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000114|FRM000186|PPM00000545|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].kadar_co",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -7422,7 +7422,7 @@
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Tuberkulosis (Dewasa & Lansia)",
       "question_count": 8,
-      "covered_question_count": 1,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Apakah anda ada kontak dengan pasien Tuberkulosis (TBC)?",
@@ -7522,8 +7522,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000133|FRM000184|PPM00000504|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].metode_pemeriksaan_tb (TCM, BTA Mikroskopis only; Foto Toraks / Klinis have no ASIK option)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan TCM",
@@ -8732,7 +8732,7 @@
       "in_audit": true,
       "audit_form_title": "Penurunan Kognitif - Tindak Lanjut (Mini Cog-Clock Draw)",
       "question_count": 4,
-      "covered_question_count": 1,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Mintalah pasien untuk mendengarkan dengan cermat dan mengingat tiga kata dgn pilihan : versi 1: Pisang, bulan, kursi ; versi 2 ; pemimpin, musim meja ; versi 3 : desa, dapur, bayi",
@@ -8785,8 +8785,8 @@
             "Salah"
           ],
           "live_name": "LPM000025|FRM000030|PPM00000115|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[pemeriksaan_cog | skilas].clock_drawing_test (Normal -> Benar; Abnormal -> Salah)",
+          "covered_by_converter": true
         },
         {
           "label": "Mintalah pasien untuk MENGULANG 3 kata yang disebutkan pada pertanyaan no 1",
@@ -11346,7 +11346,7 @@
       "in_audit": true,
       "audit_form_title": "Penapisan Risiko Kanker Paru",
       "question_count": 7,
-      "covered_question_count": 4,
+      "covered_question_count": 6,
       "questions": [
         {
           "label": "Apakah Anda merokok dalam setahun terakhir ini?",
@@ -11405,8 +11405,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].riwayat_merokok_15th",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda terpapar atau menghirup asap rokok dari orang lain di rumah, lingkungan atau tempat kerja dalam 1 bulan terakhir?",
@@ -11495,8 +11495,8 @@
             "Tidak"
           ],
           "live_name": "LPM000105|FRM000138|PPM00000564|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].gejala_kanker_paru",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda pernah memiliki riwayat penyakit TBC atau PPOK?",
@@ -11944,7 +11944,7 @@
       "in_audit": true,
       "audit_form_title": "Skrining Kanker Payudara",
       "question_count": 3,
-      "covered_question_count": 0,
+      "covered_question_count": 3,
       "questions": [
         {
           "label": "Pemeriksaan yang dilakukan",
@@ -11975,8 +11975,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000035|FRM000059|PPM00000067|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[risiko_kanker_payudara].checkup_result1 / hasil_usg_payudara (SADANIS first)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil pemeriksaan SADANIS",
@@ -12007,8 +12007,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[risiko_kanker_payudara].checkup_result1 (Tidak ada benjolan -> Normal; Benjolan; Curiga Kanker)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil pemeriksaan USG Payudara",
@@ -12039,8 +12039,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[risiko_kanker_payudara].hasil_usg_payudara (Normal; Kista Simpleks -> Simple cyst)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -12934,7 +12934,7 @@
       "in_audit": true,
       "audit_form_title": "Skrining Penyakit Periodontal",
       "question_count": 2,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Penyakit Periodontal",
@@ -12963,8 +12963,8 @@
             "Tidak"
           ],
           "live_name": "LPM000032|FRM000056|PPM00000044|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[gigi_dewasa | gigi_lansia].penyakit_periodontal (Tidak Ada -> Tidak; Gingivitis / Periodontitis -> Ya)",
+          "covered_by_converter": true
         },
         {
           "label": "Gigi Goyang",
@@ -12993,8 +12993,8 @@
             "Tidak"
           ],
           "live_name": "LPM000032|FRM000056|PPM00000070|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[gigi_dewasa | gigi_lansia].gigi_goyang",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -14541,7 +14541,7 @@
       "in_audit": true,
       "audit_form_title": "Tekanan Darah Dewasa Lansia",
       "question_count": 9,
-      "covered_question_count": 3,
+      "covered_question_count": 6,
       "questions": [
         {
           "label": "Apakah Anda pernah dinyatakan tekanan darah tinggi?",
@@ -14603,8 +14603,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[hipertensi].lama_hipertensi_bulan (only when the history answer is Ya)",
+          "covered_by_converter": true
         },
         {
           "label": "Tekanan Darah Sistolik",
@@ -14651,8 +14651,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000265|PPM00000540|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[hipertensi].sistole_2",
+          "covered_by_converter": true
         },
         {
           "label": "Tekanan darah diastolik ke-2",
@@ -14667,8 +14667,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000265|PPM00000541|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[hipertensi].diastole_2",
+          "covered_by_converter": true
         },
         {
           "label": "Tekanan Darah Dewasa Lansia Ke-1",
@@ -16528,12 +16528,62 @@
       ]
     },
     {
+      "path": "screenings[diabetes_melitus].gds_2",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
+          "frm_code": "FRM000256",
+          "label": "Gula Darah Sewaktu Kedua (GDS 2). Lakukan jika hasil GDS 1 Prediabetes (≥140-199mg/dl) atau Hiperglikemia (≥200mg/dl) dan BELUM PERNAH didiagnosis Diabetes"
+        }
+      ]
+    },
+    {
+      "path": "screenings[diabetes_melitus].gula_darah_2jam_pp",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
+          "frm_code": "FRM000256",
+          "label": "Gula Darah 2 Jam PP (mg/dl)"
+        }
+      ]
+    },
+    {
+      "path": "screenings[diabetes_melitus].lama_diabetes_bulan (only when the history answer is Ya)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
+          "frm_code": "FRM000256",
+          "label": "Sudah Berapa Bulan Anda Didiagnosis Diabetes Melitus Oleh Dokter? Isi Total Bulan Sejak didiagnosis dokter hingga saat ini, misal didiagnosis 1 tahun yang lalu = 12, dst"
+        }
+      ]
+    },
+    {
       "path": "screenings[diabetes_melitus].question5_anamnesis (R-UNIFORM)",
       "destinations": [
         {
           "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
           "frm_code": "FRM000256",
           "label": "Apakah Anda pernah dinyatakan diabetes atau kencing manis oleh Dokter?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[gigi_dewasa | gigi_lansia].gigi_goyang",
+      "destinations": [
+        {
+          "form_name": "Skrining Penyakit Periodontal",
+          "frm_code": "FRM000056",
+          "label": "Gigi Goyang"
+        }
+      ]
+    },
+    {
+      "path": "screenings[gigi_dewasa | gigi_lansia].penyakit_periodontal (Tidak Ada -> Tidak; Gingivitis / Periodontitis -> Ya)",
+      "destinations": [
+        {
+          "form_name": "Skrining Penyakit Periodontal",
+          "frm_code": "FRM000056",
+          "label": "Penyakit Periodontal"
         }
       ]
     },
@@ -16558,6 +16608,26 @@
       ]
     },
     {
+      "path": "screenings[hipertensi].diastole_2",
+      "destinations": [
+        {
+          "form_name": "Tekanan Darah Dewasa Lansia",
+          "frm_code": "FRM000265",
+          "label": "Tekanan darah diastolik ke-2"
+        }
+      ]
+    },
+    {
+      "path": "screenings[hipertensi].lama_hipertensi_bulan (only when the history answer is Ya)",
+      "destinations": [
+        {
+          "form_name": "Tekanan Darah Dewasa Lansia",
+          "frm_code": "FRM000265",
+          "label": "Sudah Berapa Bulan Anda Didiagnosis Hipertensi Oleh Dokter? Isi Total Bulan Sejak didiagnosis dokter hingga saat ini, misal didiagnosis 1 tahun yang lalu = 12, dst"
+        }
+      ]
+    },
+    {
       "path": "screenings[hipertensi].question1_anamnesis (R-UNIFORM)",
       "destinations": [
         {
@@ -16568,12 +16638,42 @@
       ]
     },
     {
+      "path": "screenings[hipertensi].sistole_2",
+      "destinations": [
+        {
+          "form_name": "Tekanan Darah Dewasa Lansia",
+          "frm_code": "FRM000265",
+          "label": "Tekanan Darah Sistolik Ke-2"
+        }
+      ]
+    },
+    {
       "path": "screenings[imunisasi_tetanus_wus].imunisasi_tetanus (>= T2)",
       "destinations": [
         {
           "form_name": "Riwayat Imunisasi Tetanus(Status T) - Hanya untuk Catin",
           "frm_code": "FRM000172",
           "label": "Apakah anda pernah mendapatkan imunisasi tetanus minimal 2 kali? (imunisasi tetanus biasanya didapatkan pada vaksin DPT saat bayi, vaksin TT/Td saat usia sekolah dasar)"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].gejala_kanker_paru",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-Laki >=45 Tahun) - Penapisan Risiko Kanker Paru",
+          "frm_code": "FRM000138",
+          "label": "Apakah Anda sedang mengalami salah satu atau lebih gejala berikut dan telah diobati tetapi tidak sembuh-sembuh : batuk dalam jangka waktu yang lama / batuk berdarah/ sesak napas/ nyeri dada/ leher bengkak/ terdapat benjolan pada leher?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].kadar_co",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Kadar CO (Hanya Diisi Apabila Merokok atau Terpapar Asap Rokok)",
+          "frm_code": "FRM000186",
+          "label": "Kadar CO Pernapasan"
         }
       ]
     },
@@ -16644,6 +16744,36 @@
           "form_name": "Skrining Kanker Paru (Laki-laki, =>45 thn)",
           "frm_code": "FRM000041",
           "label": "Pernah didiagnosis penyakit paru kronik?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].riwayat_merokok_15th",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-Laki >=45 Tahun) - Penapisan Risiko Kanker Paru",
+          "frm_code": "FRM000138",
+          "label": "Apakah Anda pernah memiliki riwayat merokok dalam 15 tahun terakhir?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_serviks].pernah_hubungan_seksual",
+      "destinations": [
+        {
+          "form_name": "Kanker Leher Rahim",
+          "frm_code": "FRM000088",
+          "label": "Apakah pernah melakukan hubungan intim/seksual?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[pemeriksaan_cog | skilas].clock_drawing_test (Normal -> Benar; Abnormal -> Salah)",
+      "destinations": [
+        {
+          "form_name": "Penurunan Kognitif - Tindak Lanjut (Mini Cog-Clock Draw)",
+          "frm_code": "FRM000030",
+          "label": "Katakan seluruh frase berikut sesuai urutannya:  “Tolong gambar sebuah jam pada lembar ini. Mulailah dengan menggambar sebuah lingkaran besar. Kemudian, tuliskan angka-angka pada lingkaran dan atur jarum jam mengarah pukul 11:10 (11 lewat 10 menit).”Bila subjek tidak dapat menyelesaikan gambar jam dalam waktu 3 menit, hentikan pemeriksaan langkah ini dan lanjut ke langkah ke-3.\""
         }
       ]
     },
@@ -16809,6 +16939,36 @@
           "form_name": "Hasil Pemeriksaan - Skrining Jantung",
           "frm_code": "FRM000057",
           "label": "Hasil Pemeriksaan EKG"
+        }
+      ]
+    },
+    {
+      "path": "screenings[risiko_kanker_payudara].checkup_result1 (Tidak ada benjolan -> Normal; Benjolan; Curiga Kanker)",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Payudara",
+          "frm_code": "FRM000059",
+          "label": "Hasil pemeriksaan SADANIS"
+        }
+      ]
+    },
+    {
+      "path": "screenings[risiko_kanker_payudara].checkup_result1 / hasil_usg_payudara (SADANIS first)",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Payudara",
+          "frm_code": "FRM000059",
+          "label": "Pemeriksaan yang dilakukan"
+        }
+      ]
+    },
+    {
+      "path": "screenings[risiko_kanker_payudara].hasil_usg_payudara (Normal; Kista Simpleks -> Simple cyst)",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Payudara",
+          "frm_code": "FRM000059",
+          "label": "Hasil pemeriksaan USG Payudara"
         }
       ]
     },
@@ -17014,6 +17174,26 @@
           "form_name": "Pemeriksaan Tuberkulosis Anak",
           "frm_code": "FRM000178",
           "label": "Apakah anda ada kontak dengan pasien Tuberkulosis (TBC)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[tbc].metode_pemeriksaan_tb (TCM, BTA Mikroskopis only; Foto Toraks / Klinis have no ASIK option)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Tuberkulosis (Dewasa & Lansia)",
+          "frm_code": "FRM000184",
+          "label": "Metode Pemeriksaan (untuk terduga TB)"
+        }
+      ]
+    },
+    {
+      "path": "screenings[tbc].pembesaran_kgb",
+      "destinations": [
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak Sekolah, Dewasa & Lansia)",
+          "frm_code": "FRM000182",
+          "label": "Apakah pasien memiliki pembesaran kelenjar getah bening?"
         }
       ]
     },

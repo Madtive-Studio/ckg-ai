@@ -564,3 +564,117 @@ def test_medisy_nutrition_screening_fills_skilas_malnutrition_only_where_unambig
 def test_skilas_own_answer_wins_over_the_nutrition_screening():
     out = medisy_to_asik(bundle(years=70, screenings=[scr("skilas", question3a="Tidak"), scr("gizi", penurunan_bb=">15 kg")]))
     assert out[SK_MAL][WEIGHT_Q] == "Tidak"
+
+
+# ───────── columns added for the ASIK CKG forms (himed-app db/2026/20261013-add-ilp-screening-fields) ─────────
+
+NEW_ASIK_COLUMNS = (
+    "sistole_2", "diastole_2", "lama_hipertensi_bulan", "gds_2", "gula_darah_2jam_pp", "lama_diabetes_bulan", "pembesaran_kgb",
+    "metode_pemeriksaan_tb", "gigi_goyang", "penyakit_periodontal", "riwayat_merokok_15th", "gejala_kanker_paru", "kadar_co",
+    "hasil_usg_payudara", "pernah_hubungan_seksual", "clock_drawing_test",
+)
+
+
+def test_second_blood_pressure_and_months_since_diagnosis():
+    ht = scr("hipertensi", question1_anamnesis="Ya", question2_anamnesis="Tidak", sistole_2=150, diastole_2="95", lama_hipertensi_bulan=18)
+    out = medisy_to_asik(bundle(screenings=[ht]))[TD]
+    assert out["Tekanan Darah Sistolik Ke-2"] == 150 and out["Tekanan darah diastolik ke-2"] == 95
+    assert out[next(k for k in out if k.startswith("Sudah Berapa Bulan"))] == 18
+
+
+def test_months_are_only_sent_when_the_history_answer_is_ya():
+    ht = scr("hipertensi", question1_anamnesis="Tidak", question2_anamnesis="Ya", lama_hipertensi_bulan=18)
+    assert not any(k.startswith("Sudah Berapa Bulan") for k in medisy_to_asik(bundle(screenings=[ht]))[TD])
+
+
+@pytest.mark.parametrize("empty", [None, "", 0, "0", "abc"])
+def test_unanswered_or_zero_new_numbers_are_never_sent(empty):
+    ht = scr("hipertensi", sistole_2=empty, diastole_2=empty, lama_hipertensi_bulan=empty)
+    dm = scr("diabetes_melitus", gds_2=empty, gula_darah_2jam_pp=empty, lama_diabetes_bulan=empty)
+    out = medisy_to_asik(bundle(screenings=[ht, dm]))
+    assert not any("Ke-2" in k or "ke-2" in k or k.startswith("Sudah") for k in out[TD])
+    assert not any("Kedua" in k or "2 Jam" in k or k.startswith("Sudah") for k in out[GD])
+
+
+def test_second_glucose_two_hour_pp_and_months():
+    dm = scr("diabetes_melitus", question5_anamnesis="Ya", question1_anamnesis="Tidak", gds_2="155,5", gula_darah_2jam_pp="130", lama_diabetes_bulan=7)
+    out = medisy_to_asik(bundle(screenings=[dm]))[GD]
+    assert out[next(k for k in out if k.startswith("Gula Darah Sewaktu Kedua"))] == 155.5
+    assert out["Gula Darah 2 Jam PP (mg/dl)"] == 130
+    assert out[next(k for k in out if k.startswith("Sudah Berapa Bulan"))] == 7
+
+
+def test_tb_lymph_nodes_and_test_method():
+    out = medisy_to_asik(bundle(screenings=[scr("tbc", batuk="Tidak", pembesaran_kgb="Ya", metode_pemeriksaan_tb="BTA Mikroskopis")]))
+    xray = out["Faktor Risiko dan Skrining X-Ray TB (Dewasa & Lansia)"]
+    assert xray["Apakah pasien memiliki pembesaran kelenjar getah bening?"] == "Ya"
+    assert out["Pemeriksaan Tuberkulosis (Dewasa & Lansia)"]["Metode Pemeriksaan (untuk terduga TB)"] == "BTA"
+
+
+@pytest.mark.parametrize("method", ["Foto Toraks (Rontgen)", "Pemeriksaan Klinis", None, ""])
+def test_tb_methods_without_an_asik_option_are_not_sent(method):
+    out = medisy_to_asik(bundle(screenings=[scr("tbc", batuk="Tidak", metode_pemeriksaan_tb=method)]))
+    assert "Metode Pemeriksaan (untuk terduga TB)" not in out["Pemeriksaan Tuberkulosis (Dewasa & Lansia)"]
+
+
+@pytest.mark.parametrize("table", ["gigi_dewasa", "gigi_lansia"])
+@pytest.mark.parametrize("disease, expected", [("Tidak Ada", "Tidak"), ("Gingivitis", "Ya"), ("Periodontitis", "Ya"), (None, None)])
+def test_periodontal_form_reads_either_dental_table(table, disease, expected):
+    out = medisy_to_asik(bundle(screenings=[scr(table, gigi_goyang="Ya", penyakit_periodontal=disease)]))["Skrining Penyakit Periodontal"]
+    assert out["Gigi Goyang"] == "Ya"
+    assert out.get("Penyakit Periodontal") == expected
+
+
+def test_lung_screening_questions_and_exhaled_co():
+    kp = scr("kanker_paru", riwayat_merokok_15th="Ya", gejala_kanker_paru="Tidak", kadar_co="7,5")
+    out = medisy_to_asik(bundle(years=50, screenings=[kp]))
+    screen = out["Penapisan Risiko Kanker Paru"]
+    assert screen[next(k for k in screen if "15 tahun" in k)] == "Ya"
+    assert screen[next(k for k in screen if "gejala" in k)] == "Tidak"
+    assert out["Pemeriksaan Kadar CO (Hanya Diisi Apabila Merokok atau Terpapar Asap Rokok)"] == {"Kadar CO Pernapasan": 7.5}
+
+
+def test_a_recorded_co_of_zero_is_a_real_reading_but_blank_is_not():
+    co = "Pemeriksaan Kadar CO (Hanya Diisi Apabila Merokok atau Terpapar Asap Rokok)"
+    assert medisy_to_asik(bundle(years=50, screenings=[scr("kanker_paru", kadar_co="0")]))[co] == {"Kadar CO Pernapasan": 0}
+    assert medisy_to_asik(bundle(years=50, screenings=[scr("kanker_paru", kadar_co=None)]))[co] == {}
+
+
+def test_breast_screening_sadanis_and_ultrasound():
+    risk = scr("risiko_kanker_payudara", checkup_result1="Tidak ada benjolan", hasil_usg_payudara="Kista Simpleks")
+    out = medisy_to_asik(bundle(gender="P", years=47, screenings=[risk]))["Skrining Kanker Payudara"]
+    assert out == {"Pemeriksaan yang dilakukan": "SADANIS", "Hasil pemeriksaan SADANIS": "Normal", "Hasil pemeriksaan USG Payudara": "Simple cyst"}
+
+
+def test_ultrasound_results_without_an_asik_option_are_not_sent():
+    risk = scr("risiko_kanker_payudara", checkup_result1=None, hasil_usg_payudara="Tumor Jinak (Fibroadenoma)")
+    assert medisy_to_asik(bundle(gender="P", years=47, screenings=[risk]))["Skrining Kanker Payudara"] == {}
+
+
+def test_breast_form_is_for_women_from_30_only():
+    risk = scr("risiko_kanker_payudara", checkup_result1="Benjolan")
+    assert "Skrining Kanker Payudara" not in medisy_to_asik(bundle(gender="L", years=47, screenings=[risk]))
+    assert "Skrining Kanker Payudara" not in medisy_to_asik(bundle(gender="P", years=25, screenings=[risk]))
+
+
+def test_cervical_sexual_history_and_clock_drawing():
+    out = medisy_to_asik(bundle(gender="P", years=65, screenings=[
+        scr("kanker_serviks", pernah_hubungan_seksual="Ya"), scr("pemeriksaan_cog", instruction1="3 kata", clock_drawing_test="Abnormal")]))
+    assert out["Kanker Leher Rahim"] == {"Apakah pernah melakukan hubungan intim/seksual?": "Ya"}
+    minicog = out[m._F_MINICOG]
+    assert minicog[next(k for k in minicog if k.startswith("Katakan seluruh frase"))] == "Salah"
+
+
+def test_clock_drawing_falls_back_to_the_skilas_step():
+    out = medisy_to_asik(bundle(gender="P", years=65, screenings=[scr("skilas", clock_drawing_test="Normal")]))[m._F_MINICOG]
+    assert out[next(k for k in out if k.startswith("Katakan seluruh frase"))] == "Benar"
+
+
+def test_nothing_new_is_invented_from_empty_columns():
+    """New columns are NULL until answered: a bundle where they are all null must produce none of the new answers."""
+    cols = {c: None for c in NEW_ASIK_COLUMNS}
+    shots = [scr(k, **cols) for k in ("hipertensi", "diabetes_melitus", "tbc", "gigi_dewasa", "kanker_paru",
+                                      "risiko_kanker_payudara", "kanker_serviks", "pemeriksaan_cog", "skilas")]
+    with_nulls = medisy_to_asik(bundle(gender="P", years=65, screenings=shots))
+    without = medisy_to_asik(bundle(gender="P", years=65))
+    assert with_nulls == without

@@ -22,7 +22,7 @@ Same klaster logic as the EPUS converter, read from `patient.gender` (1 = Laki-l
 | ≥ 45 | kanker paru, EKG, kanker usus shells |
 | < 45 with HT/DM | EKG |
 | ≥ 60 | SKILAS ×4, Barthel, Mini-Cog, SPPB, MNA-SF (+ shells for AD-8, depression follow-up) |
-| female ≥ 30 | HPV-DNA / leher rahim shells |
+| female ≥ 30 | HPV-DNA shell; Kanker Leher Rahim and Skrining Kanker Payudara (filled when Medisy has the answers) |
 | female (adult) | catin Hb, tetanus |
 
 An eligible form that Medisy cannot fill is an empty `{}` shell so the convert preview still shows it; the merge keeps the ASIK value.
@@ -55,7 +55,16 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 - **SKILAS malnutrition:** SKILAS's own answers first; Medisy's nutrition screening (`screenings[gizi]`) fills the two matching questions only where unambiguous (sign-off 2026-10-05): weight loss none → Tidak, "not sure (clothes loose)" / 6 kg or more → Ya, "1-5 kg" blank (straddles the 3 kg line; Medisy asks about 6 months, SKILAS about 3); reduced intake from lack of appetite Ya → Ya, Tidak stays blank (SKILAS also asks about difficulty eating).
 - **SKILAS / Barthel / Mini-Cog / SPPB / MNA-SF:** each from its own Medisy table; Barthel maps the item score to the ASIK option; SPPB and MNA-SF map option text through explicit tables.
 - **Tetanus:** only T2 or higher → "minimal dua kali". Below T2 stays blank (ASIK has no "belum" option).
-- **Dental:** `gigi_dewasa` question 3 / 4 → caries / missing-tooth. Periodontal stays blank.
+- **Dental:** `gigi_dewasa` question 3 / 4 → caries / missing-tooth. Periodontal: see the next bullet.
+- **ASIK CKG columns** (added in Medisy by `db/2026/20261013-add-ilp-screening-fields`; every column is NULL until a nurse answers, so a missing value is never sent and a `0` is never trusted, except exhaled CO where 0 ppm is a real reading):
+  - Blood pressure: `hipertensi.sistole_2` / `diastole_2` → second reading; `lama_hipertensi_bulan` → months since diagnosis **only when the history answer is Ya** (ASIK reveals it only then).
+  - Glucose: `diabetes_melitus.gds_2` → GDS 2; `gula_darah_2jam_pp` → 2-hour PP; `lama_diabetes_bulan` → months (only when the history answer is Ya).
+  - TB: `tbc.pembesaran_kgb` Ya/Tidak → lymph-node question of the adult X-Ray form; `metode_pemeriksaan_tb` → "TCM" or "BTA" (BTA Mikroskopis). "Foto Toraks" and "Pemeriksaan Klinis" have no ASIK option and are not sent.
+  - Periodontal form: `gigi_goyang` Ya/Tidak; `penyakit_periodontal` Tidak Ada → Tidak, Gingivitis / Periodontitis → Ya (the ePuskesmas converter reads gum inflammation the same way). Adult screening first, elderly screening as fallback.
+  - Lung: `kanker_paru.riwayat_merokok_15th` and `gejala_kanker_paru` → the two matching questions of "Penapisan Risiko Kanker Paru"; `kadar_co` → "Kadar CO Pernapasan".
+  - Breast (women ≥ 30): `risiko_kanker_payudara.checkup_result1` → SADANIS (Tidak ada benjolan → Normal, Benjolan → Ditemukan benjolan, Curiga Kanker → Curiga kanker); `hasil_usg_payudara` → USG (Normal, Kista Simpleks → Simple cyst; "Tumor Jinak (Fibroadenoma)" and "Curiga Keganasan" have no ASIK option and are not sent). "Pemeriksaan yang dilakukan" names SADANIS first, then USG, like the ePuskesmas converter.
+  - Cervical (women ≥ 30): `kanker_serviks.pernah_hubungan_seksual` Ya/Tidak.
+  - Mini-Cog follow-up: `pemeriksaan_cog.clock_drawing_test` (else `kk_skilas`) Normal → "Benar", Abnormal → "Salah".
 - **Pediatric:** vitals-driven growth, BP, GDS; TB-child from the tbc screening; syphilis only on an A50-A53 diagnosis.
 
 ## 4. Deliberately not mapped (R-NOMATCH) and Medisy gaps
@@ -63,11 +72,11 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 | ASIK form / field | Why blank |
 |---|---|
 | Kesehatan Jiwa (PHQ-4) | Medisy screens with EPDS / SDQ — different instruments |
-| Kadar CO | not measured in Medisy |
 | Perilaku Merokok: type, years, cigarettes/day, ex-smoker details | not on the live ASIK form (2 questions); the school-student smoking table is not the adult survey |
 | Tingkat Aktivitas Fisik: the other 4 questions | Medisy has one yes/no (insufficient activity) |
-| Penapisan Risiko Kanker Paru: 15-year history, symptoms | asked differently in Medisy |
-| Inspekulo/IVA, Payudara, HPV-DNA, kanker usus, AD-8, skin diseases | no Medisy source (IVA/payudara only if data appears) |
+| Inspekulo/IVA, HPV-DNA, kanker usus, AD-8, skin diseases, disabilitas | no Medisy source |
+| Payudara: breast USG "Tumor Jinak" / "Curiga Keganasan"; TB method "Foto Toraks" / "Klinis" | no matching ASIK option |
+| Second BP, GDS 2, months since diagnosis | mapped, but only filled where nurses record them (new Medisy columns, NULL by default) |
 | KPSP, KMPE, GPPH, M-CHAT, imunisasi balita, talasemia, birth weight | no Medisy source |
 | SKILAS malnutrisi LiLA question | no Medisy source (the `gizi` screening covers the other two, see §3) |
 
@@ -83,6 +92,8 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 6. ~~Dashboard "tertatalaksana" flags~~ **Resolved 2026-10-05** — still PROXIES, with the education part pinned to Medisy's education form (`edukasi_term` select or `edukasi` text, `tambah_tindakan_tpl.php`): drug = an antihypertensive / antidiabetic / lipid-lowering drug was prescribed at the visit; education = that form is filled.
 7. ~~Newborn registry (bayi)~~ **Resolved 2026-10-05** — PJB "Gagal" is a positive screen and `saturasi_tangan` is taken as the right hand; ikterus from the child (MTBM) rows; the external-referral destination from `visit.referral`.
 8. ~~Shared / placeholder NIK~~ **Resolved** — decision D13 in `MEDISY_MIGRATION.md`: the API flags `shared`, ckg-ai skips those visits.
+
+9. **Open sign-offs for the ASIK CKG columns (2026-10-14):** (a) periodontal: gingivitis / periodontitis → "Ya"; (b) clock drawing Normal / Abnormal → "Benar" / "Salah"; (c) breast USG options without an ASIK equivalent stay unsent; (d) months since diagnosis are sent only after a "Ya" history answer. Until a clinician confirms (a) and (b), review the first real sends by hand.
 
 Still open: the numerator/denominator order of real eye entries (Q2), and the questions beyond the converter (unmapped ASIK forms with no Medisy table found yet) which the loop agent hunts.
 
@@ -219,6 +230,9 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | Apakah Anda pernah dinyatakan tekanan darah tinggi? | `screenings[hipertensi].question1_anamnesis (R-UNIFORM)` |
 | Tekanan Darah Sistolik | `anamnesis.vitals.systole (fallback screenings[hipertensi].sistole)` |
 | Tekanan darah diastolik | `anamnesis.vitals.diastole (fallback screenings[hipertensi].diastole)` |
+| Tekanan Darah Sistolik Ke-2 | `screenings[hipertensi].sistole_2` |
+| Tekanan darah diastolik ke-2 | `screenings[hipertensi].diastole_2` |
+| Sudah Berapa Bulan Anda Didiagnosis Hipertensi Oleh Dokter? Isi Total Bulan Sejak didiagno | `screenings[hipertensi].lama_hipertensi_bulan (only when the history answer is Ya)` |
 
 ### Pemeriksaan Gula Darah Dewasa Lansia
 
@@ -226,7 +240,10 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 |---|---|
 | Apakah Anda pernah dinyatakan diabetes atau kencing manis oleh Dokter? | `screenings[diabetes_melitus].question5_anamnesis (R-UNIFORM)` |
 | Gula Darah Sewaktu (GDS) (mg/dl) | `anamnesis.vitals.gds (fallback screenings[diabetes_melitus].gds_hasil)` |
+| Gula Darah Sewaktu Kedua (GDS 2). Lakukan jika hasil GDS 1 Prediabetes (≥140-199mg/dl) ata | `screenings[diabetes_melitus].gds_2` |
 | Gula Darah Puasa (GDP) (mg/dl) | `anamnesis.vitals.gdp (fallback screenings[diabetes_melitus].gdp_hasil)` |
+| Gula Darah 2 Jam PP (mg/dl) | `screenings[diabetes_melitus].gula_darah_2jam_pp` |
+| Sudah Berapa Bulan Anda Didiagnosis Diabetes Melitus Oleh Dokter? Isi Total Bulan Sejak di | `screenings[diabetes_melitus].lama_diabetes_bulan (only when the history answer is Ya)` |
 
 ### Gizi (BB - TB - Lingkar Perut) Laki-laki
 
@@ -274,6 +291,20 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 |---|---|
 | Status Perkawinan | `patient.marital_status` |
 
+### Kanker Leher Rahim
+
+| ASIK field | Medisy source |
+|---|---|
+| Apakah pernah melakukan hubungan intim/seksual? | `screenings[kanker_serviks].pernah_hubungan_seksual` |
+
+### Skrining Kanker Payudara
+
+| ASIK field | Medisy source |
+|---|---|
+| Pemeriksaan yang dilakukan | `screenings[risiko_kanker_payudara].checkup_result1 / hasil_usg_payudara (SADANIS first)` |
+| Hasil pemeriksaan SADANIS | `screenings[risiko_kanker_payudara].checkup_result1 (Tidak ada benjolan -> Normal; Benjolan; Curiga Kanker)` |
+| Hasil pemeriksaan USG Payudara | `screenings[risiko_kanker_payudara].hasil_usg_payudara (Normal; Kista Simpleks -> Simple cyst)` |
+
 ### Skrining Telinga dan Mata (=>40 tahun)
 
 | ASIK field | Medisy source |
@@ -307,6 +338,7 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | Apakah berat badan Anda turun tanpa penyebab jelas/ BB tidak naik/ nafsu makan turun? | `screenings[tbc].bb_turun` |
 | Apakah Anda mengalami demam hilang timbul tanpa sebab yang jelas? | `screenings[tbc].demam` |
 | Apakah Anda mengalami berkeringat di malam hari tanpa kegiatan? | `screenings[tbc].berkeringat_malam` |
+| Apakah pasien memiliki pembesaran kelenjar getah bening? | `screenings[tbc].pembesaran_kgb` |
 | Apakah dilakukan pemeriksaan radiografi toraks? | `screenings[tbc].pemeriksaan_foto_toraks / abnormalitas_tbc` |
 
 ### Pemeriksaan Tuberkulosis (Dewasa & Lansia)
@@ -314,6 +346,7 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | ASIK field | Medisy source |
 |---|---|
 | Apakah anda ada kontak dengan pasien Tuberkulosis (TBC)? | `screenings[tbc].kontak_tbc (only 'Tidak Ada')` |
+| Metode Pemeriksaan (untuk terduga TB) | `screenings[tbc].metode_pemeriksaan_tb (TCM, BTA Mikroskopis only; Foto Toraks / Klinis have no ASIK option)` |
 
 ### Hasil Pemeriksaan - Skrining Jantung
 
@@ -346,6 +379,12 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 |---|---|
 | Apakah Anda merokok dalam setahun terakhir ini? | `programs.ptm_questionnaire[Q0013 1.4 Status merokok] (1.1 = 0 when never smoked)` |
 | Apakah Anda terpapar asap rokok atau menghirup asap rokok dari orang lain dalam sebulan te | `programs.ptm_questionnaire[Q0013 1.5]` |
+
+### Pemeriksaan Kadar CO (Hanya Diisi Apabila Merokok atau Terpapar Asap Rokok)
+
+| ASIK field | Medisy source |
+|---|---|
+| Kadar CO Pernapasan | `screenings[kanker_paru].kadar_co` |
 
 ### Tingkat Aktivitas Fisik (sedang dan berat)
 
@@ -417,14 +456,17 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | ASIK field | Medisy source |
 |---|---|
 | Apakah Anda merokok dalam setahun terakhir ini? | `programs.ptm_questionnaire[Q0013 1.4 Status merokok]` |
+| Apakah Anda pernah memiliki riwayat merokok dalam 15 tahun terakhir? | `screenings[kanker_paru].riwayat_merokok_15th` |
 | Apakah Anda terpapar atau menghirup asap rokok dari orang lain di rumah, lingkungan atau t | `programs.ptm_questionnaire[Q0013 1.5]` |
 | Apakah memiliki riwayat kanker paru pada keluarga (ayah/ibu/saudara kandung)? | `programs.ptm_questionnaire[Q0019 1.2]` |
+| Apakah Anda sedang mengalami salah satu atau lebih gejala berikut dan telah diobati tetapi | `screenings[kanker_paru].gejala_kanker_paru` |
 | Apakah Anda pernah memiliki riwayat penyakit TBC atau PPOK? | `programs.ptm_questionnaire[Q0019 1.7]` |
 
 ### Penurunan Kognitif - Tindak Lanjut (Mini Cog-Clock Draw)
 
 | ASIK field | Medisy source |
 |---|---|
+| Katakan seluruh frase berikut sesuai urutannya:  “Tolong gambar sebuah jam pada lembar ini | `screenings[pemeriksaan_cog | skilas].clock_drawing_test (Normal -> Benar; Abnormal -> Salah)` |
 | Mintalah pasien untuk MENGULANG 3 kata yang disebutkan pada pertanyaan no 1 | `screenings[pemeriksaan_cog].instruction1` |
 
 ### Mobilisasi - Pemeriksaan Lanjutan (SPPB)
@@ -468,3 +510,9 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | Gigi karies | `screenings[gigi_dewasa].question4` |
 | Gigi hilang/dicabut | `screenings[gigi_dewasa].question3` |
 
+### Skrining Penyakit Periodontal
+
+| ASIK field | Medisy source |
+|---|---|
+| Gigi Goyang | `screenings[gigi_dewasa | gigi_lansia].gigi_goyang` |
+| Penyakit Periodontal | `screenings[gigi_dewasa | gigi_lansia].penyakit_periodontal (Tidak Ada -> Tidak; Gingivitis / Periodontitis -> Ya)` |

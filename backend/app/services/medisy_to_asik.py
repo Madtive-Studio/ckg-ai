@@ -95,6 +95,12 @@ def _positive(v: Any) -> bool:
     return n is not None and n > 0
 
 
+def _pos(v: Any) -> int | float | None:
+    """A strictly positive number, else None (a recorded 0 is never trusted as a measurement)."""
+    n = _num(v)
+    return n if n is not None and n > 0 else None
+
+
 def _gender(b: dict) -> str | None:
     g = (_clean((b.get("patient") or {}).get("gender")) or "").upper()
     return {"L": "Laki-Laki", "P": "Perempuan"}.get(g)
@@ -286,6 +292,11 @@ def _map_tekanan_darah(b: dict, scr: dict) -> dict[str, Any]:
         out[_q(_F_TD, "Tekanan Darah Sistolik")] = sis
     if dia:
         out[_q(_F_TD, "Tekanan darah diastolik")] = dia
+    # columns added for the ASIK CKG form (db/2026/20261014-skrining-asik-ckg); NULL until a nurse answers
+    _put(out, _q(_F_TD, "Tekanan Darah Sistolik Ke-2"), _pos(ht.get("sistole_2")))
+    _put(out, _q(_F_TD, "Tekanan darah diastolik ke-2"), _pos(ht.get("diastole_2")))
+    if riwayat == "Ya":                  # ASIK reveals the duration only after "Ya"
+        _put(out, _q(_F_TD, "Sudah Berapa Bulan Anda Didiagnosis Hipertensi"), _pos(ht.get("lama_hipertensi_bulan")))
     return out
 
 
@@ -302,6 +313,10 @@ def _map_gula_darah(b: dict, scr: dict) -> dict[str, Any]:
         out[_q(_F_GD, "Gula Darah Sewaktu (GDS) (mg/dl)")] = gds
     if gdp:
         out[_q(_F_GD, "Gula Darah Puasa (GDP)")] = gdp
+    _put(out, _q(_F_GD, "Gula Darah Sewaktu Kedua"), _pos(dm.get("gds_2")))
+    _put(out, _q(_F_GD, "Gula Darah 2 Jam PP"), _pos(dm.get("gula_darah_2jam_pp")))
+    if riwayat == "Ya":
+        _put(out, _q(_F_GD, "Sudah Berapa Bulan Anda Didiagnosis Diabetes"), _pos(dm.get("lama_diabetes_bulan")))
     return out
 
 
@@ -472,11 +487,17 @@ def _map_tb_risk(scr: dict) -> dict[str, dict[str, Any]]:
     _put(xray, _q(_F_TB_RISK[1], "Apakah Anda mengalami berkeringat di malam hari"), _yatidak(t.get("berkeringat_malam")))
     if _clean(t.get("pemeriksaan_foto_toraks")) not in (None, "-") or _clean(t.get("abnormalitas_tbc")):
         xray[_q(_F_TB_RISK[1], "Apakah dilakukan pemeriksaan radiografi toraks?")] = "Ya"
+    _put(xray, _q(_F_TB_RISK[1], "Apakah pasien memiliki pembesaran kelenjar getah bening"), _yatidak((scr.get("tbc") or {}).get("pembesaran_kgb")))
     return out
+
+
+# Medisy test method (normalised) -> ASIK option; "Foto Toraks" and "Pemeriksaan Klinis" have no ASIK equivalent and are not sent.
+_TB_METHOD = {_norm("TCM"): "TCM", _norm("BTA Mikroskopis"): "BTA", _norm("BTA"): "BTA"}
 
 
 def _map_tb_exam(scr: dict) -> dict[str, Any]:
     out: dict[str, Any] = {}
+    _put(out, _q(_F_TB_EXAM, "Metode Pemeriksaan (untuk terduga TB)"), _TB_METHOD.get(_norm((scr.get("tbc") or {}).get("metode_pemeriksaan_tb"))))
     # kontak_tbc holds the TB type of the contact, not the kind of contact: only "Tidak Ada" is sourceable.
     if _norm(_tbc(scr).get("kontak_tbc")) == _norm("Tidak Ada"):
         out[_q(_F_TB_EXAM, "Apakah anda ada kontak dengan pasien Tuberkulosis")] = "Tidak ada"
@@ -528,7 +549,22 @@ def _map_dental(scr: dict) -> dict[str, dict[str, Any]]:
         out[_q(f, "Gigi karies")] = karies
     if hilang:
         out[_q(f, "Gigi hilang/dicabut")] = hilang
-    return {f: out, "Skrining Penyakit Periodontal": {}}
+    return {f: out, _F_PERIO: _map_periodontal(scr)}
+
+
+_F_PERIO = "Skrining Penyakit Periodontal"
+_PERIO = {_norm("Tidak Ada"): "Tidak", _norm("Gingivitis"): "Ya", _norm("Periodontitis"): "Ya"}
+
+
+def _map_periodontal(scr: dict) -> dict[str, Any]:
+    """Loose teeth (Ya/Tidak) and periodontal disease (none -> Tidak; gingivitis / periodontitis -> Ya, the same reading the
+    ePuskesmas converter uses). The adult screening is used first, the elderly one when the adult one has no answer."""
+    out: dict[str, Any] = {}
+    for key in ("gigi_dewasa", "gigi_lansia"):
+        g = scr.get(key) or {}
+        _put(out, _q(_F_PERIO, "Gigi Goyang"), out.get(_q(_F_PERIO, "Gigi Goyang")) or _yatidak(g.get("gigi_goyang")))
+        _put(out, _q(_F_PERIO, "Penyakit Periodontal"), out.get(_q(_F_PERIO, "Penyakit Periodontal")) or _PERIO.get(_norm(g.get("penyakit_periodontal"))))
+    return out
 
 
 # ─── labs (>= 40) ─────────────────────────────────────────────────────────────
@@ -741,6 +777,24 @@ def _map_kanker_paru_q(q: dict) -> dict[str, Any]:
     return out
 
 
+def _map_kanker_paru_extra(scr: dict) -> dict[str, Any]:
+    """"Penapisan Risiko Kanker Paru": the two Ya/Tidak questions the lung screening table now stores (NULL until answered)."""
+    k = scr.get("kanker_paru") or {}
+    out: dict[str, Any] = {}
+    _put(out, _q(_F_KP_SCREEN, "Apakah Anda pernah memiliki riwayat merokok dalam 15 tahun terakhir"), _yatidak(k.get("riwayat_merokok_15th")))
+    _put(out, _q(_F_KP_SCREEN, "Apakah Anda sedang mengalami salah satu atau lebih gejala"), _yatidak(k.get("gejala_kanker_paru")))
+    return out
+
+
+_F_CO = "Pemeriksaan Kadar CO (Hanya Diisi Apabila Merokok atau Terpapar Asap Rokok)"
+
+
+def _map_kadar_co(scr: dict) -> dict[str, Any]:
+    """Exhaled CO (ppm). The column is NULL until measured, so a typed 0 is a real reading here (not a form default)."""
+    co = _num((scr.get("kanker_paru") or {}).get("kadar_co"))
+    return {_q(_F_CO, "Kadar CO Pernapasan"): co} if co is not None and co >= 0 else {}
+
+
 def _map_kanker_paru_screen(q: dict) -> dict[str, Any]:
     """"Penapisan Risiko Kanker Paru": only the questions Medisy asks in the same words."""
     out: dict[str, Any] = {}
@@ -751,6 +805,35 @@ def _map_kanker_paru_screen(q: dict) -> dict[str, Any]:
          {"429011007": "Ya", "QRI000035": "Tidak", "QRI000036": "Tidak"}.get(_code(q.get((_CA_PARU, "1.2"))) or ""))
     _put(out, _q(_F_KP_SCREEN, "Apakah Anda pernah memiliki riwayat penyakit TBC atau PPOK?"),
          {"161414005": "Ya", "414415007": "Ya", "160258000": "Tidak"}.get(_code(q.get((_CA_PARU, "1.7"))) or ""))
+    return out
+
+
+_F_PAYUDARA = "Skrining Kanker Payudara"
+_SADANIS = {_norm("Tidak ada benjolan"): "Normal", _norm("Benjolan"): "Ditemukan benjolan", _norm("Curiga Kanker"): "Curiga kanker"}
+# Only the ultrasound results with an identical ASIK option; "Tumor Jinak (Fibroadenoma)" / "Curiga Keganasan" have no match and are not sent.
+_USG = {_norm("Normal"): "Normal", _norm("Kista Simpleks"): "Simple cyst"}
+
+
+def _map_payudara(scr: dict) -> dict[str, Any]:
+    """SADANIS (clinical breast exam) from ``checkup_result1`` and the ultrasound result; "Pemeriksaan yang dilakukan" names the
+    exam whose result is sent (SADANIS first, as the ePuskesmas converter does)."""
+    p = scr.get("risiko_kanker_payudara") or {}
+    out: dict[str, Any] = {}
+    sadanis = _SADANIS.get(_norm(p.get("checkup_result1")))
+    usg = _USG.get(_norm(p.get("hasil_usg_payudara")))
+    if sadanis:
+        out[_q(_F_PAYUDARA, "Pemeriksaan yang dilakukan")] = "SADANIS"
+        out[_q(_F_PAYUDARA, "Hasil pemeriksaan SADANIS")] = sadanis
+    if usg:
+        out.setdefault(_q(_F_PAYUDARA, "Pemeriksaan yang dilakukan"), "USG Payudara")
+        out[_q(_F_PAYUDARA, "Hasil pemeriksaan USG Payudara")] = usg
+    return out
+
+
+def _map_leher_rahim(scr: dict) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    _put(out, _q("Kanker Leher Rahim", "Apakah pernah melakukan hubungan intim/seksual"),
+         _yatidak((scr.get("kanker_serviks") or {}).get("pernah_hubungan_seksual")))
     return out
 
 
@@ -876,11 +959,20 @@ def _map_barthel(scr: dict) -> dict[str, Any]:
 _MINICOG_RECALL = {"0": "Tidak dapat mengingat/mengulang kata", "1": "Benar 1 kata", "2": "Benar 2 Kata", "3": "Benar semua kata"}
 
 
+# Medisy clock-drawing result -> ASIK "Benar" / "Salah" (the same drawing test, different wording).
+_CLOCK = {_norm("Normal"): "Benar", _norm("Abnormal"): "Salah"}
+
+
 def _map_minicog(scr: dict) -> dict[str, Any]:
+    out: dict[str, Any] = {}
     m = re.match(r"^(\d)\b", _clean((scr.get("pemeriksaan_cog") or {}).get("instruction1")) or "")
-    if not m:
-        return {}
-    return {_q(_F_MINICOG, "Mintalah pasien untuk MENGULANG"): _MINICOG_RECALL[m.group(1)]} if m.group(1) in _MINICOG_RECALL else {}
+    if m and m.group(1) in _MINICOG_RECALL:
+        out[_q(_F_MINICOG, "Mintalah pasien untuk MENGULANG")] = _MINICOG_RECALL[m.group(1)]
+    # the Mini-Cog table first, the SKILAS cognitive step when the Mini-Cog one has no answer
+    clock = _CLOCK.get(_norm((scr.get("pemeriksaan_cog") or {}).get("clock_drawing_test"))) \
+        or _CLOCK.get(_norm((scr.get("skilas") or {}).get("clock_drawing_test")))
+    _put(out, _q(_F_MINICOG, "Katakan seluruh frase berikut"), clock)
+    return out
 
 
 # Medisy option text (normalised) -> byte-exact ASIK option, per SPPB item / MNA item.
@@ -1067,10 +1159,9 @@ def medisy_to_asik(bundle: dict) -> ASIK_Result:
     out["Pemeriksaan Hepatitis"] = _map_hepatitis(codes, labs)
 
     # Forms the live klaster runs but Medisy cannot fill (R-NOMATCH): empty shells so eligibility shows in the preview.
-    for shell in ("Perilaku Merokok",
-                  "Pemeriksaan Kadar CO (Hanya Diisi Apabila Merokok atau Terpapar Asap Rokok)",
-                  "Tingkat Aktivitas Fisik (sedang dan berat)", "Kesehatan Jiwa", *_SKIN_SHELLS, "Hati"):
+    for shell in ("Perilaku Merokok", "Tingkat Aktivitas Fisik (sedang dan berat)", "Kesehatan Jiwa", *_SKIN_SHELLS, "Hati"):
         out[shell] = {}
+    out[_F_CO] = _map_kadar_co(scr)
     out[_F_MEROKOK] = _map_perilaku_merokok(ptm_q)
     out[_F_AKTIVITAS] = _map_aktivitas_fisik(ptm_q)
     out.update(_map_dental(scr))
@@ -1081,7 +1172,7 @@ def medisy_to_asik(bundle: dict) -> ASIK_Result:
     ht_or_dm = _has_icd(codes, _HT_ICD + _DM_ICD) or _ht_history(scr) == "Ya" or _dm_history(scr) == "Ya"
     if years >= 45:
         out[_F_KP] = {**_map_kanker_paru_q(ptm_q), **_map_kanker_paru(scr)}        # the screening table wins over the questionnaire
-        out[_F_KP_SCREEN] = _map_kanker_paru_screen(ptm_q)
+        out[_F_KP_SCREEN] = {**_map_kanker_paru_screen(ptm_q), **_map_kanker_paru_extra(scr)}
         out[_F_USUS] = _map_kanker_usus(ptm_q)
         out["Pemeriksaan Lanjutan Kanker Usus"] = {}
         out["Hasil Pemeriksaan - Skrining Jantung"] = _map_ekg(scr)
@@ -1102,7 +1193,8 @@ def medisy_to_asik(bundle: dict) -> ASIK_Result:
     if gender == "Perempuan":
         if years >= 30:
             out["Hasil Pemeriksaan HPV-DNA"] = {}
-            out["Kanker Leher Rahim"] = {}
+            out["Kanker Leher Rahim"] = _map_leher_rahim(scr)
+            out[_F_PAYUDARA] = _map_payudara(scr)
         catin: dict[str, Any] = {}
         _put(catin, _q("Pemeriksaan Calon Pengantin Perempuan", "Kadar Hemoglobin"), _lab_num(labs, _LAB_HB))
         out["Pemeriksaan Calon Pengantin Perempuan"] = catin
@@ -1185,6 +1277,25 @@ for _f, _p, _path in (
     (_SKILAS_KOGNITIF, "Tanggal berapakah hari ini", "screenings[skilas].question1 (orientation outcome)"),
     (_SKILAS_KOGNITIF, "Apakah peserta dapat mengingat tiga kata sebelumnya", "screenings[skilas].question1 (recall outcome)"),
     (_F_TETANUS, "Apakah anda pernah mendapatkan imunisasi tetanus", "screenings[imunisasi_tetanus_wus].imunisasi_tetanus (>= T2)"),
+    # columns added for the ASIK CKG forms (himed-app db/2026/20261013-add-ilp-screening-fields); NULL until a nurse answers
+    (_F_TD, "Tekanan Darah Sistolik Ke-2", "screenings[hipertensi].sistole_2"),
+    (_F_TD, "Tekanan darah diastolik ke-2", "screenings[hipertensi].diastole_2"),
+    (_F_TD, "Sudah Berapa Bulan Anda Didiagnosis Hipertensi", "screenings[hipertensi].lama_hipertensi_bulan (only when the history answer is Ya)"),
+    (_F_GD, "Gula Darah Sewaktu Kedua", "screenings[diabetes_melitus].gds_2"),
+    (_F_GD, "Gula Darah 2 Jam PP", "screenings[diabetes_melitus].gula_darah_2jam_pp"),
+    (_F_GD, "Sudah Berapa Bulan Anda Didiagnosis Diabetes", "screenings[diabetes_melitus].lama_diabetes_bulan (only when the history answer is Ya)"),
+    (_F_TB_RISK[1], "Apakah pasien memiliki pembesaran kelenjar getah bening", "screenings[tbc].pembesaran_kgb"),
+    (_F_TB_EXAM, "Metode Pemeriksaan (untuk terduga TB)", "screenings[tbc].metode_pemeriksaan_tb (TCM, BTA Mikroskopis only; Foto Toraks / Klinis have no ASIK option)"),
+    (_F_PERIO, "Gigi Goyang", "screenings[gigi_dewasa | gigi_lansia].gigi_goyang"),
+    (_F_PERIO, "Penyakit Periodontal", "screenings[gigi_dewasa | gigi_lansia].penyakit_periodontal (Tidak Ada -> Tidak; Gingivitis / Periodontitis -> Ya)"),
+    (_F_KP_SCREEN, "Apakah Anda pernah memiliki riwayat merokok dalam 15 tahun terakhir", "screenings[kanker_paru].riwayat_merokok_15th"),
+    (_F_KP_SCREEN, "Apakah Anda sedang mengalami salah satu atau lebih gejala", "screenings[kanker_paru].gejala_kanker_paru"),
+    (_F_CO, "Kadar CO Pernapasan", "screenings[kanker_paru].kadar_co"),
+    (_F_PAYUDARA, "Pemeriksaan yang dilakukan", "screenings[risiko_kanker_payudara].checkup_result1 / hasil_usg_payudara (SADANIS first)"),
+    (_F_PAYUDARA, "Hasil pemeriksaan SADANIS", "screenings[risiko_kanker_payudara].checkup_result1 (Tidak ada benjolan -> Normal; Benjolan; Curiga Kanker)"),
+    (_F_PAYUDARA, "Hasil pemeriksaan USG Payudara", "screenings[risiko_kanker_payudara].hasil_usg_payudara (Normal; Kista Simpleks -> Simple cyst)"),
+    ("Kanker Leher Rahim", "Apakah pernah melakukan hubungan intim/seksual", "screenings[kanker_serviks].pernah_hubungan_seksual"),
+    (_F_MINICOG, "Katakan seluruh frase berikut", "screenings[pemeriksaan_cog | skilas].clock_drawing_test (Normal -> Benar; Abnormal -> Salah)"),
 ):
     _bc(_f, _p, _path)
 for _form, _table, _spec in ((_F_SPPB, "short_physical_performance", _SPPB), (_F_MNA, "pengkajian_nutrisi", _MNA)):

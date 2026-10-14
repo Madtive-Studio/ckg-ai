@@ -194,7 +194,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 3,
-      "covered_question_count": 1,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Berat Lahir",
@@ -211,8 +211,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[hipotiroid_kongenital].berat_lahir_gram (grams assumed)",
+          "covered_by_converter": true
         },
         {
           "label": "Panjang Badan Lahir (unpublished)",
@@ -305,7 +305,7 @@
       "in_audit": true,
       "audit_form_title": "Demografi Dewasa Laki-Laki",
       "question_count": 3,
-      "covered_question_count": 1,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Status Perkawinan",
@@ -408,8 +408,8 @@
             "Penyandang disabilitas"
           ],
           "live_name": "LPM000056|FRM000006|PPM00000299|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "patient.disability (kk_pendaftaran.disabilitas)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -429,7 +429,7 @@
       "in_audit": true,
       "audit_form_title": "Demografi Dewasa Perempuan",
       "question_count": 4,
-      "covered_question_count": 2,
+      "covered_question_count": 3,
       "questions": [
         {
           "label": "Status Perkawinan",
@@ -564,8 +564,8 @@
             "Penyandang disabilitas"
           ],
           "live_name": "LPM000063|FRM000007|PPM00000299|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "patient.disability (kk_pendaftaran.disabilitas)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -587,7 +587,7 @@
       "in_audit": true,
       "audit_form_title": "Demografi Lansia",
       "question_count": 2,
-      "covered_question_count": 1,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Status Perkawinan",
@@ -662,8 +662,8 @@
             "Penyandang disabilitas"
           ],
           "live_name": "LPM000064|FRM000008|PPM00000299|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "patient.disability (kk_pendaftaran.disabilitas)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -4406,7 +4406,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Hasil Pemeriksaan Kuesioner GPPH",
@@ -4437,8 +4437,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[GPPH].hasil_pemeriksaan",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -4453,7 +4453,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Hasil pemeriksaan KMPE",
@@ -4484,8 +4484,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[KMPE].hasil_pemeriksaan",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -4500,7 +4500,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Hasil pemeriksaan KPSP",
@@ -4535,8 +4535,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[KPSP].hasil_pemeriksaan",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -4555,7 +4555,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Apakah anak Anda memiliki satu atau lebih kondisi berikut ini: 1) Masalah interaksi dengan orang lain seperti kontak mata tidak adekuat; 2) Masalah bahasa dan bicara seperti kosakata bermakna kurang dari 50 dan anak belum mampu merangkai kata, belum bisa menunjuk sesuatu, belum paham instruksi sederhana, atau bicara bahasa planet; 3) Memiliki perilaku berulang tanpa tujuan atau perilaku aneh seperti senang melihat benda berputar, menjejerkan mainan, gerakan stereotipik (flapping, clapping, body rocking), preokupasi terhadap suatu benda, masalah sensoris",
@@ -4581,8 +4581,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[M-CHAT-R].hasil_pemeriksaan",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -5367,7 +5367,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Berapa jumlah gigi karies?",
@@ -5416,8 +5416,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -9983,7 +9983,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 22,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Apakah anak pernah memperoleh imunisasi saat usia 0 sd 24 bulan",
@@ -10084,8 +10084,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.immunization.imunisasi[].hb0_kurang_24_jam (latest answered row)",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah anak anda sudah pernah menerima imunisasi BCG pada usia <1 bulan?",
@@ -12287,7 +12287,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 8,
-      "covered_question_count": 0,
+      "covered_question_count": 5,
       "questions": [
         {
           "label": "Hasil Pemeriksaan Hemoglobin (Hb) dalam g/dL",
@@ -12304,8 +12304,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].hb_result (> 0; not g/L)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan MCV",
@@ -12320,8 +12320,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].mcv_result (> 0)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan MCH",
@@ -12336,8 +12336,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].mch_result (> 0)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan Eritrosit / RBC Count",
@@ -12352,8 +12352,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].rbc_result (> 0)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan Red cell distribution width (RDW)",
@@ -12368,8 +12368,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].rdw_result (> 0)",
+          "covered_by_converter": true
         },
         {
           "label": "Indeks Mentzer",
@@ -13009,7 +13009,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 7,
-      "covered_question_count": 2,
+      "covered_question_count": 3,
       "questions": [
         {
           "label": "Berat Badan Balita",
@@ -13067,8 +13067,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "anamnesis.vitals.measurement_position (kk_kunjungan.posisi_pengukuran: Berdiri / Telentang)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil BB/U",
@@ -14084,7 +14084,7 @@
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 5,
-      "covered_question_count": 0,
+      "covered_question_count": 5,
       "questions": [
         {
           "label": "Hasil Tes Daya Dengar",
@@ -14110,8 +14110,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[TDD].hasil_pemeriksaan",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah ditemukan serumen impaksi?",
@@ -14137,8 +14137,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm.fase_pendengaran.serumen_impeksi_right/left",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah ditemukan infeksi telinga?",
@@ -14164,8 +14164,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm.fase_pendengaran.omsk_congek_right_ear/left_ear",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil pemeriksaan Tes Daya Lihat",
@@ -14191,8 +14191,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[TDL].hasil_pemeriksaan",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah ditemukan selaput mata merah atau kornea keruh atau kelopak mata ada benjolan atau susah berkedip atau posisi bola mata juling atau pupil putih?",
@@ -14218,8 +14218,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[ptm_mata].kelainan_mata_anak",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -15801,7 +15801,7 @@
       "in_audit": true,
       "audit_form_title": "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)",
       "question_count": 6,
-      "covered_question_count": 3,
+      "covered_question_count": 4,
       "questions": [
         {
           "label": "Apakah anak Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh?",
@@ -15814,8 +15814,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tb_anak].batuk_anak",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah berat badan anak Anda turun tanpa penyebab jelas/ BB tidak naik dalam 2 bulan sebelumnya/ nafsu makan turun?",
@@ -15979,6 +15979,16 @@
           "form_name": "Gizi (BB - TB - Lingkar Perut) Perempuan",
           "frm_code": "FRM000051",
           "label": "Pengukuran Tinggi Badan (cm)"
+        }
+      ]
+    },
+    {
+      "path": "anamnesis.vitals.measurement_position (kk_kunjungan.posisi_pengukuran: Berdiri / Telentang)",
+      "destinations": [
+        {
+          "form_name": "Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun",
+          "frm_code": "FRM000016",
+          "label": "Posisi Pengukuran"
         }
       ]
     },
@@ -16263,6 +16273,26 @@
       ]
     },
     {
+      "path": "patient.disability (kk_pendaftaran.disabilitas)",
+      "destinations": [
+        {
+          "form_name": "Demografi Dewasa Laki-Laki",
+          "frm_code": "FRM000006",
+          "label": "Apakah Anda penyandang disabilitas?"
+        },
+        {
+          "form_name": "Demografi Dewasa Perempuan",
+          "frm_code": "FRM000007",
+          "label": "Apakah Anda penyandang disabilitas?"
+        },
+        {
+          "form_name": "Demografi Lansia",
+          "frm_code": "FRM000008",
+          "label": "Apakah Anda penyandang disabilitas?"
+        }
+      ]
+    },
+    {
       "path": "patient.marital_status",
       "destinations": [
         {
@@ -16279,6 +16309,76 @@
           "form_name": "Demografi Lansia",
           "frm_code": "FRM000008",
           "label": "Status Perkawinan"
+        }
+      ]
+    },
+    {
+      "path": "programs.child.sdidtk[GPPH].hasil_pemeriksaan",
+      "destinations": [
+        {
+          "form_name": "Kuesioner Gangguan Pemusatan Perhatian dan Hiperaktivitas (GPPH) - bila ada indikasi",
+          "frm_code": "FRM000086",
+          "label": "Hasil Pemeriksaan Kuesioner GPPH"
+        }
+      ]
+    },
+    {
+      "path": "programs.child.sdidtk[KMPE].hasil_pemeriksaan",
+      "destinations": [
+        {
+          "form_name": "Kuesioner Masalah Perilaku dan Emosional (KMPE) - Jika terindikasi memiliki masalah perilaku dan emosi",
+          "frm_code": "FRM000018",
+          "label": "Hasil pemeriksaan KMPE"
+        }
+      ]
+    },
+    {
+      "path": "programs.child.sdidtk[KPSP].hasil_pemeriksaan",
+      "destinations": [
+        {
+          "form_name": "Kuesioner Pra Skrining Perkembangan (KPSP)",
+          "frm_code": "FRM000017",
+          "label": "Hasil pemeriksaan KPSP"
+        }
+      ]
+    },
+    {
+      "path": "programs.child.sdidtk[M-CHAT-R].hasil_pemeriksaan",
+      "destinations": [
+        {
+          "form_name": "M-CHAT - 1. Penapisan",
+          "frm_code": "FRM000095",
+          "label": "Apakah anak Anda memiliki satu atau lebih kondisi berikut ini: 1) Masalah interaksi dengan orang lain seperti kontak mata tidak adekuat; 2) Masalah bahasa dan bicara seperti kosakata bermakna kurang dari 50 dan anak belum mampu merangkai kata, belum bisa menunjuk sesuatu, belum paham instruksi sederhana, atau bicara bahasa planet; 3) Memiliki perilaku berulang tanpa tujuan atau perilaku aneh seperti senang melihat benda berputar, menjejerkan mainan, gerakan stereotipik (flapping, clapping, body rocking), preokupasi terhadap suatu benda, masalah sensoris"
+        }
+      ]
+    },
+    {
+      "path": "programs.child.sdidtk[TDD].hasil_pemeriksaan",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Hasil Tes Daya Dengar"
+        }
+      ]
+    },
+    {
+      "path": "programs.child.sdidtk[TDL].hasil_pemeriksaan",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Hasil pemeriksaan Tes Daya Lihat"
+        }
+      ]
+    },
+    {
+      "path": "programs.immunization.imunisasi[].hb0_kurang_24_jam (latest answered row)",
+      "destinations": [
+        {
+          "form_name": "Riwayat Imunisasi Rutin Balita",
+          "frm_code": "FRM000171",
+          "label": "Apakah anak anda sudah pernah menerima imunisasi Hepatitis B pada usia <24 jam?"
         }
       ]
     },
@@ -16304,6 +16404,11 @@
           "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
           "frm_code": "FRM000099",
           "label": "Apa Hasil Pemeriksaan Telinga Luar (infeksi telinga)?"
+        },
+        {
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Apakah ditemukan infeksi telinga?"
         }
       ]
     },
@@ -16319,6 +16424,11 @@
           "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
           "frm_code": "FRM000099",
           "label": "Apa Hasil Pemeriksaan Telinga Luar (serumen impaksi)?"
+        },
+        {
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Apakah ditemukan serumen impaksi?"
         }
       ]
     },
@@ -16608,6 +16718,16 @@
       ]
     },
     {
+      "path": "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gigi - Anak",
+          "frm_code": "FRM000131",
+          "label": "Berapa jumlah gigi karies?"
+        }
+      ]
+    },
+    {
       "path": "screenings[hipertensi].diastole_2",
       "destinations": [
         {
@@ -16644,6 +16764,16 @@
           "form_name": "Tekanan Darah Dewasa Lansia",
           "frm_code": "FRM000265",
           "label": "Tekanan Darah Sistolik Ke-2"
+        }
+      ]
+    },
+    {
+      "path": "screenings[hipotiroid_kongenital].berat_lahir_gram (grams assumed)",
+      "destinations": [
+        {
+          "form_name": "Berat Lahir",
+          "frm_code": "FRM000010",
+          "label": "Berat Lahir"
         }
       ]
     },
@@ -16908,6 +17038,16 @@
       ]
     },
     {
+      "path": "screenings[ptm_mata].kelainan_mata_anak",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Apakah ditemukan selaput mata merah atau kornea keruh atau kelopak mata ada benjolan atau susah berkedip atau posisi bola mata juling atau pupil putih?"
+        }
+      ]
+    },
+    {
       "path": "screenings[ptm_mata].pupil_kanan/pupil_kiri (only OV000393 Suspek Katarak -> Curiga Katarak)",
       "destinations": [
         {
@@ -17168,6 +17308,16 @@
       ]
     },
     {
+      "path": "screenings[tb_anak].batuk_anak",
+      "destinations": [
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)",
+          "frm_code": null,
+          "label": "Apakah anak Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh?"
+        }
+      ]
+    },
+    {
       "path": "screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)",
       "destinations": [
         {
@@ -17269,6 +17419,56 @@
           "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)",
           "frm_code": null,
           "label": "Apakah dilakukan pemeriksaan radiografi toraks?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].hb_result (> 0; not g/L)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan Hemoglobin (Hb) dalam g/dL"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].mch_result (> 0)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan MCH"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].mcv_result (> 0)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan MCV"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].rbc_result (> 0)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan Eritrosit / RBC Count"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].rdw_result (> 0)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan Red cell distribution width (RDW)"
         }
       ]
     }

@@ -66,6 +66,16 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
   - Cervical (women ≥ 30): `kanker_serviks.pernah_hubungan_seksual` Ya/Tidak.
   - Mental health (PHQ-4): the adult (`kategori_usia` = Dewasa) form of `kesehatan_jiwa` is PHQ-2 (`question1-2`) + GAD-2 (`question3-4`) with the same four options as ASIK, so no new column was needed (an earlier version of this doc said Medisy had no PHQ-4: wrong).
   - Inspekulo / IVA (women ≥ 30): `kanker_serviks.result_of_inspekulo_checkup` (SNOMED 395100000 → Normal, 315266007 → Curiga kanker) only when `is_inspekulo_performed` = 1, and `result_of_iva_checkup` (id 1/5 → Negatif, 2/6 → Positif; servisitis and suspected cancer have no ASIK option) only when `is_iva_performed` = 1. The form pre-selects a result and the controller writes IVA id 5 after a normal speculum exam, so the performed flag is the only trustworthy signal.
+  - **Children and registration** (columns added by `db/2026/20261015-add-ckg-asik-remaining-fields`; every one NULL until answered, so nothing is sent for old rows):
+    - Disability: `patient.disability` (registration, `kk_pendaftaran.disabilitas`: Non disabilitas / Penyandang disabilitas) → "Apakah Anda penyandang disabilitas?" of the three Demografi forms.
+    - Growth position: `anamnesis.vitals.measurement_position` (Berdiri / Telentang) → "Posisi Pengukuran" of the 1-5 year growth form.
+    - Caries: `jumlah_gigi_karies` of `gigi_mulut_balita` / `gigi_mulut_remaja` (Tidak ada, 1, 2, 3, >3) → "Berapa jumlah gigi karies?" (ASIK option text assumed to be the plain number).
+    - Child TB cough: `tb_anak.batuk_anak` (Tidak batuk / Ya, kurang dari 2 minggu / Ya, lebih dari 2 minggu) → the cough question of the child X-Ray TB form.
+    - Birth weight: `hipotiroid_kongenital.berat_lahir_gram` → "Berat Lahir" (grams assumed); newborns only.
+    - Hepatitis B under 24 hours: `programs.immunization.imunisasi[].hb0_kurang_24_jam` (Sudah / Belum, latest answered row) → newborns only.
+    - Thalassemia follow-up (age 1-6): `thalasemia.hb_result / mcv_result / mch_result / rbc_result / rdw_result` (the `*_result` columns hold the measurement, `*_value` is the reference range); only a number above 0; Hb is skipped when its unit is g/L.
+    - Toddler ear / eye form (age ≤ 6): serumen and infection from the PTM hearing phase (same columns as the adult form), the eye finding from `ptm_mata.kelainan_mata_anak` (Normal / Curiga kelainan mata), the hearing and vision test results from the TDD / TDL instruments below.
+    - Development screening results (age ≤ 6): `programs.child.sdidtk[]` rows (one per instrument and age, category KPSP / KMPE / GPPH / M-CHAT-R / TDD / TDL) with `hasil_pemeriksaan`: the nurse picks the ASIK wording in Medisy, the converter sends the latest row whose text is one of the ASIK options and ignores anything else.
   - Mini-Cog follow-up: `pemeriksaan_cog.clock_drawing_test` (else `kk_skilas`) Normal → "Benar", Abnormal → "Salah".
 - **Pediatric:** vitals-driven growth, BP, GDS; TB-child from the tbc screening; syphilis only on an A50-A53 diagnosis.
 
@@ -75,11 +85,12 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 |---|---|
 | Perilaku Merokok: type, years, cigarettes/day, ex-smoker details | not on the live ASIK form (2 questions); the school-student smoking table is not the adult survey |
 | Tingkat Aktivitas Fisik: the other 4 questions | Medisy has one yes/no (insufficient activity) |
-| HPV-DNA, kanker usus, AD-8, skin diseases, disabilitas | no Medisy source |
+| HPV-DNA, kanker usus, AD-8, skin diseases | no Medisy source |
+| Curiga Talasemia (and the Mentzer / Shine & LAL indices) | not sent: ASIK appears to compute them from Hb / MCV / MCH / RBC / RDW (unverified) |
 | Kesehatan Jiwa for pregnant adults (EPDS), children and teenagers (SDQ) | different instruments; only the adult PHQ-2 + GAD-2 is PHQ-4 |
 | Payudara: breast USG "Tumor Jinak" / "Curiga Keganasan"; TB method "Foto Toraks" / "Klinis" | no matching ASIK option |
 | Second BP, GDS 2, months since diagnosis | mapped, but only filled where nurses record them (new Medisy columns, NULL by default) |
-| KPSP, KMPE, GPPH, M-CHAT, imunisasi balita, talasemia, birth weight | no Medisy source |
+| Rest of the toddler immunisation schedule (BCG, polio, DPT …) | only the Hepatitis B < 24 h question is stored |
 | SKILAS malnutrisi LiLA question | no Medisy source (the `gizi` screening covers the other two, see §3) |
 
 `kk_ckg_log` is ignored (decision D3). Visit-level data with no ASIK target (spo2, heart rate, temperature, prescriptions, procedures, religion, occupation, education, blood type) is unused.
@@ -96,6 +107,7 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 8. ~~Shared / placeholder NIK~~ **Resolved** — decision D13 in `MEDISY_MIGRATION.md`: the API flags `shared`, ckg-ai skips those visits.
 
 9. **Open sign-offs for the ASIK CKG columns (2026-10-14):** (a) periodontal: gingivitis / periodontitis → "Ya"; (b) clock drawing Normal / Abnormal → "Benar" / "Salah"; (c) breast USG options without an ASIK equivalent stay unsent; (d) months since diagnosis are sent only after a "Ya" history answer. Until a clinician confirms (a) and (b), review the first real sends by hand.
+10. **Open sign-offs for the child columns (2026-10-15):** (a) birth weight unit is grams; (b) the live ASIK option text of "jumlah gigi karies" is the plain number; (c) "Curiga Talasemia" is computed by ASIK; (d) the toddler age band (≤ 6 years) for the SDIDTK, ear / eye and thalassemia forms; (e) the nurse, not a rule, decides the SDIDTK result.
 
 Still open: the numerator/denominator order of real eye entries (Q2), and the questions beyond the converter (unmapped ASIK forms with no Medisy table found yet) which the loop agent hunts.
 
@@ -173,6 +185,7 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 |---|---|
 | Berat Badan Balita | `anamnesis.vitals.weight_kg` |
 | Pengukuran Tinggi Badan (cm) | `anamnesis.vitals.height_cm` |
+| Posisi Pengukuran | `anamnesis.vitals.measurement_position (kk_kunjungan.posisi_pengukuran: Berdiri / Telentang)` |
 
 ### Skrining Pertumbuhan - Balita dan Anak Prasekolah 5-6 Tahun
 
@@ -208,10 +221,17 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | Apakah Anak Anda pernah dinyatakan diabetes atau kencing manis oleh Dokter? | `diagnoses / history.diagnoses ICD E10-E14 (R-DIAG: only turns 'Ya' on)` |
 | Gula Darah Sewaktu (GDS) | `anamnesis.vitals.gds` |
 
+### Pemeriksaan Gigi - Anak
+
+| ASIK field | Medisy source |
+|---|---|
+| Berapa jumlah gigi karies? | `screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies` |
+
 ### Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)
 
 | ASIK field | Medisy source |
 |---|---|
+| Apakah anak Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh? | `screenings[tb_anak].batuk_anak` |
 | Apakah berat badan anak Anda turun tanpa penyebab jelas/ BB tidak naik dalam 2 bulan sebel | `screenings[tbc].bb_turun` |
 | Apakah anak anda mengalami demam hilang timbul tanpa sebab yang jelas lebih dari 2 minggu? | `screenings[tbc].demam` |
 | Apakah dilakukan pemeriksaan radiografi toraks? | `screenings[tbc].pemeriksaan_foto_toraks / abnormalitas_tbc` |
@@ -226,7 +246,58 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 
 | ASIK field | Medisy source |
 |---|---|
+| Berat Lahir | `screenings[hipotiroid_kongenital].berat_lahir_gram (grams assumed)` |
 | Berat Badan Saat Ini (usia >24 jam) | `anamnesis.vitals.weight_kg (birth weight has no Medisy source)` |
+
+### Riwayat Imunisasi Rutin Balita
+
+| ASIK field | Medisy source |
+|---|---|
+| Apakah anak anda sudah pernah menerima imunisasi Hepatitis B pada usia <24 jam? | `programs.immunization.imunisasi[].hb0_kurang_24_jam (latest answered row)` |
+
+### Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah
+
+| ASIK field | Medisy source |
+|---|---|
+| Hasil Pemeriksaan Hemoglobin (Hb) dalam g/dL | `screenings[thalasemia].hb_result (> 0; not g/L)` |
+| Hasil Pemeriksaan MCV | `screenings[thalasemia].mcv_result (> 0)` |
+| Hasil Pemeriksaan MCH | `screenings[thalasemia].mch_result (> 0)` |
+| Hasil Pemeriksaan Eritrosit / RBC Count | `screenings[thalasemia].rbc_result (> 0)` |
+| Hasil Pemeriksaan Red cell distribution width (RDW) | `screenings[thalasemia].rdw_result (> 0)` |
+
+### Skrining Telinga dan Mata - Balita dan Anak Prasekolah
+
+| ASIK field | Medisy source |
+|---|---|
+| Hasil Tes Daya Dengar | `programs.child.sdidtk[TDD].hasil_pemeriksaan` |
+| Hasil pemeriksaan Tes Daya Lihat | `programs.child.sdidtk[TDL].hasil_pemeriksaan` |
+| Apakah ditemukan selaput mata merah atau kornea keruh atau kelopak mata ada benjolan atau  | `screenings[ptm_mata].kelainan_mata_anak` |
+| Apakah ditemukan serumen impaksi? | `programs.ptm.fase_pendengaran.serumen_impeksi_right/left` |
+| Apakah ditemukan infeksi telinga? | `programs.ptm.fase_pendengaran.omsk_congek_right_ear/left_ear` |
+
+### Kuesioner Masalah Perilaku dan Emosional (KMPE) - Jika terindikasi memiliki masalah perilaku dan emosi
+
+| ASIK field | Medisy source |
+|---|---|
+| Hasil pemeriksaan KMPE | `programs.child.sdidtk[KMPE].hasil_pemeriksaan` |
+
+### Kuesioner Pra Skrining Perkembangan (KPSP)
+
+| ASIK field | Medisy source |
+|---|---|
+| Hasil pemeriksaan KPSP | `programs.child.sdidtk[KPSP].hasil_pemeriksaan` |
+
+### Kuesioner Gangguan Pemusatan Perhatian dan Hiperaktivitas (GPPH) - bila ada indikasi
+
+| ASIK field | Medisy source |
+|---|---|
+| Hasil Pemeriksaan Kuesioner GPPH | `programs.child.sdidtk[GPPH].hasil_pemeriksaan` |
+
+### M-CHAT - 1. Penapisan
+
+| ASIK field | Medisy source |
+|---|---|
+| Apakah anak Anda memiliki satu atau lebih kondisi berikut ini: 1) Masalah interaksi dengan | `programs.child.sdidtk[M-CHAT-R].hasil_pemeriksaan` |
 
 ### Penapisan dan Pemeriksaan Sifilis Anak
 
@@ -289,18 +360,21 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 |---|---|
 | Status Perkawinan | `patient.marital_status` |
 | Apakah Anda sedang hamil? | `programs.kia.hamil (an active record turns it on; absence is not 'Tidak')` |
+| Apakah Anda penyandang disabilitas? | `patient.disability (kk_pendaftaran.disabilitas)` |
 
 ### Demografi Dewasa Laki-Laki
 
 | ASIK field | Medisy source |
 |---|---|
 | Status Perkawinan | `patient.marital_status` |
+| Apakah Anda penyandang disabilitas? | `patient.disability (kk_pendaftaran.disabilitas)` |
 
 ### Demografi Lansia
 
 | ASIK field | Medisy source |
 |---|---|
 | Status Perkawinan | `patient.marital_status` |
+| Apakah Anda penyandang disabilitas? | `patient.disability (kk_pendaftaran.disabilitas)` |
 
 ### Pemeriksaan Inspekulo dan IVA
 

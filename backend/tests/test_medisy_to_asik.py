@@ -736,3 +736,113 @@ def test_inspekulo_iva_form_is_for_women_from_30_only():
     k = scr("kanker_serviks", is_inspekulo_performed=1, result_of_inspekulo_checkup=SERVIKS_NORMAL)
     assert IVA_FORM not in medisy_to_asik(bundle(gender="L", years=40, screenings=[k]))
     assert IVA_FORM not in medisy_to_asik(bundle(gender="P", years=25, screenings=[k]))
+
+
+# ───────── children and registration (himed-app db/2026/20261015-add-ckg-asik-remaining-fields) ─────────
+
+
+def child_bundle(years, *, screenings=None, programs=None, vitals=None, disability=None):
+    b = bundle(gender="L", years=years, screenings=screenings, programs=programs, vitals=vitals,
+               dob="2025-06-01" if years < 1 else "2022-06-01")
+    b["patient"]["disability"] = disability
+    return b
+
+
+@pytest.mark.parametrize("value, expected", [("Penyandang disabilitas", "Penyandang disabilitas"), ("Non disabilitas", "Non disabilitas"),
+                                             (None, None), ("", None), ("Lainnya", None)])
+def test_disability_comes_from_patient_registration(value, expected):
+    b = bundle(gender="P", years=30)
+    b["patient"]["disability"] = value
+    out = next(v for k, v in medisy_to_asik(b).items() if k.startswith("Demografi"))
+    assert out.get("Apakah Anda penyandang disabilitas?") == expected
+
+
+def test_measurement_position_for_one_to_four_year_olds():
+    out = medisy_to_asik(child_bundle(3, vitals={"measurement_position": "Telentang"}))
+    assert out["Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun"]["Posisi Pengukuran"] == "Telentang"
+    assert "Posisi Pengukuran" not in medisy_to_asik(child_bundle(3, vitals={"measurement_position": "Duduk"}))[
+        "Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun"]
+
+
+@pytest.mark.parametrize("table", ["gigi_mulut_balita", "gigi_mulut_remaja"])
+@pytest.mark.parametrize("value, expected", [("Tidak ada", "Tidak ada"), ("2", "2"), (">3", ">3"), (None, None), ("5", None)])
+def test_carious_teeth_count(table, value, expected):
+    out = medisy_to_asik(child_bundle(4, screenings=[scr(table, jumlah_gigi_karies=value)]))["Pemeriksaan Gigi - Anak"]
+    assert out.get("Berapa jumlah gigi karies?") == expected
+
+
+@pytest.mark.parametrize("value, expected", [("Tidak batuk", "Tidak batuk"), ("Ya, kurang dari 2 minggu", "Ya, kurang dari 2 minggu"),
+                                             ("Ya, lebih dari 2 minggu", "Ya, lebih dari 2 minggu"), (None, None), ("Kadang", None)])
+def test_child_tb_cough(value, expected):
+    out = medisy_to_asik(child_bundle(5, screenings=[scr("tb_anak", batuk_anak=value)]))["Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)"]
+    assert out.get(next((k for k in out if "batuk" in k), "")) == expected
+
+
+def test_birth_weight_and_hepatitis_b_under_24_hours_for_newborns():
+    imm = {"immunization": {"imunisasi": [{"id": 1, "tanggal": "2026-09-02", "hb0_kurang_24_jam": "Belum"},
+                                          {"id": 2, "tanggal": "2026-09-09", "hb0_kurang_24_jam": "Sudah"}]}}
+    out = medisy_to_asik(child_bundle(0, screenings=[scr("hipotiroid_kongenital", berat_lahir_gram=3100)], programs=imm))
+    assert out["Berat Lahir"]["Berat Lahir"] == 3100
+    assert list(out["Riwayat Imunisasi Rutin Balita"].values()) == ["Sudah"]                     # the latest answered row
+
+
+@pytest.mark.parametrize("weight", [None, 0, "0", "abc"])
+def test_unanswered_birth_weight_and_hb0_are_not_sent(weight):
+    imm = {"immunization": {"imunisasi": [{"id": 1, "tanggal": "2026-09-02", "hb0_kurang_24_jam": None}]}}
+    out = medisy_to_asik(child_bundle(0, screenings=[scr("hipotiroid_kongenital", berat_lahir_gram=weight)], programs=imm))
+    assert "Berat Lahir" not in out["Berat Lahir"] and out["Riwayat Imunisasi Rutin Balita"] == {}
+
+
+def test_thalassemia_follow_up_values_and_units():
+    t = scr("thalasemia", hb_result="11,2", hb_unit="g/dL", mcv_result="78", mch_result="0", rbc_result="4.5", rdw_result="-", result_final="Negatif Thalasemia")
+    out = medisy_to_asik(child_bundle(3, screenings=[t]))["Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah"]
+    assert out == {"Hasil Pemeriksaan Hemoglobin (Hb) dalam g/dL": 11.2, "Hasil Pemeriksaan MCV": 78,
+                   "Hasil Pemeriksaan Eritrosit / RBC Count": 4.5}
+    in_g_per_l = scr("thalasemia", hb_result="112", hb_unit="g/L")
+    assert medisy_to_asik(child_bundle(3, screenings=[in_g_per_l]))["Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah"] == {}
+
+
+def test_toddler_ear_and_eye_form():
+    programs = {"ptm": {"fase_pendengaran": [{"serumen_impeksi_right": 1, "serumen_impeksi_left": 0, "omsk_congek_right_ear": 0, "omsk_congek_left_ear": 0}]},
+                "child": {"sdidtk": [{"id": 1, "sdidtk_category": "TDD", "created_at": "2026-09-02", "hasil_pemeriksaan": "Sesuai Umur"},
+                                     {"id": 2, "sdidtk_category": "TDL", "created_at": "2026-09-02",
+                                      "hasil_pemeriksaan": "Daya lihat anak baik (visus >6/12 atau >6/60)"}]}}
+    out = medisy_to_asik(child_bundle(4, screenings=[scr("ptm_mata", kelainan_mata_anak="Curiga kelainan mata")], programs=programs))
+    form = out["Skrining Telinga dan Mata - Balita dan Anak Prasekolah"]
+    assert form["Hasil Tes Daya Dengar"] == "Sesuai Umur"
+    assert form["Hasil pemeriksaan Tes Daya Lihat"] == "Daya lihat anak baik (visus >6/12 atau >6/60)"
+    assert form["Apakah ditemukan serumen impaksi?"] == "Ada serumen impaksi"
+    assert form["Apakah ditemukan infeksi telinga?"] == "Tidak ada infeksi telinga"
+    assert form[next(k for k in form if k.startswith("Apakah ditemukan selaput mata merah"))] == "Curiga kelainan mata"
+
+
+@pytest.mark.parametrize("category, text, form_prefix, label_prefix", [
+    ("KPSP", "Perkembangan meragukan", "Kuesioner Pra Skrining Perkembangan", "Hasil pemeriksaan KPSP"),
+    ("KMPE", "Ada 1 jawaban ‘Ya’", "Kuesioner Masalah Perilaku dan Emosional", "Hasil pemeriksaan KMPE"),
+    ("GPPH", "Nilai total ≧ 13", "Kuesioner Gangguan Pemusatan Perhatian", "Hasil Pemeriksaan Kuesioner GPPH"),
+    ("M-CHAT-R", "Ya", "M-CHAT - 1. Penapisan", "Apakah anak Anda memiliki satu atau lebih kondisi"),
+])
+def test_sdidtk_instrument_results(category, text, form_prefix, label_prefix):
+    programs = {"child": {"sdidtk": [{"id": 1, "sdidtk_category": category, "created_at": "2026-09-02", "hasil_pemeriksaan": text}]}}
+    out = medisy_to_asik(child_bundle(3, programs=programs))
+    form = next(f for f in out if f.startswith(form_prefix))
+    assert list(out[form].values()) == [text]
+    assert next(iter(out[form])).startswith(label_prefix)
+
+
+def test_sdidtk_uses_the_latest_answered_row_and_ignores_unknown_wording():
+    rows = [{"id": 1, "sdidtk_category": "KPSP", "created_at": "2026-03-01", "hasil_pemeriksaan": "Perkembangan sesuai usia"},
+            {"id": 2, "sdidtk_category": "KPSP", "created_at": "2026-09-01", "hasil_pemeriksaan": "Perkembangan meragukan"},
+            {"id": 3, "sdidtk_category": "KPSP", "created_at": "2026-10-01", "hasil_pemeriksaan": "meragukan banget"},
+            {"id": 4, "sdidtk_category": "DDTK", "created_at": "2026-10-01", "hasil_pemeriksaan": "Ya"},
+            {"id": 5, "sdidtk_category": "KMPE", "created_at": "2026-10-01", "hasil_pemeriksaan": None}]
+    out = medisy_to_asik(child_bundle(3, programs={"child": {"sdidtk": rows}}))
+    assert list(out["Kuesioner Pra Skrining Perkembangan (KPSP)"].values()) == ["Perkembangan meragukan"]
+    assert next(v for k, v in out.items() if k.startswith("Kuesioner Masalah Perilaku")) == {}
+
+
+def test_toddler_forms_are_not_emitted_for_older_children_or_adults():
+    older = medisy_to_asik(child_bundle(8, programs={"child": {"sdidtk": [{"id": 1, "sdidtk_category": "KPSP", "hasil_pemeriksaan": "Perkembangan meragukan"}]}}))
+    assert "Kuesioner Pra Skrining Perkembangan (KPSP)" not in older
+    assert "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah" not in older
+    assert "Skrining Telinga dan Mata - Balita dan Anak Prasekolah" not in medisy_to_asik(bundle(years=45))

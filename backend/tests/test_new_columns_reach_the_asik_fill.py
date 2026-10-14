@@ -71,7 +71,9 @@ def _choices(form_title: str, label_prefix: str):
             if label.startswith(label_prefix):
                 ch = q.get("choices")
                 if isinstance(ch, list) and ch:
-                    return [c["line"] for c in ch if isinstance(c, dict)]
+                    # the catalogue stores the numeric options of "jumlah gigi karies" as 1.0 / 2.0 / 3.0; the live text is assumed to be "1" / "2" / "3"
+                    return [str(int(c["line"])) if isinstance(c["line"], float) and c["line"].is_integer() else c["line"]
+                            for c in ch if isinstance(c, dict)]
     return None
 
 
@@ -111,3 +113,75 @@ def test_the_new_answers_are_the_ones_the_fill_loop_matches_by_label():
         keys = [it["merged_key"] for it in items if it["merged_key"].startswith(prefix)]
         assert len(keys) == 1, (title, prefix, keys)
         assert keys[0] in ASIK_FORM_LABELS[_form], (title, keys[0])
+
+
+# ───────── children and registration (db/2026/20261015-add-ckg-asik-remaining-fields) ─────────
+
+EXPECTED_CHILD = (
+    ("Demografi Dewasa Perempuan", "Apakah Anda penyandang disabilitas", "Penyandang disabilitas"),
+    ("Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun", "Posisi Pengukuran", "Telentang"),
+    ("Pemeriksaan Gigi - Anak", "Berapa jumlah gigi karies", "2"),
+    ("Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)", "Apakah anak Anda pernah atau sedang mengalami batuk", "Ya, lebih dari 2 minggu"),
+    ("Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah", "Hasil Pemeriksaan Hemoglobin (Hb)", 11.2),
+    ("Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah", "Hasil Pemeriksaan MCV", 78),
+    ("Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah", "Hasil Pemeriksaan MCH", 26),
+    ("Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah", "Hasil Pemeriksaan Eritrosit", 4.5),
+    ("Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah", "Hasil Pemeriksaan Red cell distribution width", 13.1),
+    ("Skrining Telinga dan Mata - Balita dan Anak Prasekolah", "Hasil Tes Daya Dengar", "Sesuai Umur"),
+    ("Skrining Telinga dan Mata - Balita dan Anak Prasekolah", "Hasil pemeriksaan Tes Daya Lihat", "Daya lihat anak baik (visus >6/12 atau >6/60)"),
+    ("Skrining Telinga dan Mata - Balita dan Anak Prasekolah", "Apakah ditemukan selaput mata merah", "Curiga kelainan mata"),
+    ("Skrining Telinga dan Mata - Balita dan Anak Prasekolah", "Apakah ditemukan serumen impaksi", "Ada serumen impaksi"),
+    ("Skrining Telinga dan Mata - Balita dan Anak Prasekolah", "Apakah ditemukan infeksi telinga", "Tidak ada infeksi telinga"),
+    ("Kuesioner Pra Skrining Perkembangan (KPSP)", "Hasil pemeriksaan KPSP", "Perkembangan meragukan"),
+    ("Kuesioner Masalah Perilaku dan Emosional (KMPE) - Jika terindikasi memiliki masalah perilaku dan emosi", "Hasil pemeriksaan KMPE", "Ada 1 jawaban \u2018Ya\u2019"),
+    ("Kuesioner Gangguan Pemusatan Perhatian dan Hiperaktivitas (GPPH) - bila ada indikasi", "Hasil Pemeriksaan Kuesioner GPPH", "Nilai total \u2267 13"),
+    ("M-CHAT - 1. Penapisan", "Apakah anak Anda memiliki satu atau lebih kondisi", "Tidak"),
+)
+EXPECTED_NEWBORN = (
+    ("Berat Lahir", "Berat Lahir", 3100),
+    ("Riwayat Imunisasi Rutin Balita", "Apakah anak anda sudah pernah menerima imunisasi Hepatitis B", "Sudah"),
+)
+
+
+def _fictitious_toddler():
+    programs = {"ptm": {"fase_pendengaran": [{"serumen_impeksi_right": 1, "serumen_impeksi_left": 0, "omsk_congek_right_ear": 0, "omsk_congek_left_ear": 0}]},
+                "child": {"sdidtk": [
+                    {"id": 1, "sdidtk_category": c, "created_at": "2026-09-02", "hasil_pemeriksaan": v} for c, v in (
+                        ("KPSP", "Perkembangan meragukan"), ("KMPE", "Ada 1 jawaban \u2018Ya\u2019"), ("GPPH", "Nilai total \u2267 13"),
+                        ("M-CHAT-R", "Tidak"), ("TDD", "Sesuai Umur"), ("TDL", "Daya lihat anak baik (visus >6/12 atau >6/60)"))]}}
+    screenings = [scr("gigi_mulut_balita", jumlah_gigi_karies="2"), scr("tb_anak", batuk_anak="Ya, lebih dari 2 minggu"),
+                  scr("thalasemia", hb_result="11,2", hb_unit="g/dL", mcv_result="78", mch_result="26", rbc_result="4.5", rdw_result="13.1"),
+                  scr("ptm_mata", kelainan_mata_anak="Curiga kelainan mata")]
+    b = bundle(gender="L", years=3, screenings=screenings, programs=programs, vitals={"measurement_position": "Telentang"}, dob="2022-06-01")
+    return b
+
+
+def _fictitious_newborn():
+    programs = {"immunization": {"imunisasi": [{"id": 1, "tanggal": "2026-09-02", "hb0_kurang_24_jam": "Sudah"}]}}
+    return bundle(gender="P", years=0, screenings=[scr("hipotiroid_kongenital", berat_lahir_gram=3100)], programs=programs, dob="2026-08-20")
+
+
+def _check(expected_rows, out):
+    index = sync._build_section_index(out)
+    problems = []
+    for title, prefix, expected in expected_rows:
+        items = sync._match_section_items(index, sync._slugify_form(title))
+        hit = next((it for it in items if it["merged_key"].startswith(prefix)), None)
+        if hit is None or hit["merged_value"] != expected:
+            problems.append((title[:40], prefix, expected, hit and hit["merged_value"]))
+        elif not isinstance(expected, (int, float)):
+            options = _choices(title, prefix)
+            if options is None or expected not in options:
+                problems.append((title[:40], prefix, expected, "not an ASIK option", options))
+    return problems
+
+
+def test_child_and_registration_answers_reach_the_fill_with_valid_options():
+    adult = bundle(gender="P", years=30)
+    adult["patient"]["disability"] = "Penyandang disabilitas"
+    problems = _check(EXPECTED_CHILD[:1], medisy_to_asik(adult)) + _check(EXPECTED_CHILD[1:], medisy_to_asik(_fictitious_toddler()))
+    assert not problems, problems
+
+
+def test_newborn_answers_reach_the_fill_with_valid_options():
+    assert not _check(EXPECTED_NEWBORN, medisy_to_asik(_fictitious_newborn()))

@@ -345,6 +345,9 @@ def _status_perkawinan(v: Any) -> str | None:
             "duda": "Cerai Mati", "janda/duda": "Cerai Mati"}.get(s)
 
 
+_DISABILITAS = {_norm(o): o for o in ("Non disabilitas", "Penyandang disabilitas")}     # patient registration (kk_pendaftaran.disabilitas)
+
+
 def _map_demografi(b: dict, gender: str, years: int) -> tuple[str, dict[str, Any]]:
     kawin = _status_perkawinan((b.get("patient") or {}).get("marital_status"))
     if years >= 60:
@@ -354,6 +357,7 @@ def _map_demografi(b: dict, gender: str, years: int) -> tuple[str, dict[str, Any
     out: dict[str, Any] = {}
     if kawin:
         out[_q(form, "Status Perkawinan")] = kawin
+    _put(out, _q(form, "Apakah Anda penyandang disabilitas"), _DISABILITAS.get(_norm((b.get("patient") or {}).get("disability"))))
     # R-DIAG: an active pregnancy record turns "hamil" ON; its absence is not a "Tidak".
     if gender == "Perempuan" and years < 60 and _program_rows(b, "kia", "hamil"):
         out[_q(form, "Apakah Anda sedang hamil?")] = "Ya"
@@ -1081,6 +1085,117 @@ _SKIN_SHELLS = ("Pemeriksaan Penyakit Frambusia (untuk daerah endemis atau beris
                 "Pemeriksaan Penyakit Kusta", "Pemeriksaan Penyakit Skabies")
 
 
+# ─── children: answers Medisy stores since db/2026/20261015-add-ckg-asik-remaining-fields ────────────────────────────────
+
+_F_PERTUMBUHAN_15 = "Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun"
+_POSISI = {_norm("Berdiri"): "Berdiri", _norm("Telentang"): "Telentang"}
+_F_GIGI_ANAK = "Pemeriksaan Gigi - Anak"
+_KARIES = {_norm(o): o for o in ("Tidak ada", "1", "2", "3", ">3")}      # option text assumed to be the plain number (the catalogue shows 1.0 / 2.0 / 3.0)
+_F_XRAY_ANAK = "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)"
+_BATUK_ANAK = {_norm(o): o for o in ("Tidak batuk", "Ya, kurang dari 2 minggu", "Ya, lebih dari 2 minggu")}
+_F_BERAT_LAHIR = "Berat Lahir"
+_F_IMUNISASI = "Riwayat Imunisasi Rutin Balita"
+_HB0 = {_norm("Sudah"): "Sudah", _norm("Belum"): "Belum"}
+_F_TALASEMIA = "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah"
+_TALASEMIA = (("hb_result", "Hasil Pemeriksaan Hemoglobin (Hb)"), ("mcv_result", "Hasil Pemeriksaan MCV"), ("mch_result", "Hasil Pemeriksaan MCH"),
+              ("rbc_result", "Hasil Pemeriksaan Eritrosit"), ("rdw_result", "Hasil Pemeriksaan Red cell distribution width"))
+_F_TELMAT_BALITA = "Skrining Telinga dan Mata - Balita dan Anak Prasekolah"
+_MATA_ANAK = {_norm(o): o for o in ("Normal", "Curiga kelainan mata")}
+_KMPE_FORM = "Kuesioner Masalah Perilaku dan Emosional (KMPE) - Jika terindikasi memiliki masalah perilaku dan emosi"
+_GPPH_FORM = "Kuesioner Gangguan Pemusatan Perhatian dan Hiperaktivitas (GPPH) - bila ada indikasi"
+# SDIDTK instrument -> (ASIK form, question label prefix, ASIK options). The nurse picks the ASIK wording in Medisy (kk_sdidtk.hasil_pemeriksaan).
+_SDIDTK = {
+    "KPSP": ("Kuesioner Pra Skrining Perkembangan (KPSP)", "Hasil pemeriksaan KPSP",
+             ("Perkembangan sesuai usia", "Perkembangan meragukan", "Perkembangan curiga adanya penyimpangan")),
+    "KMPE": (_KMPE_FORM, "Hasil pemeriksaan KMPE", ("Tidak ada jawaban \u2018Ya\u2019", "Ada 1 jawaban \u2018Ya\u2019", "Ada 2 jawaban \u2018Ya\u2019")),
+    "GPPH": (_GPPH_FORM, "Hasil Pemeriksaan Kuesioner GPPH", ("Nilai total <13", "Nilai total <13, namun pemeriksa merasa ragu", "Nilai total \u2267 13")),
+    "M-CHAT-R": ("M-CHAT - 1. Penapisan", "Apakah anak Anda memiliki satu atau lebih kondisi berikut ini", ("Ya", "Tidak")),
+    "TDD": (_F_TELMAT_BALITA, "Hasil Tes Daya Dengar", ("Sesuai Umur", "Ada kemungkinan penyimpangan")),
+    "TDL": (_F_TELMAT_BALITA, "Hasil pemeriksaan Tes Daya Lihat",
+            ("Daya lihat anak baik (visus >6/12 atau >6/60)", "Daya lihat anak kurang (visus <6/12 atau <6/60)")),
+}
+
+
+def _map_gigi_anak(scr: dict) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key in ("gigi_mulut_balita", "gigi_mulut_remaja"):
+        val = _KARIES.get(_norm((scr.get(key) or {}).get("jumlah_gigi_karies")))
+        if val:
+            out[_q(_F_GIGI_ANAK, "Berapa jumlah gigi karies")] = val
+            break
+    return out
+
+
+def _map_birth_weight(scr: dict) -> int | float | None:
+    """Birth weight in grams, from the newborn (hipotiroid kongenital) screening. The unit is assumed to be ASIK's: grams."""
+    return _pos((scr.get("hipotiroid_kongenital") or {}).get("berat_lahir_gram"))
+
+
+def _map_hb0(b: dict) -> dict[str, Any]:
+    """Hepatitis B given under 24 hours: the latest immunisation row that has an answer (Sudah / Belum)."""
+    rows = [r for r in _program_rows(b, "immunization", "imunisasi") if _HB0.get(_norm(r.get("hb0_kurang_24_jam")))]
+    if not rows:
+        return {}
+    latest = max(rows, key=lambda r: (_clean(r.get("tanggal")) or "", _num(r.get("id")) or 0))
+    return {_q(_F_IMUNISASI, "Apakah anak anda sudah pernah menerima imunisasi Hepatitis B"): _HB0[_norm(latest.get("hb0_kurang_24_jam"))]}
+
+
+def _map_talasemia(scr: dict) -> dict[str, Any]:
+    """Hb / MCV / MCH / RBC / RDW of the thalassemia screening (the result columns; the *_value columns are reference ranges).
+    "Curiga Talasemia" and the Mentzer / Shine & LAL indices are computed by ASIK from these. A zero or text result is never sent."""
+    t = scr.get("thalasemia") or {}
+    out: dict[str, Any] = {}
+    unit = (_clean(t.get("hb_unit")) or "").lower().replace(" ", "")
+    for col, prefix in _TALASEMIA:
+        if col == "hb_result" and unit.startswith("g/l"):          # ASIK wants g/dL; a g/L entry is not converted
+            continue
+        _put(out, _q(_F_TALASEMIA, prefix), _pos(t.get(col)))
+    return out
+
+
+def _map_telinga_mata_balita(b: dict, scr: dict) -> dict[str, Any]:
+    """Toddler ear / eye form: the otoscopy findings come from the PTM hearing phase (same columns as the adult form), the eye finding
+    from the vision screening; the hearing and vision test results are the TDD / TDL SDIDTK instruments."""
+    out: dict[str, Any] = {}
+    rows = [r for r in _program_rows(b, "ptm", "fase_pendengaran")
+            if any(r.get(c) is not None for c in ("serumen_impeksi_right", "serumen_impeksi_left", "omsk_congek_right_ear", "omsk_congek_left_ear"))]
+    if rows:
+        r = rows[-1]
+
+        def flag(cols: tuple[str, ...], yes: str, no: str) -> str | None:
+            vals = [_num(r.get(c)) for c in cols if _num(r.get(c)) is not None]
+            return None if not vals else yes if any(v == 1 for v in vals) else no
+
+        _put(out, _q(_F_TELMAT_BALITA, "Apakah ditemukan serumen impaksi"),
+             flag(("serumen_impeksi_right", "serumen_impeksi_left"), "Ada serumen impaksi", "Tidak ada serumen impaksi"))
+        _put(out, _q(_F_TELMAT_BALITA, "Apakah ditemukan infeksi telinga"),
+             flag(("omsk_congek_right_ear", "omsk_congek_left_ear"), "Ada infeksi telinga", "Tidak ada infeksi telinga"))
+    _put(out, _q(_F_TELMAT_BALITA, "Apakah ditemukan selaput mata merah"),
+         _MATA_ANAK.get(_norm((scr.get("ptm_mata") or {}).get("kelainan_mata_anak"))))
+    return out
+
+
+def _map_sdidtk(b: dict) -> ASIK_Result:
+    """Development screening results: for each instrument the LATEST row whose ``hasil_pemeriksaan`` is one of the ASIK options."""
+    out: ASIK_Result = {}
+    latest: dict[str, tuple[str, int, str]] = {}
+    for r in _program_rows(b, "child", "sdidtk"):
+        cat = _clean(r.get("sdidtk_category"))
+        conf = _SDIDTK.get(cat or "")
+        if not conf:
+            continue
+        canon = {_norm(o): o for o in conf[2]}.get(_norm(r.get("hasil_pemeriksaan")))
+        if not canon:
+            continue
+        rank = (_clean(r.get("created_at")) or "", _num(r.get("id")) or 0)
+        if cat not in latest or rank >= latest[cat][:2]:
+            latest[cat] = (rank[0], rank[1], canon)
+    for cat, (_, _, canon) in latest.items():
+        form, prefix, _opts = _SDIDTK[cat]
+        out.setdefault(form, {})[_q(form, prefix)] = canon
+    return out
+
+
 def _pediatric(b: dict, scr: dict, years: int, codes: set[str]) -> ASIK_Result:
     v = _vitals(b)
     bb, tb = _num(v.get("weight_kg")) or None, _num(v.get("height_cm")) or None
@@ -1089,14 +1204,17 @@ def _pediatric(b: dict, scr: dict, years: int, codes: set[str]) -> ASIK_Result:
     if years < 1:
         f = "Berat Lahir"
         bl: dict[str, Any] = {}
-        _put(bl, _q(f, "Berat Badan Saat Ini"), bb)       # birth weight has no Medisy source
+        _put(bl, _q(f, "Berat Badan Saat Ini"), bb)
+        _put(bl, _q(f, "Berat Lahir"), _map_birth_weight(scr))
         out[f] = bl
         out["Pemeriksaan PJB"] = {}
+        out[_F_IMUNISASI] = _map_hb0(b)
     if 1 <= years <= 4:
         f = "Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun"
         g: dict[str, Any] = {}
         _put(g, _q(f, "Berat Badan Balita"), bb)
         _put(g, _q(f, "Pengukuran Tinggi Badan (cm)"), tb)
+        _put(g, _q(f, "Posisi Pengukuran"), _POSISI.get(_norm(v.get("measurement_position"))))
         out[f] = g
     elif 5 <= years <= 6:
         f = "Skrining Pertumbuhan - Balita dan Anak Prasekolah 5-6 Tahun"
@@ -1126,7 +1244,7 @@ def _pediatric(b: dict, scr: dict, years: int, codes: set[str]) -> ASIK_Result:
         out[gd_form] = gd
 
     if 1 <= years <= 17:
-        out["Pemeriksaan Gigi - Anak"] = {}
+        out[_F_GIGI_ANAK] = _map_gigi_anak(scr)
 
     if 1 <= years <= 9:
         f = "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)"
@@ -1134,6 +1252,7 @@ def _pediatric(b: dict, scr: dict, years: int, codes: set[str]) -> ASIK_Result:
         tb_out: dict[str, Any] = {}
         _put(tb_out, _q(f, "Apakah berat badan anak Anda turun"), _yatidak(t.get("bb_turun")))
         _put(tb_out, _q(f, "Apakah anak anda mengalami demam hilang timbul"), _yatidak(t.get("demam")))
+        _put(tb_out, _q(f, "Apakah anak Anda pernah atau sedang mengalami batuk"), _BATUK_ANAK.get(_norm((scr.get("tb_anak") or {}).get("batuk_anak"))))
         if _clean(t.get("pemeriksaan_foto_toraks")) not in (None, "-") or _clean(t.get("abnormalitas_tbc")):
             tb_out[_q(f, "Apakah dilakukan pemeriksaan radiografi toraks?")] = "Ya"
         out[f] = tb_out
@@ -1142,6 +1261,13 @@ def _pediatric(b: dict, scr: dict, years: int, codes: set[str]) -> ASIK_Result:
             if _norm(t.get("kontak_tbc")) == _norm("Tidak Ada") else {}
         )
 
+    if years <= 6:
+        for form, fields in _map_sdidtk(b).items():
+            out[form] = fields
+        out[_F_TELMAT_BALITA] = {**_map_telinga_mata_balita(b, scr), **out.get(_F_TELMAT_BALITA, {})}
+        out.setdefault(_F_TALASEMIA, _map_talasemia(scr))
+        for shell in (_KMPE_FORM, _GPPH_FORM, "Kuesioner Pra Skrining Perkembangan (KPSP)", "M-CHAT - 1. Penapisan"):
+            out.setdefault(shell, {})
     for shell in _SKIN_SHELLS:
         out[shell] = {}
     if _has_icd(codes, _SYPH_ICD):
@@ -1342,6 +1468,26 @@ for _f, _p, _path in (
     (_F_IVA, "Pemeriksaan Inspekulo", "screenings[kanker_serviks].result_of_inspekulo_checkup (only when is_inspekulo_performed = 1)"),
     (_F_IVA, "Pemeriksaan Inspeksi Visual Asam Asetat", "screenings[kanker_serviks].result_of_iva_checkup (only when is_iva_performed = 1; Negatif / Positif)"),
     (_F_MINICOG, "Katakan seluruh frase berikut", "screenings[pemeriksaan_cog | skilas].clock_drawing_test (Normal -> Benar; Abnormal -> Salah)"),
+    # children + registration (himed-app db/2026/20261015-add-ckg-asik-remaining-fields); NULL until answered
+    (_F_PERTUMBUHAN_15, "Posisi Pengukuran", _VIT + "measurement_position (kk_kunjungan.posisi_pengukuran: Berdiri / Telentang)"),
+    (_F_GIGI_ANAK, "Berapa jumlah gigi karies", "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies"),
+    (_F_XRAY_ANAK, "Apakah anak Anda pernah atau sedang mengalami batuk", "screenings[tb_anak].batuk_anak"),
+    (_F_BERAT_LAHIR, "Berat Lahir", "screenings[hipotiroid_kongenital].berat_lahir_gram (grams assumed)"),
+    (_F_IMUNISASI, "Apakah anak anda sudah pernah menerima imunisasi Hepatitis B", "programs.immunization.imunisasi[].hb0_kurang_24_jam (latest answered row)"),
+    (_F_TALASEMIA, "Hasil Pemeriksaan Hemoglobin (Hb)", "screenings[thalasemia].hb_result (> 0; not g/L)"),
+    (_F_TALASEMIA, "Hasil Pemeriksaan MCV", "screenings[thalasemia].mcv_result (> 0)"),
+    (_F_TALASEMIA, "Hasil Pemeriksaan MCH", "screenings[thalasemia].mch_result (> 0)"),
+    (_F_TALASEMIA, "Hasil Pemeriksaan Eritrosit", "screenings[thalasemia].rbc_result (> 0)"),
+    (_F_TALASEMIA, "Hasil Pemeriksaan Red cell distribution width", "screenings[thalasemia].rdw_result (> 0)"),
+    (_F_TELMAT_BALITA, "Hasil Tes Daya Dengar", "programs.child.sdidtk[TDD].hasil_pemeriksaan"),
+    (_F_TELMAT_BALITA, "Hasil pemeriksaan Tes Daya Lihat", "programs.child.sdidtk[TDL].hasil_pemeriksaan"),
+    (_F_TELMAT_BALITA, "Apakah ditemukan selaput mata merah", "screenings[ptm_mata].kelainan_mata_anak"),
+    (_F_TELMAT_BALITA, "Apakah ditemukan serumen impaksi", "programs.ptm.fase_pendengaran.serumen_impeksi_right/left"),
+    (_F_TELMAT_BALITA, "Apakah ditemukan infeksi telinga", "programs.ptm.fase_pendengaran.omsk_congek_right_ear/left_ear"),
+    (_SDIDTK["KPSP"][0], "Hasil pemeriksaan KPSP", "programs.child.sdidtk[KPSP].hasil_pemeriksaan"),
+    (_KMPE_FORM, "Hasil pemeriksaan KMPE", "programs.child.sdidtk[KMPE].hasil_pemeriksaan"),
+    (_GPPH_FORM, "Hasil Pemeriksaan Kuesioner GPPH", "programs.child.sdidtk[GPPH].hasil_pemeriksaan"),
+    ("M-CHAT - 1. Penapisan", "Apakah anak Anda memiliki satu atau lebih kondisi berikut ini", "programs.child.sdidtk[M-CHAT-R].hasil_pemeriksaan"),
 ):
     _bc(_f, _p, _path)
 for _form, _table, _spec in ((_F_SPPB, "short_physical_performance", _SPPB), (_F_MNA, "pengkajian_nutrisi", _MNA)):
@@ -1355,6 +1501,7 @@ for _f in ("Gizi (BB - TB - Lingkar Perut) Laki-laki", "Gizi (BB - TB - Lingkar 
     _bc(_f, "Pengukuran Lingkar Perut", _VIT + "waist_cm (fallback screenings[diabetes_melitus].lingkar_perut)")
 for _f in ("Demografi Dewasa Laki-Laki", "Demografi Dewasa Perempuan", "Demografi Lansia"):
     _bc(_f, "Status Perkawinan", "patient.marital_status")
+    _bc(_f, "Apakah Anda penyandang disabilitas", "patient.disability (kk_pendaftaran.disabilitas)")
 _bc("Demografi Dewasa Perempuan", "Apakah Anda sedang hamil?", "programs.kia.hamil (an active record turns it on; absence is not 'Tidak')")
 for _f in _TELMAT_ADULT:
     _bc(_f, "Apa Hasil Pemeriksaan Telinga Luar (serumen impaksi)?", "programs.ptm.fase_pendengaran.serumen_impeksi_right/left")

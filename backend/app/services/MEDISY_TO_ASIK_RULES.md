@@ -64,6 +64,8 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
   - Lung: `kanker_paru.riwayat_merokok_15th` and `gejala_kanker_paru` → the two matching questions of "Penapisan Risiko Kanker Paru"; `kadar_co` → "Kadar CO Pernapasan".
   - Breast (women ≥ 30): `risiko_kanker_payudara.checkup_result1` → SADANIS (Tidak ada benjolan → Normal, Benjolan → Ditemukan benjolan, Curiga Kanker → Curiga kanker); `hasil_usg_payudara` → USG (Normal, Kista Simpleks → Simple cyst; "Tumor Jinak (Fibroadenoma)" and "Curiga Keganasan" have no ASIK option and are not sent). "Pemeriksaan yang dilakukan" names SADANIS first, then USG, like the ePuskesmas converter.
   - Cervical (women ≥ 30): `kanker_serviks.pernah_hubungan_seksual` Ya/Tidak.
+  - Mental health (PHQ-4): the adult (`kategori_usia` = Dewasa) form of `kesehatan_jiwa` is PHQ-2 (`question1-2`) + GAD-2 (`question3-4`) with the same four options as ASIK, so no new column was needed (an earlier version of this doc said Medisy had no PHQ-4: wrong).
+  - Inspekulo / IVA (women ≥ 30): `kanker_serviks.result_of_inspekulo_checkup` (SNOMED 395100000 → Normal, 315266007 → Curiga kanker) only when `is_inspekulo_performed` = 1, and `result_of_iva_checkup` (id 1/5 → Negatif, 2/6 → Positif; servisitis and suspected cancer have no ASIK option) only when `is_iva_performed` = 1. The form pre-selects a result and the controller writes IVA id 5 after a normal speculum exam, so the performed flag is the only trustworthy signal.
   - Mini-Cog follow-up: `pemeriksaan_cog.clock_drawing_test` (else `kk_skilas`) Normal → "Benar", Abnormal → "Salah".
 - **Pediatric:** vitals-driven growth, BP, GDS; TB-child from the tbc screening; syphilis only on an A50-A53 diagnosis.
 
@@ -71,10 +73,10 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 
 | ASIK form / field | Why blank |
 |---|---|
-| Kesehatan Jiwa (PHQ-4) | Medisy screens with EPDS / SDQ — different instruments |
 | Perilaku Merokok: type, years, cigarettes/day, ex-smoker details | not on the live ASIK form (2 questions); the school-student smoking table is not the adult survey |
 | Tingkat Aktivitas Fisik: the other 4 questions | Medisy has one yes/no (insufficient activity) |
-| Inspekulo/IVA, HPV-DNA, kanker usus, AD-8, skin diseases, disabilitas | no Medisy source |
+| HPV-DNA, kanker usus, AD-8, skin diseases, disabilitas | no Medisy source |
+| Kesehatan Jiwa for pregnant adults (EPDS), children and teenagers (SDQ) | different instruments; only the adult PHQ-2 + GAD-2 is PHQ-4 |
 | Payudara: breast USG "Tumor Jinak" / "Curiga Keganasan"; TB method "Foto Toraks" / "Klinis" | no matching ASIK option |
 | Second BP, GDS 2, months since diagnosis | mapped, but only filled where nurses record them (new Medisy columns, NULL by default) |
 | KPSP, KMPE, GPPH, M-CHAT, imunisasi balita, talasemia, birth weight | no Medisy source |
@@ -111,6 +113,15 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | Tempat Lahir | `patient.place_of_birth` |
 | Jenis Kelamin | `patient.gender (1=L, 2=P)` |
 | Alamat Domisili | `patient.address.text` |
+
+### Kesehatan Jiwa
+
+| ASIK field | Medisy source |
+|---|---|
+| Dalam 2 minggu terakhir, seberapa sering anda kurang/ tidak bersemangat dalam melakukan ke | `screenings[kesehatan_jiwa].question1 (kategori_usia Dewasa, PHQ-2)` |
+| Dalam 2 minggu terakhir, seberapa sering anda merasa murung, tertekan, atau putus asa? | `screenings[kesehatan_jiwa].question2 (kategori_usia Dewasa, PHQ-2)` |
+| Dalam 2 minggu terakhir, seberapa sering anda merasa gugup, cemas, atau gelisah? | `screenings[kesehatan_jiwa].question3 (kategori_usia Dewasa, GAD-2)` |
+| Dalam 2 minggu terakhir, seberapa sering anda tidak mampu mengendalikan rasa khawatir? | `screenings[kesehatan_jiwa].question4 (kategori_usia Dewasa, GAD-2)` |
 
 ### SKILAS Pemeriksaan Gejala Depresi - Lansia
 
@@ -290,6 +301,13 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | ASIK field | Medisy source |
 |---|---|
 | Status Perkawinan | `patient.marital_status` |
+
+### Pemeriksaan Inspekulo dan IVA
+
+| ASIK field | Medisy source |
+|---|---|
+| Pemeriksaan Inspekulo | `screenings[kanker_serviks].result_of_inspekulo_checkup (only when is_inspekulo_performed = 1)` |
+| Pemeriksaan Inspeksi Visual Asam Asetat (IVA) | `screenings[kanker_serviks].result_of_iva_checkup (only when is_iva_performed = 1; Negatif / Positif)` |
 
 ### Kanker Leher Rahim
 

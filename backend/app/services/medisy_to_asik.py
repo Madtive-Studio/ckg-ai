@@ -808,6 +808,44 @@ def _map_kanker_paru_screen(q: dict) -> dict[str, Any]:
     return out
 
 
+_F_JIWA = "Kesehatan Jiwa"
+_PHQ4_OPTIONS = {_norm(o): o for o in ("Tidak sama sekali", "Kurang dari 1 minggu", "Lebih dari 1 minggu", "Hampir setiap hari")}
+_PHQ4 = (("question1", "Dalam 2 minggu terakhir, seberapa sering anda kurang"),
+         ("question2", "Dalam 2 minggu terakhir, seberapa sering anda merasa murung"),
+         ("question3", "Dalam 2 minggu terakhir, seberapa sering anda merasa gugup"),
+         ("question4", "Dalam 2 minggu terakhir, seberapa sering anda tidak mampu mengendalikan"))
+
+
+def _map_kesehatan_jiwa(scr: dict) -> dict[str, Any]:
+    """PHQ-4 = PHQ-2 (question1-2) + GAD-2 (question3-4): the adult ("Dewasa") mental-health screening asks exactly these four
+    questions with the ASIK options. Pregnant adults (EPDS), children and teenagers (SDQ) use other instruments and are skipped."""
+    j = scr.get("kesehatan_jiwa") or {}
+    if _norm(j.get("kategori_usia")) != _norm("Dewasa"):
+        return {}
+    out: dict[str, Any] = {}
+    for col, prefix in _PHQ4:
+        _put(out, _q(_F_JIWA, prefix), _PHQ4_OPTIONS.get(_norm(j.get(col))))
+    return out
+
+
+_F_IVA = "Pemeriksaan Inspekulo dan IVA"
+_INSPEKULO_CODES = {"395100000": "Normal", "315266007": "Curiga kanker"}      # SNOMED: no evidence of cancer / suspected cervical cancer
+_IVA_IDS = {1: "Negatif", 5: "Negatif", 2: "Positif", 6: "Positif"}              # kk_opsi_hasil_pemeriksaan_iva; servisitis / suspected cancer have no ASIK option
+
+
+def _map_inspekulo_iva(scr: dict) -> dict[str, Any]:
+    """Only an exam flagged as performed counts: the form pre-selects a "no evidence of cancer" result and the controller writes
+    IVA "negative" (id 5) after a normal speculum exam, whether or not an IVA was done."""
+    k = scr.get("kanker_serviks") or {}
+    out: dict[str, Any] = {}
+    if _num(k.get("is_inspekulo_performed")) == 1:
+        m = re.search(r'"code"\s*:\s*"(\d+)"', _clean(k.get("result_of_inspekulo_checkup")) or "")
+        _put(out, _q(_F_IVA, "Pemeriksaan Inspekulo"), _INSPEKULO_CODES.get(m.group(1)) if m else None)
+    if _num(k.get("is_iva_performed")) == 1:
+        _put(out, _q(_F_IVA, "Pemeriksaan Inspeksi Visual Asam Asetat"), _IVA_IDS.get(_num(k.get("result_of_iva_checkup"))))
+    return out
+
+
 _F_PAYUDARA = "Skrining Kanker Payudara"
 _SADANIS = {_norm("Tidak ada benjolan"): "Normal", _norm("Benjolan"): "Ditemukan benjolan", _norm("Curiga Kanker"): "Curiga kanker"}
 # Only the ultrasound results with an identical ASIK option; "Tumor Jinak (Fibroadenoma)" / "Curiga Keganasan" have no match and are not sent.
@@ -1159,8 +1197,9 @@ def medisy_to_asik(bundle: dict) -> ASIK_Result:
     out["Pemeriksaan Hepatitis"] = _map_hepatitis(codes, labs)
 
     # Forms the live klaster runs but Medisy cannot fill (R-NOMATCH): empty shells so eligibility shows in the preview.
-    for shell in ("Perilaku Merokok", "Tingkat Aktivitas Fisik (sedang dan berat)", "Kesehatan Jiwa", *_SKIN_SHELLS, "Hati"):
+    for shell in ("Perilaku Merokok", "Tingkat Aktivitas Fisik (sedang dan berat)", *_SKIN_SHELLS, "Hati"):
         out[shell] = {}
+    out[_F_JIWA] = _map_kesehatan_jiwa(scr)
     out[_F_CO] = _map_kadar_co(scr)
     out[_F_MEROKOK] = _map_perilaku_merokok(ptm_q)
     out[_F_AKTIVITAS] = _map_aktivitas_fisik(ptm_q)
@@ -1195,6 +1234,7 @@ def medisy_to_asik(bundle: dict) -> ASIK_Result:
             out["Hasil Pemeriksaan HPV-DNA"] = {}
             out["Kanker Leher Rahim"] = _map_leher_rahim(scr)
             out[_F_PAYUDARA] = _map_payudara(scr)
+            out[_F_IVA] = _map_inspekulo_iva(scr)
         catin: dict[str, Any] = {}
         _put(catin, _q("Pemeriksaan Calon Pengantin Perempuan", "Kadar Hemoglobin"), _lab_num(labs, _LAB_HB))
         out["Pemeriksaan Calon Pengantin Perempuan"] = catin
@@ -1295,6 +1335,12 @@ for _f, _p, _path in (
     (_F_PAYUDARA, "Hasil pemeriksaan SADANIS", "screenings[risiko_kanker_payudara].checkup_result1 (Tidak ada benjolan -> Normal; Benjolan; Curiga Kanker)"),
     (_F_PAYUDARA, "Hasil pemeriksaan USG Payudara", "screenings[risiko_kanker_payudara].hasil_usg_payudara (Normal; Kista Simpleks -> Simple cyst)"),
     ("Kanker Leher Rahim", "Apakah pernah melakukan hubungan intim/seksual", "screenings[kanker_serviks].pernah_hubungan_seksual"),
+    (_F_JIWA, "Dalam 2 minggu terakhir, seberapa sering anda kurang", "screenings[kesehatan_jiwa].question1 (kategori_usia Dewasa, PHQ-2)"),
+    (_F_JIWA, "Dalam 2 minggu terakhir, seberapa sering anda merasa murung", "screenings[kesehatan_jiwa].question2 (kategori_usia Dewasa, PHQ-2)"),
+    (_F_JIWA, "Dalam 2 minggu terakhir, seberapa sering anda merasa gugup", "screenings[kesehatan_jiwa].question3 (kategori_usia Dewasa, GAD-2)"),
+    (_F_JIWA, "Dalam 2 minggu terakhir, seberapa sering anda tidak mampu mengendalikan", "screenings[kesehatan_jiwa].question4 (kategori_usia Dewasa, GAD-2)"),
+    (_F_IVA, "Pemeriksaan Inspekulo", "screenings[kanker_serviks].result_of_inspekulo_checkup (only when is_inspekulo_performed = 1)"),
+    (_F_IVA, "Pemeriksaan Inspeksi Visual Asam Asetat", "screenings[kanker_serviks].result_of_iva_checkup (only when is_iva_performed = 1; Negatif / Positif)"),
     (_F_MINICOG, "Katakan seluruh frase berikut", "screenings[pemeriksaan_cog | skilas].clock_drawing_test (Normal -> Benar; Abnormal -> Salah)"),
 ):
     _bc(_f, _p, _path)

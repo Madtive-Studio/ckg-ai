@@ -4167,7 +4167,7 @@
       "in_audit": true,
       "audit_form_title": "Kesehatan Jiwa",
       "question_count": 6,
-      "covered_question_count": 0,
+      "covered_question_count": 4,
       "questions": [
         {
           "label": "Dalam 2 minggu terakhir, seberapa sering anda kurang/ tidak bersemangat dalam melakukan kegiatan sehari-hari?",
@@ -4220,8 +4220,8 @@
             "Hampir setiap hari"
           ],
           "live_name": "LPM000023|FRM000067|PPM00000192|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kesehatan_jiwa].question1 (kategori_usia Dewasa, PHQ-2)",
+          "covered_by_converter": true
         },
         {
           "label": "Dalam 2 minggu terakhir, seberapa sering anda merasa murung, tertekan, atau putus asa?",
@@ -4262,8 +4262,8 @@
             "Hampir setiap hari"
           ],
           "live_name": "LPM000023|FRM000067|PPM00000193|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kesehatan_jiwa].question2 (kategori_usia Dewasa, PHQ-2)",
+          "covered_by_converter": true
         },
         {
           "label": "Gejala Depresi",
@@ -4320,8 +4320,8 @@
             "Hampir setiap hari"
           ],
           "live_name": "LPM000023|FRM000067|PPM00000194|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kesehatan_jiwa].question3 (kategori_usia Dewasa, GAD-2)",
+          "covered_by_converter": true
         },
         {
           "label": "Dalam 2 minggu terakhir, seberapa sering anda tidak mampu mengendalikan rasa khawatir?",
@@ -4362,8 +4362,8 @@
             "Hampir setiap hari"
           ],
           "live_name": "LPM000023|FRM000067|PPM00000195|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kesehatan_jiwa].question4 (kategori_usia Dewasa, GAD-2)",
+          "covered_by_converter": true
         },
         {
           "label": "Gejala Kecemasan",
@@ -6203,7 +6203,7 @@
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Inspekulo dan IVA",
       "question_count": 2,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Pemeriksaan Inspekulo",
@@ -6236,8 +6236,8 @@
             "Curiga kanker"
           ],
           "live_name": "LPM000036|FRM000060|PPM00000092|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_serviks].result_of_inspekulo_checkup (only when is_inspekulo_performed = 1)",
+          "covered_by_converter": true
         },
         {
           "label": "Pemeriksaan Inspeksi Visual Asam Asetat (IVA)",
@@ -6266,8 +6266,8 @@
             "Positif"
           ],
           "live_name": "LPM000036|FRM000060|PPM00000093|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_serviks].result_of_iva_checkup (only when is_iva_performed = 1; Negatif / Positif)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -16764,6 +16764,66 @@
           "form_name": "Kanker Leher Rahim",
           "frm_code": "FRM000088",
           "label": "Apakah pernah melakukan hubungan intim/seksual?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_serviks].result_of_inspekulo_checkup (only when is_inspekulo_performed = 1)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Inspekulo dan IVA",
+          "frm_code": "FRM000060",
+          "label": "Pemeriksaan Inspekulo"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_serviks].result_of_iva_checkup (only when is_iva_performed = 1; Negatif / Positif)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Inspekulo dan IVA",
+          "frm_code": "FRM000060",
+          "label": "Pemeriksaan Inspeksi Visual Asam Asetat (IVA)"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kesehatan_jiwa].question1 (kategori_usia Dewasa, PHQ-2)",
+      "destinations": [
+        {
+          "form_name": "Kesehatan Jiwa",
+          "frm_code": "FRM000067",
+          "label": "Dalam 2 minggu terakhir, seberapa sering anda kurang/ tidak bersemangat dalam melakukan kegiatan sehari-hari?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kesehatan_jiwa].question2 (kategori_usia Dewasa, PHQ-2)",
+      "destinations": [
+        {
+          "form_name": "Kesehatan Jiwa",
+          "frm_code": "FRM000067",
+          "label": "Dalam 2 minggu terakhir, seberapa sering anda merasa murung, tertekan, atau putus asa?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kesehatan_jiwa].question3 (kategori_usia Dewasa, GAD-2)",
+      "destinations": [
+        {
+          "form_name": "Kesehatan Jiwa",
+          "frm_code": "FRM000067",
+          "label": "Dalam 2 minggu terakhir, seberapa sering anda merasa gugup, cemas, atau gelisah?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kesehatan_jiwa].question4 (kategori_usia Dewasa, GAD-2)",
+      "destinations": [
+        {
+          "form_name": "Kesehatan Jiwa",
+          "frm_code": "FRM000067",
+          "label": "Dalam 2 minggu terakhir, seberapa sering anda tidak mampu mengendalikan rasa khawatir?"
         }
       ]
     },

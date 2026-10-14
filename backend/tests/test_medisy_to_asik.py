@@ -678,3 +678,61 @@ def test_nothing_new_is_invented_from_empty_columns():
     with_nulls = medisy_to_asik(bundle(gender="P", years=65, screenings=shots))
     without = medisy_to_asik(bundle(gender="P", years=65))
     assert with_nulls == without
+
+
+# ───────── PHQ-4 and inspekulo / IVA: already recorded by Medisy, mapping only ─────────
+
+PHQ = "Kesehatan Jiwa"
+IVA_FORM = "Pemeriksaan Inspekulo dan IVA"
+
+
+def _jiwa(**cols):
+    return scr("kesehatan_jiwa", **{"kategori_usia": "Dewasa", **cols})
+
+
+def test_phq4_is_phq2_plus_gad2_of_the_adult_mental_health_form():
+    out = medisy_to_asik(bundle(screenings=[_jiwa(question1="Tidak sama sekali", question2="Kurang dari 1 minggu",
+                                                  question3="Lebih dari 1 minggu", question4="Hampir setiap hari")]))[PHQ]
+    assert list(out.values()) == ["Tidak sama sekali", "Kurang dari 1 minggu", "Lebih dari 1 minggu", "Hampir setiap hari"]
+    assert all(k.startswith("Dalam 2 minggu terakhir") for k in out)
+
+
+@pytest.mark.parametrize("kategori", ["Dewasa Hamil", "Anak", "Remaja", None])
+def test_other_mental_health_instruments_are_not_phq4(kategori):
+    out = medisy_to_asik(bundle(screenings=[scr("kesehatan_jiwa", kategori_usia=kategori, question1="Tidak sama sekali",
+                                                question2="Tidak Benar", question3="Sebagaimana Biasanya", question4="Selalu Benar")]))
+    assert out[PHQ] == {}
+
+
+def test_phq4_skips_blank_answers_and_unknown_options():
+    out = medisy_to_asik(bundle(screenings=[_jiwa(question1=None, question2="Tidak sama sekali", question3="Kadang", question4="")]))[PHQ]
+    assert list(out.values()) == ["Tidak sama sekali"]
+
+
+SERVIKS_NORMAL = '{"system":"http://snomed.info/sct","code":"395100000","display":"No evidence of cancer found"}'
+SERVIKS_CURIGA = '{"system":"http://snomed.info/sct","code":"315266007","display":"Suspected cervical cancer"}'
+
+
+@pytest.mark.parametrize("inspekulo, iva_id, expected", [
+    (SERVIKS_NORMAL, 1, {"Pemeriksaan Inspekulo": "Normal", "Pemeriksaan Inspeksi Visual Asam Asetat (IVA)": "Negatif"}),
+    (SERVIKS_CURIGA, 6, {"Pemeriksaan Inspekulo": "Curiga kanker", "Pemeriksaan Inspeksi Visual Asam Asetat (IVA)": "Positif"}),
+    (SERVIKS_NORMAL, 3, {"Pemeriksaan Inspekulo": "Normal"}),      # servisitis has no ASIK option
+    (SERVIKS_NORMAL, 4, {"Pemeriksaan Inspekulo": "Normal"}),      # "suspected cancer" on the IVA list has none either
+])
+def test_inspekulo_and_iva_results_when_performed(inspekulo, iva_id, expected):
+    out = medisy_to_asik(bundle(gender="P", years=40, screenings=[scr(
+        "kanker_serviks", is_inspekulo_performed=1, result_of_inspekulo_checkup=inspekulo, is_iva_performed=1, result_of_iva_checkup=iva_id)]))
+    assert out[IVA_FORM] == expected
+
+
+def test_preselected_results_are_not_sent_when_the_exam_was_not_performed():
+    """The form pre-selects "no evidence of cancer", and the controller writes IVA id 5 after a normal speculum exam."""
+    out = medisy_to_asik(bundle(gender="P", years=40, screenings=[scr(
+        "kanker_serviks", is_inspekulo_performed=0, result_of_inspekulo_checkup=SERVIKS_NORMAL, is_iva_performed=0, result_of_iva_checkup=5)]))
+    assert out[IVA_FORM] == {}
+
+
+def test_inspekulo_iva_form_is_for_women_from_30_only():
+    k = scr("kanker_serviks", is_inspekulo_performed=1, result_of_inspekulo_checkup=SERVIKS_NORMAL)
+    assert IVA_FORM not in medisy_to_asik(bundle(gender="L", years=40, screenings=[k]))
+    assert IVA_FORM not in medisy_to_asik(bundle(gender="P", years=25, screenings=[k]))

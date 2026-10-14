@@ -8,7 +8,9 @@
 #
 # Build (from repo root, after `docker build` of ckg-backend:latest):
 #   docker build -f loop-agent/Dockerfile -t ckg-loop-agent:latest .
-FROM ckg-backend:latest
+# BASE_IMAGE lets CI build on the pushed registry image of the same release; the default keeps the local `docker build` above working.
+ARG BASE_IMAGE=ckg-backend:latest
+FROM ${BASE_IMAGE}
 
 USER root
 ENV DEBIAN_FRONTEND=noninteractive

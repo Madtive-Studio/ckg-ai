@@ -71,7 +71,7 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
     - Growth position: `anamnesis.vitals.measurement_position` (Berdiri / Telentang) → "Posisi Pengukuran" of the 1-5 year growth form.
     - Caries: `jumlah_gigi_karies` of `gigi_mulut_balita` / `gigi_mulut_remaja` (Tidak ada, 1, 2, 3, >3) → "Berapa jumlah gigi karies?"; ASIK's options read "1.0" / "2.0" / "3.0" (live school-form catalogue), so 1 / 2 / 3 are sent as those. If a live option text differs the robot cannot match it and leaves the question blank (nothing wrong is sent).
     - Child TB cough: `tb_anak.batuk_anak` (Tidak batuk / Ya, kurang dari 2 minggu / Ya, lebih dari 2 minggu) → the cough question of the child X-Ray TB form.
-    - Birth weight: `hipotiroid_kongenital.berat_lahir_gram` → "Berat Lahir"; newborns only. ASIK's unit for this question is NOT verified: only a value between 200 and 8000 is sent, so a typo never reaches ASIK (the form input has the same bounds).
+    - Birth weight: `hipotiroid_kongenital.berat_lahir_gram` → "Berat Lahir"; newborns only. ASIK's unit is grams (Satuan "g", normal 2500-3999; read on a live newborn result 2026-10-14). Only a value between 200 and 8000 is sent, so a typo never reaches ASIK (the form input has the same bounds). "Berat Badan Saat Ini" is also in grams on that form, so the visit weight (kg in Medisy) is converted to grams (0.2-30 kg only).
     - Hepatitis B under 24 hours: `programs.immunization.imunisasi[].hb0_kurang_24_jam` (Sudah / Belum, latest answered row) → newborns only.
     - Thalassemia follow-up (age 1-6): `thalasemia.hb_result / mcv_result / mch_result / rbc_result / rdw_result` (the `*_result` columns hold the measurement, `*_value` is the reference range); only a number above 0; Hb is skipped when its unit is g/L.
     - Toddler ear / eye form (age ≤ 6): serumen and infection from the PTM hearing phase (same columns as the adult form), the eye finding from `ptm_mata.kelainan_mata_anak` (Normal / Curiga kelainan mata), the hearing and vision test results from the TDD / TDL instruments below.
@@ -107,7 +107,7 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 8. ~~Shared / placeholder NIK~~ **Resolved** — decision D13 in `MEDISY_MIGRATION.md`: the API flags `shared`, ckg-ai skips those visits.
 
 9. **ASIK CKG columns (2026-10-14)** — **accepted by the owner 2026-10-15** as mapped: periodontal Gingivitis / Periodontitis → "Ya"; clock drawing Normal / Abnormal → "Benar" / "Salah"; USG options without an ASIK equivalent are not sent; months since diagnosis only after a "Ya" history answer. The owner reviews the mapped output before the first real send.
-10. **Child columns (2026-10-15)** — accepted by the owner 2026-10-15: toddler band ≤ 6 years for the SDIDTK / ear-eye / thalassemia forms; the nurse (not a rule) decides the SDIDTK result; "Curiga Talasemia" is **not mapped** (skipped for now). **Still open:** (a) the unit ASIK expects for "Berat Lahir" (grams assumed; read the field label on a newborn's ASIK form before the first newborn send); (b) the live option text of "jumlah gigi karies" ("1.0" per the catalogue; confirm on the first child send).
+10. **Child columns (2026-10-15)** — accepted by the owner 2026-10-15: toddler band ≤ 6 years for the SDIDTK / ear-eye / thalassemia forms; the nurse (not a rule) decides the SDIDTK result; "Curiga Talasemia" is **not mapped** (skipped for now). **Birth-weight unit confirmed (2026-10-14):** ASIK uses grams for both "Berat Lahir" and "Berat Badan Saat Ini" (the latter now converted from kg). **Still open:** the live option text of "jumlah gigi karies" ("1.0" per the catalogue; confirm on the first child send). Note: the legacy ePuskesmas path (`epus_to_asik.py`) sends the current weight without converting; it is being removed in the last phase.
 
 Still open: the numerator/denominator order of real eye entries (Q2), and the questions beyond the converter (unmapped ASIK forms with no Medisy table found yet) which the loop agent hunts.
 
@@ -247,7 +247,7 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | ASIK field | Medisy source |
 |---|---|
 | Berat Lahir | `screenings[hipotiroid_kongenital].berat_lahir_gram (grams; sent only between 200 and 8000)` |
-| Berat Badan Saat Ini (usia >24 jam) | `anamnesis.vitals.weight_kg (birth weight has no Medisy source)` |
+| Berat Badan Saat Ini (usia >24 jam) | `anamnesis.vitals.weight_kg (converted kg -> g: ASIK's unit for this question is grams)` |
 
 ### Riwayat Imunisasi Rutin Balita
 

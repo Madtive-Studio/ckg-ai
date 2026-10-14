@@ -1128,10 +1128,18 @@ def _map_gigi_anak(scr: dict) -> dict[str, Any]:
 
 
 def _map_birth_weight(scr: dict) -> int | float | None:
-    """Birth weight in grams, from the newborn (hipotiroid kongenital) screening. ASIK's unit for this question is NOT verified: only a
-    plausible gram value (200 - 8000) is sent, so a typo such as 31 or 31000 never reaches the government record."""
+    """Birth weight in grams, from the newborn (hipotiroid kongenital) screening. ASIK's unit is grams (Satuan "g", normal 2500-3999;
+    read on a live newborn result 2026-10-14). Only a plausible value (200 - 8000) is sent, so a typo such as 31 or 31000 never
+    reaches the government record."""
     w = _pos((scr.get("hipotiroid_kongenital") or {}).get("berat_lahir_gram"))
     return w if w is not None and 200 <= w <= 8000 else None
+
+
+def _newborn_weight_grams(kg: Any) -> int | None:
+    """Medisy keeps the visit weight in kg; ASIK's "Berat Badan Saat Ini" on the newborn form is in grams (Satuan "g")."""
+    if kg is None or not 0.2 <= kg <= 30:
+        return None
+    return int(round(kg * 1000))
 
 
 def _map_hb0(b: dict) -> dict[str, Any]:
@@ -1207,7 +1215,7 @@ def _pediatric(b: dict, scr: dict, years: int, codes: set[str]) -> ASIK_Result:
     if years < 1:
         f = "Berat Lahir"
         bl: dict[str, Any] = {}
-        _put(bl, _q(f, "Berat Badan Saat Ini"), bb)
+        _put(bl, _q(f, "Berat Badan Saat Ini"), _newborn_weight_grams(bb))
         _put(bl, _q(f, "Berat Lahir"), _map_birth_weight(scr))
         out[f] = bl
         out["Pemeriksaan PJB"] = {}
@@ -1520,7 +1528,7 @@ for _f in ("Skrining Fungsi Ginjal Laki-Laki (hanya untuk =>40 tahun dengan risi
     _bc(_f, "Hasil Pemeriksaan Ureum", "lab[Ureum].result")
     _bc(_f, "Nilai Hasil pemeriksaan (e-LFG", "lab[eGFR].result")
     _bc(_f, "Usia", "patient.age.years (derived)")
-_bc("Berat Lahir", "Berat Badan Saat Ini", _VIT + "weight_kg (birth weight has no Medisy source)")
+_bc("Berat Lahir", "Berat Badan Saat Ini", _VIT + "weight_kg (converted kg -> g: ASIK's unit for this question is grams)")
 _bc("Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun", "Berat Badan Balita", _VIT + "weight_kg")
 _bc("Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun", "Pengukuran Tinggi Badan (cm)", _VIT + "height_cm")
 _bc("Skrining Pertumbuhan - Balita dan Anak Prasekolah 5-6 Tahun", "Pengukuran Tinggi Badan (cm)", _VIT + "height_cm")

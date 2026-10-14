@@ -786,6 +786,12 @@ def test_birth_weight_and_hepatitis_b_under_24_hours_for_newborns():
     assert list(out["Riwayat Imunisasi Rutin Balita"].values()) == ["Sudah"]                     # the latest answered row
 
 
+@pytest.mark.parametrize("kg, grams", [(5.7, 5700), (3.15, 3150), (0.1, None), (0, None), (45, None), (None, None)])
+def test_newborn_current_weight_is_sent_in_grams(kg, grams):
+    out = medisy_to_asik(child_bundle(0, vitals={"weight_kg": kg}))
+    assert out["Berat Lahir"].get("Berat Badan Saat Ini (usia >24 jam)") == grams
+
+
 @pytest.mark.parametrize("weight", [None, 0, "0", "abc", 31, 31000])
 def test_unanswered_birth_weight_and_hb0_are_not_sent(weight):
     imm = {"immunization": {"imunisasi": [{"id": 1, "tanggal": "2026-09-02", "hb0_kurang_24_jam": None}]}}

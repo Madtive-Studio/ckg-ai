@@ -241,7 +241,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "anamnesis.vitals.weight_kg (birth weight has no Medisy source)",
+          "epus_source": "anamnesis.vitals.weight_kg (converted kg -> g: ASIK's unit for this question is grams)",
           "covered_by_converter": true
         }
       ],
@@ -16043,7 +16043,7 @@
       ]
     },
     {
-      "path": "anamnesis.vitals.weight_kg (birth weight has no Medisy source)",
+      "path": "anamnesis.vitals.weight_kg (converted kg -> g: ASIK's unit for this question is grams)",
       "destinations": [
         {
           "form_name": "Berat Lahir",

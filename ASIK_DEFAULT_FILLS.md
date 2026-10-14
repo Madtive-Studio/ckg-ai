@@ -9,6 +9,11 @@ This file has two parts:
 The filename is kept because code comments point at it
 (`backend/app/models/patient.py`, `backend/app/services/asik_defaults.py`).
 
+> **Update 2026-10-14 — Medisy records:** the default fills described in Part 2 no longer apply to records whose clinic source is Medisy
+> (`clinical_defaults=false`): a required measurement or clinical answer with no data stays blank instead of receiving an invented value;
+> only a free-text `-` placeholder is still filled. EPUS-lineage and ASIK-only records keep the behaviour below. See
+> `backend/app/services/MEDISY_TO_ASIK_RULES.md` §5 item 11.
+
 > Everything here was derived from the code. Where the code and this file disagree,
 > **the code wins** — see §1.11 for the parts that were not read.
 

@@ -1207,7 +1207,7 @@ _DRIFT_NUMBER_DEFAULTS = (
 )
 
 
-def _resolve_default(question: dict, default_values: dict) -> object | None:
+def _resolve_default(question: dict, default_values: dict, clinical: bool = True) -> object | None:
     """Safe default value for one required question, or None if we must not fill it.
 
     Prefers the documented map (built from asik_form_mapping.json); falls back to a
@@ -1215,6 +1215,9 @@ def _resolve_default(question: dict, default_values: dict) -> object | None:
     documented default returns None — we never fabricate an unknown measurement, except
     the narrow behavioural activity-frequency follow-ups in `_DRIFT_NUMBER_DEFAULTS`.
     """
+    if not clinical:
+        # Medisy records: no measurement, option or activity figure is ever invented; only a free-text placeholder.
+        return "-" if question.get("kind") == "text" else None
     norm = _normalize_default_label(question.get("label", ""))
     entry = default_values.get(norm)
     if entry and entry.get("value") is not None:
@@ -1269,7 +1272,7 @@ def _read_dropdown_options(page: Page, data_name: str) -> list[str]:
     return [t.strip() for t in texts if t and t.strip()]
 
 
-def _fill_required_defaults(page: Page, default_values: dict, max_passes: int = 4) -> list[dict]:
+def _fill_required_defaults(page: Page, default_values: dict, max_passes: int = 4, clinical: bool = True) -> list[dict]:
     """Fill every required-but-empty field with a safe default; return what we set.
 
     Loops so a default that reveals a `visibleIf` child gets the new field filled
@@ -1284,9 +1287,9 @@ def _fill_required_defaults(page: Page, default_values: dict, max_passes: int = 
             data_name = q.get("dataName")
             if not data_name or data_name in seen:
                 continue
-            value = _resolve_default(q, default_values)
+            value = _resolve_default(q, default_values, clinical)
             kind = q.get("kind")
-            if value is None and kind == "dropdown":
+            if value is None and kind == "dropdown" and clinical:
                 # Map miss on a dropdown (drift): read its live options and pick safe.
                 value = _pick_safe_option(_read_dropdown_options(page, data_name))
             if value is None:
@@ -1606,6 +1609,7 @@ def _process_form_inner(
     parent_layanan: str | None = None,
     dry_run: bool = False,
     prune_unchanged: bool = False,
+    clinical_defaults: bool = True,
 ) -> dict:
     # `layanan` is the PAKET label (sub-section in ASIK's Pelayanan oleh
     # Nakes list). `parent_layanan` is the accordion-header label above it
@@ -1752,7 +1756,7 @@ def _process_form_inner(
     # Fill a SAFE DEFAULT for every REQUIRED field we have no data for, then re-check.
     # This replaces the old "abandon on any unfilled required" behavior — ASIK forces
     # required questions, so we default + log them (asik_default_fills) and submit.
-    defaults_applied = _fill_required_defaults(page, default_values)
+    defaults_applied = _fill_required_defaults(page, default_values, clinical=clinical_defaults)
     record["defaults"] = defaults_applied
     if defaults_applied:
         console.print(
@@ -1893,6 +1897,8 @@ def run(args) -> dict:
 
     # {normalized_label: {value, kind}} safe defaults for required-but-missing fields.
     default_values = cfg.get("default_values") or {}
+    # False for Medisy records: required measurements / clinical answers are left blank, never invented.
+    clinical_defaults = bool(cfg.get("clinical_defaults", True))
     # dry_run: fill everything (incl. defaults) but never click Kirim (safe testing).
     dry_run = bool(cfg.get("dry_run", False))
     # Skip forms whose every value ASIK already holds. OFF by default: the first
@@ -2262,6 +2268,7 @@ def run(args) -> dict:
                     parent_layanan=row.get("parent_layanan"),
                     dry_run=dry_run,
                     prune_unchanged=prune_unchanged,
+                    clinical_defaults=clinical_defaults,
                 )
                 result["forms"].append(rec)
                 # After submit / back, ensure we are on detail page; some forms

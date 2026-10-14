@@ -98,7 +98,7 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 ## 5. Clinical sign-off questions
 
 1. ~~Smoking status~~ **Resolved 2026-10-05** — the "Faktor Risiko PTM" modal (questionnaire Q0013) holds it; mapped.
-2. ~~Eyes~~ **Resolved 2026-10-05** — the eye card stores Snellen fractions and a coded pupil; mapped (ratio rule + suspected cataract only). Still to confirm: nothing in UAT proves the numerator/denominator order of real entries (the 4 UAT rows look like test data); the rule assumes a correct `6 / 12` entry.
+2. ~~Eyes~~ **Resolved 2026-10-05** — the eye card stores Snellen fractions and a coded pupil; mapped (ratio rule + suspected cataract only). **Order confirmed 2026-10-14** on Medisy's own form (`kesehatan_penglihatan.php`: `visus_<side>` is typed first, the `/ denominator` box defaults to 6) and on the 31 real Pelabuhanratu rows (10 × 6/6, the rest untouched 0/6 or 0/0, which are never sent). Note: Medisy's on-screen label calls anything from 6/18 (0.33) up "Normal", whereas ASIK's option is "Normal (visus 6/6 - 6/12)" / "Curiga (<6/12)"; we follow ASIK, so a 6/15 reads Normal in Medisy and is sent as Curiga.
 3. ~~TB "Ya" cough~~ **Resolved 2026-10-05** — "Ya" means more than 2 weeks → "Ya, lebih dari 2 minggu".
 4. ~~PUMA evidence rule~~ **Resolved 2026-10-05** — keep R-ZERO, plus: an all-zero row saved again after creation counts as answered.
 5. ~~Medisy `gizi` screening → SKILAS malnutrisi~~ **Resolved 2026-10-05** — unambiguous answers only (see §3).
@@ -109,7 +109,10 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 9. **ASIK CKG columns (2026-10-14)** — **accepted by the owner 2026-10-15** as mapped: periodontal Gingivitis / Periodontitis → "Ya"; clock drawing Normal / Abnormal → "Benar" / "Salah"; USG options without an ASIK equivalent are not sent; months since diagnosis only after a "Ya" history answer. The owner reviews the mapped output before the first real send.
 10. **Child columns (2026-10-15)** — accepted by the owner 2026-10-15: toddler band ≤ 6 years for the SDIDTK / ear-eye / thalassemia forms; the nurse (not a rule) decides the SDIDTK result; "Curiga Talasemia" is **not mapped** (skipped for now). **Birth-weight unit confirmed (2026-10-14):** ASIK uses grams for both "Berat Lahir" and "Berat Badan Saat Ini" (the latter now converted from kg). **Caries option text confirmed by the owner (2026-10-14):** "1.0" / "2.0" / "3.0" align with ASIK. Note: the legacy ePuskesmas path (`epus_to_asik.py`) sends the current weight without converting; it is being removed in the last phase.
 
-Still open: the numerator/denominator order of real eye entries (Q2), and the questions beyond the converter (unmapped ASIK forms with no Medisy table found yet) which the loop agent hunts.
+11. **Defaults for required ASIK questions (2026-10-14)** — decided by the owner: for **Medisy records** the sync no longer fills a required measurement, option or activity figure with an invented default (no 60 kg / 160 cm / 120-80 / Hb 13 / "Tidak"); only a free-text placeholder ("-") is still filled so the form can be saved. A required question we have no data for stays blank, so that form is reported as not saved (the honest outcome) and the nurse completes it in ASIK. EPUS-lineage and ASIK-only records keep the old behaviour until EPUS is removed. Registration step-2 fillers (marital status, occupation, disability) are unchanged. Implemented via `clinical_defaults` in the sync config (`tasks/sync.py::_clinical_defaults_allowed`, `asik_sync/sync.py::_resolve_default`).
+12. **Bulk-ticked questionnaire rows (R-UNIFORM)** — owner decision 2026-10-14: keep the rule as it is (identical answers across ≥ 4 questions are not trusted for the single-question history mappings).
+
+Still open: the questions beyond the converter (unmapped ASIK forms with no Medisy table found yet) which the loop agent hunts.
 
 ## 6. Field-by-field source (generated)
 

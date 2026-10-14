@@ -37,6 +37,7 @@ from app.models.scrape_job import ScrapeKind, TriggererType
 from app.models.sync_job import SyncJob, SyncStatus
 from app.services.asik_defaults import build_default_values_map
 from app.services.clinic_source import clinic_to_asik
+from app.services.medisy_adapter import is_medisy_blob
 from app.tasks.merge import _values_equal
 from app.tasks.scrape import (
     STDOUT_DRAIN_JOIN_TIMEOUT_SECONDS,
@@ -148,6 +149,7 @@ def _build_config(
     filter_date: str | None = None,
     default_values: dict[str, Any] | None = None,
     session_mode: str = "persistent",
+    clinical_defaults: bool = True,
 ) -> dict[str, Any]:
     return {
         "base_url": base_url,
@@ -172,6 +174,9 @@ def _build_config(
         # {normalized_label: {value, kind}} — safe defaults for required questions
         # we have no data for (see app/services/asik_defaults.py).
         "default_values": default_values or {},
+        # False = never default a measurement or a clinical answer (Medisy records: zero-hallucination); only
+        # free-text placeholders are still filled so the form can be saved.
+        "clinical_defaults": clinical_defaults,
         # Every item carries `same_as_asik`; the runner skips a form only when
         # ALL of its items are True (and never `identitas_pasien`).
         "merged_data": _annotate_same_as_asik(merged_data),
@@ -194,6 +199,16 @@ def _count_merged_forms(merged: Any) -> int:
         if (isinstance(v, list) and v)
         or (isinstance(v, dict) and v.get("sub_sections"))
     )
+
+
+def _clinical_defaults_allowed(patient: Patient) -> bool:
+    """A Medisy record is real clinic data: never fill a required measurement or clinical answer with an invented default
+    (CLAUDE.md §9, owner decision 2026-10-14). Every other record (EPUS lineage, ASIK-only) keeps the legacy behaviour."""
+    try:
+        blob = patient_crud.decrypt_field(patient, ScrapeKind.EPUS)
+    except Exception:
+        return True
+    return not is_medisy_blob(blob)
 
 
 def _execute_sync(
@@ -250,6 +265,7 @@ def _execute_sync(
                 ),
                 default_values=build_default_values_map(),
                 session_mode=session_mode,
+                clinical_defaults=_clinical_defaults_allowed(patient),
             )
             cfg_path.write_text(json.dumps(cfg))
             os.chmod(cfg_path, 0o600)

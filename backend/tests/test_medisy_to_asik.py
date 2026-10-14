@@ -518,6 +518,18 @@ def test_visus_is_judged_by_the_snellen_ratio_of_every_measured_eye():
     assert VISUS_Q not in none["Skrining Telinga dan Mata (=>40 tahun)"]
 
 
+@pytest.mark.parametrize("cols, expected", [
+    # shapes seen in the real Pelabuhanratu eye rows: untouched default 0.00 / 6, empty 0 / 0, one eye measured, both 6 / 6
+    (dict(visus_kiri=0, visus_kiri_denominator=6, visus_kanan=0, visus_kanan_denominator=6), None),
+    (dict(visus_kiri=0, visus_kiri_denominator=0, visus_kanan=0, visus_kanan_denominator=0), None),
+    (dict(visus_kiri=0, visus_kiri_denominator=6, visus_kanan=6, visus_kanan_denominator=6), "Normal (visus 6/6 - 6/12)"),
+    (dict(visus_kiri=6, visus_kiri_denominator=6, visus_kanan=6, visus_kanan_denominator=6), "Normal (visus 6/6 - 6/12)"),
+])
+def test_visus_real_row_shapes(cols, expected):
+    out = medisy_to_asik(bundle(screenings=[eyes(**cols)]))["Skrining Telinga dan Mata (=>40 tahun)"]
+    assert out.get(VISUS_Q) == expected
+
+
 def test_pupil_only_places_a_suspected_cataract_and_never_invents_normal():
     sus = medisy_to_asik(bundle(screenings=[eyes(pupil_kanan="OV000393", pupil_kiri=None)]))
     assert sus["Skrining Telinga dan Mata (=>40 tahun)"]["Hasil pemeriksaan pupil"] == "Curiga Katarak"

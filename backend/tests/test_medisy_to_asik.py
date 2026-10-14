@@ -765,7 +765,7 @@ def test_measurement_position_for_one_to_four_year_olds():
 
 
 @pytest.mark.parametrize("table", ["gigi_mulut_balita", "gigi_mulut_remaja"])
-@pytest.mark.parametrize("value, expected", [("Tidak ada", "Tidak ada"), ("2", "2"), (">3", ">3"), (None, None), ("5", None)])
+@pytest.mark.parametrize("value, expected", [("Tidak ada", "Tidak ada"), ("1", "1.0"), ("2", "2.0"), ("3", "3.0"), (">3", ">3"), (None, None), ("5", None)])
 def test_carious_teeth_count(table, value, expected):
     out = medisy_to_asik(child_bundle(4, screenings=[scr(table, jumlah_gigi_karies=value)]))["Pemeriksaan Gigi - Anak"]
     assert out.get("Berapa jumlah gigi karies?") == expected
@@ -786,7 +786,7 @@ def test_birth_weight_and_hepatitis_b_under_24_hours_for_newborns():
     assert list(out["Riwayat Imunisasi Rutin Balita"].values()) == ["Sudah"]                     # the latest answered row
 
 
-@pytest.mark.parametrize("weight", [None, 0, "0", "abc"])
+@pytest.mark.parametrize("weight", [None, 0, "0", "abc", 31, 31000])
 def test_unanswered_birth_weight_and_hb0_are_not_sent(weight):
     imm = {"immunization": {"imunisasi": [{"id": 1, "tanggal": "2026-09-02", "hb0_kurang_24_jam": None}]}}
     out = medisy_to_asik(child_bundle(0, screenings=[scr("hipotiroid_kongenital", berat_lahir_gram=weight)], programs=imm))

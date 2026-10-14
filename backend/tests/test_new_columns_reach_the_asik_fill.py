@@ -71,9 +71,8 @@ def _choices(form_title: str, label_prefix: str):
             if label.startswith(label_prefix):
                 ch = q.get("choices")
                 if isinstance(ch, list) and ch:
-                    # the catalogue stores the numeric options of "jumlah gigi karies" as 1.0 / 2.0 / 3.0; the live text is assumed to be "1" / "2" / "3"
-                    return [str(int(c["line"])) if isinstance(c["line"], float) and c["line"].is_integer() else c["line"]
-                            for c in ch if isinstance(c, dict)]
+                    # the catalogue stores the numeric options of "jumlah gigi karies" as floats (1.0 / 2.0 / 3.0), which is also the live text
+                    return [str(c["line"]) if isinstance(c["line"], float) else c["line"] for c in ch if isinstance(c, dict)]
     return None
 
 
@@ -120,7 +119,7 @@ def test_the_new_answers_are_the_ones_the_fill_loop_matches_by_label():
 EXPECTED_CHILD = (
     ("Demografi Dewasa Perempuan", "Apakah Anda penyandang disabilitas", "Penyandang disabilitas"),
     ("Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun", "Posisi Pengukuran", "Telentang"),
-    ("Pemeriksaan Gigi - Anak", "Berapa jumlah gigi karies", "2"),
+    ("Pemeriksaan Gigi - Anak", "Berapa jumlah gigi karies", "2.0"),
     ("Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)", "Apakah anak Anda pernah atau sedang mengalami batuk", "Ya, lebih dari 2 minggu"),
     ("Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah", "Hasil Pemeriksaan Hemoglobin (Hb)", 11.2),
     ("Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah", "Hasil Pemeriksaan MCV", 78),

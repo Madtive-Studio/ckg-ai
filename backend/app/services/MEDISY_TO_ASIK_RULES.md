@@ -69,9 +69,9 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
   - **Children and registration** (columns added by `db/2026/20261015-add-ckg-asik-remaining-fields`; every one NULL until answered, so nothing is sent for old rows):
     - Disability: `patient.disability` (registration, `kk_pendaftaran.disabilitas`: Non disabilitas / Penyandang disabilitas) → "Apakah Anda penyandang disabilitas?" of the three Demografi forms.
     - Growth position: `anamnesis.vitals.measurement_position` (Berdiri / Telentang) → "Posisi Pengukuran" of the 1-5 year growth form.
-    - Caries: `jumlah_gigi_karies` of `gigi_mulut_balita` / `gigi_mulut_remaja` (Tidak ada, 1, 2, 3, >3) → "Berapa jumlah gigi karies?" (ASIK option text assumed to be the plain number).
+    - Caries: `jumlah_gigi_karies` of `gigi_mulut_balita` / `gigi_mulut_remaja` (Tidak ada, 1, 2, 3, >3) → "Berapa jumlah gigi karies?"; ASIK's options read "1.0" / "2.0" / "3.0" (live school-form catalogue), so 1 / 2 / 3 are sent as those. If a live option text differs the robot cannot match it and leaves the question blank (nothing wrong is sent).
     - Child TB cough: `tb_anak.batuk_anak` (Tidak batuk / Ya, kurang dari 2 minggu / Ya, lebih dari 2 minggu) → the cough question of the child X-Ray TB form.
-    - Birth weight: `hipotiroid_kongenital.berat_lahir_gram` → "Berat Lahir" (grams assumed); newborns only.
+    - Birth weight: `hipotiroid_kongenital.berat_lahir_gram` → "Berat Lahir"; newborns only. ASIK's unit for this question is NOT verified: only a value between 200 and 8000 is sent, so a typo never reaches ASIK (the form input has the same bounds).
     - Hepatitis B under 24 hours: `programs.immunization.imunisasi[].hb0_kurang_24_jam` (Sudah / Belum, latest answered row) → newborns only.
     - Thalassemia follow-up (age 1-6): `thalasemia.hb_result / mcv_result / mch_result / rbc_result / rdw_result` (the `*_result` columns hold the measurement, `*_value` is the reference range); only a number above 0; Hb is skipped when its unit is g/L.
     - Toddler ear / eye form (age ≤ 6): serumen and infection from the PTM hearing phase (same columns as the adult form), the eye finding from `ptm_mata.kelainan_mata_anak` (Normal / Curiga kelainan mata), the hearing and vision test results from the TDD / TDL instruments below.
@@ -106,8 +106,8 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 7. ~~Newborn registry (bayi)~~ **Resolved 2026-10-05** — PJB "Gagal" is a positive screen and `saturasi_tangan` is taken as the right hand; ikterus from the child (MTBM) rows; the external-referral destination from `visit.referral`.
 8. ~~Shared / placeholder NIK~~ **Resolved** — decision D13 in `MEDISY_MIGRATION.md`: the API flags `shared`, ckg-ai skips those visits.
 
-9. **Open sign-offs for the ASIK CKG columns (2026-10-14):** (a) periodontal: gingivitis / periodontitis → "Ya"; (b) clock drawing Normal / Abnormal → "Benar" / "Salah"; (c) breast USG options without an ASIK equivalent stay unsent; (d) months since diagnosis are sent only after a "Ya" history answer. Until a clinician confirms (a) and (b), review the first real sends by hand.
-10. **Open sign-offs for the child columns (2026-10-15):** (a) birth weight unit is grams; (b) the live ASIK option text of "jumlah gigi karies" is the plain number; (c) "Curiga Talasemia" is computed by ASIK; (d) the toddler age band (≤ 6 years) for the SDIDTK, ear / eye and thalassemia forms; (e) the nurse, not a rule, decides the SDIDTK result.
+9. **ASIK CKG columns (2026-10-14)** — **accepted by the owner 2026-10-15** as mapped: periodontal Gingivitis / Periodontitis → "Ya"; clock drawing Normal / Abnormal → "Benar" / "Salah"; USG options without an ASIK equivalent are not sent; months since diagnosis only after a "Ya" history answer. The owner reviews the mapped output before the first real send.
+10. **Child columns (2026-10-15)** — accepted by the owner 2026-10-15: toddler band ≤ 6 years for the SDIDTK / ear-eye / thalassemia forms; the nurse (not a rule) decides the SDIDTK result; "Curiga Talasemia" is **not mapped** (skipped for now). **Still open:** (a) the unit ASIK expects for "Berat Lahir" (grams assumed; read the field label on a newborn's ASIK form before the first newborn send); (b) the live option text of "jumlah gigi karies" ("1.0" per the catalogue; confirm on the first child send).
 
 Still open: the numerator/denominator order of real eye entries (Q2), and the questions beyond the converter (unmapped ASIK forms with no Medisy table found yet) which the loop agent hunts.
 
@@ -225,7 +225,7 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 
 | ASIK field | Medisy source |
 |---|---|
-| Berapa jumlah gigi karies? | `screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies` |
+| Berapa jumlah gigi karies? | `screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies (1 / 2 / 3 -> ASIK "1.0" / "2.0" / "3.0")` |
 
 ### Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)
 
@@ -246,7 +246,7 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 
 | ASIK field | Medisy source |
 |---|---|
-| Berat Lahir | `screenings[hipotiroid_kongenital].berat_lahir_gram (grams assumed)` |
+| Berat Lahir | `screenings[hipotiroid_kongenital].berat_lahir_gram (grams; sent only between 200 and 8000)` |
 | Berat Badan Saat Ini (usia >24 jam) | `anamnesis.vitals.weight_kg (birth weight has no Medisy source)` |
 
 ### Riwayat Imunisasi Rutin Balita

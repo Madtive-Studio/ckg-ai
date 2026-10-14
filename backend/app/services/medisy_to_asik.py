@@ -1090,7 +1090,8 @@ _SKIN_SHELLS = ("Pemeriksaan Penyakit Frambusia (untuk daerah endemis atau beris
 _F_PERTUMBUHAN_15 = "Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun"
 _POSISI = {_norm("Berdiri"): "Berdiri", _norm("Telentang"): "Telentang"}
 _F_GIGI_ANAK = "Pemeriksaan Gigi - Anak"
-_KARIES = {_norm(o): o for o in ("Tidak ada", "1", "2", "3", ">3")}      # option text assumed to be the plain number (the catalogue shows 1.0 / 2.0 / 3.0)
+# Medisy stores the plain number; the live ASIK options read "1.0" / "2.0" / "3.0" (live school-form catalogue and the xlsx both show them)
+_KARIES = {_norm("Tidak ada"): "Tidak ada", _norm("1"): "1.0", _norm("2"): "2.0", _norm("3"): "3.0", _norm(">3"): ">3"}
 _F_XRAY_ANAK = "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)"
 _BATUK_ANAK = {_norm(o): o for o in ("Tidak batuk", "Ya, kurang dari 2 minggu", "Ya, lebih dari 2 minggu")}
 _F_BERAT_LAHIR = "Berat Lahir"
@@ -1127,8 +1128,10 @@ def _map_gigi_anak(scr: dict) -> dict[str, Any]:
 
 
 def _map_birth_weight(scr: dict) -> int | float | None:
-    """Birth weight in grams, from the newborn (hipotiroid kongenital) screening. The unit is assumed to be ASIK's: grams."""
-    return _pos((scr.get("hipotiroid_kongenital") or {}).get("berat_lahir_gram"))
+    """Birth weight in grams, from the newborn (hipotiroid kongenital) screening. ASIK's unit for this question is NOT verified: only a
+    plausible gram value (200 - 8000) is sent, so a typo such as 31 or 31000 never reaches the government record."""
+    w = _pos((scr.get("hipotiroid_kongenital") or {}).get("berat_lahir_gram"))
+    return w if w is not None and 200 <= w <= 8000 else None
 
 
 def _map_hb0(b: dict) -> dict[str, Any]:
@@ -1470,9 +1473,9 @@ for _f, _p, _path in (
     (_F_MINICOG, "Katakan seluruh frase berikut", "screenings[pemeriksaan_cog | skilas].clock_drawing_test (Normal -> Benar; Abnormal -> Salah)"),
     # children + registration (himed-app db/2026/20261015-add-ckg-asik-remaining-fields); NULL until answered
     (_F_PERTUMBUHAN_15, "Posisi Pengukuran", _VIT + "measurement_position (kk_kunjungan.posisi_pengukuran: Berdiri / Telentang)"),
-    (_F_GIGI_ANAK, "Berapa jumlah gigi karies", "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies"),
+    (_F_GIGI_ANAK, "Berapa jumlah gigi karies", "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies (1 / 2 / 3 -> ASIK \"1.0\" / \"2.0\" / \"3.0\")"),
     (_F_XRAY_ANAK, "Apakah anak Anda pernah atau sedang mengalami batuk", "screenings[tb_anak].batuk_anak"),
-    (_F_BERAT_LAHIR, "Berat Lahir", "screenings[hipotiroid_kongenital].berat_lahir_gram (grams assumed)"),
+    (_F_BERAT_LAHIR, "Berat Lahir", "screenings[hipotiroid_kongenital].berat_lahir_gram (grams; sent only between 200 and 8000)"),
     (_F_IMUNISASI, "Apakah anak anda sudah pernah menerima imunisasi Hepatitis B", "programs.immunization.imunisasi[].hb0_kurang_24_jam (latest answered row)"),
     (_F_TALASEMIA, "Hasil Pemeriksaan Hemoglobin (Hb)", "screenings[thalasemia].hb_result (> 0; not g/L)"),
     (_F_TALASEMIA, "Hasil Pemeriksaan MCV", "screenings[thalasemia].mcv_result (> 0)"),

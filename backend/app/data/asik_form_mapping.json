@@ -211,7 +211,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "screenings[hipotiroid_kongenital].berat_lahir_gram (grams assumed)",
+          "epus_source": "screenings[hipotiroid_kongenital].berat_lahir_gram (grams; sent only between 200 and 8000)",
           "covered_by_converter": true
         },
         {
@@ -5416,7 +5416,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies",
+          "epus_source": "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies (1 / 2 / 3 -> ASIK \"1.0\" / \"2.0\" / \"3.0\")",
           "covered_by_converter": true
         }
       ],
@@ -16718,7 +16718,7 @@
       ]
     },
     {
-      "path": "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies",
+      "path": "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies (1 / 2 / 3 -> ASIK \"1.0\" / \"2.0\" / \"3.0\")",
       "destinations": [
         {
           "form_name": "Pemeriksaan Gigi - Anak",
@@ -16768,7 +16768,7 @@
       ]
     },
     {
-      "path": "screenings[hipotiroid_kongenital].berat_lahir_gram (grams assumed)",
+      "path": "screenings[hipotiroid_kongenital].berat_lahir_gram (grams; sent only between 200 and 8000)",
       "destinations": [
         {
           "form_name": "Berat Lahir",

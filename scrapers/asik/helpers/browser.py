@@ -109,6 +109,66 @@ class APIInterceptor:
         return len(self.all_responses)
 
 
+# ASIK sends the patient list as an encoded payload ({"_d": "..."}) from POST /api/pkg/ssi/list-kunjungan-umum and decodes it
+# in its own page script, so the response body is useless to us. The page hands the decoded JSON to JSON.parse; this observer
+# keeps the latest parsed ``data.list`` of patient rows (it needs no key and decodes nothing itself).
+_DECODED_LIST_HOOK = """
+(() => {
+  if (window.__ckgListHooked) return;
+  window.__ckgListHooked = true;
+  window.__ckgList = null;
+  const orig = JSON.parse;
+  JSON.parse = function (text, reviver) {
+    const v = orig.call(this, text, reviver);
+    try {
+      const rows = v && v.data && Array.isArray(v.data.list) ? v.data.list : null;
+      if (rows && rows.length && rows[0] && typeof rows[0] === 'object' && 'reg_id' in rows[0]) {
+        window.__ckgList = { rows: rows, pagination: v.data.pagination || v.pagination || null, at: Date.now() };
+      }
+    } catch (e) {}
+    return v;
+  };
+})();
+"""
+
+
+def install_decoded_list_hook(context) -> None:
+    """Install the observer for every page the context opens from now on (call before the first navigation)."""
+    context.add_init_script(_DECODED_LIST_HOOK)
+
+
+def reset_decoded_list(page) -> None:
+    """Forget the last captured list so the next read can only return a fresh one."""
+    try:
+        page.evaluate("window.__ckgList = null")
+    except Exception:
+        pass
+
+
+def read_decoded_list(page) -> list[dict]:
+    """The latest patient list the page decoded, as rows in the shape the old ``list-claim`` response had
+    (``reg_id``, ``faskes_code``, ``screening_date``, ``patient_nik``, ``patient_full_name``, ``ticket_number``) plus the
+    original row under ``raw``. Empty when nothing was captured yet."""
+    try:
+        captured = page.evaluate("window.__ckgList")
+    except Exception:
+        return []
+    rows = (captured or {}).get("rows") or []
+    out: list[dict] = []
+    for r in rows:
+        patient = r.get("patient") if isinstance(r.get("patient"), dict) else {}
+        out.append({
+            "reg_id": r.get("reg_id"),
+            "faskes_code": r.get("faskes_code"),
+            "screening_date": str(r.get("register_date") or "")[:10] or None,
+            "patient_nik": patient.get("nik"),
+            "patient_full_name": patient.get("fullname"),
+            "ticket_number": r.get("ticket_number"),
+            "raw": r,
+        })
+    return out
+
+
 def clear_session_locks():
     """Remove stale Chrome profile lock files before reusing the session."""
     for name in ("SingletonLock", "SingletonCookie", "SingletonSocket"):

@@ -47,13 +47,18 @@ from app.models.puskesmas import Puskesmas     # noqa: E402
 
 
 def source_column(source):
-    """The ``Patient.scraped_<source>_data`` column object."""
+    """The ``Patient.scraped_<source>_data`` column object. Medisy bundles live in the
+    ``scraped_epus_data`` column (the column name was deliberately not renamed)."""
+    if source == "medisy":
+        source = "epus"
     return getattr(Patient, f"scraped_{source}_data")
 
 
 def _url_of(p, source):
     """Per-region base URL for a puskesmas, or its name if the source has no
     ``<source>_url`` column (single-instance source)."""
+    if source == "medisy":
+        source = "epus"          # Medisy's host is stored in puskesmas.epus_url
     return getattr(p, f"{source}_url", None) or p.name
 
 
@@ -140,6 +145,9 @@ def source_age(source, raw):
     ``data_pasien.Umur``; falls back to a few common shapes for other sources."""
     if not raw:
         return None
+    if source == "medisy":
+        years = ((raw.get("patient") or {}).get("age") or {}).get("years")
+        return int(years) if isinstance(years, (int, float)) else None
     if source == "epus":
         from app.services.epus_to_asik import _years_from_umur
         return _years_from_umur((raw.get("data_pasien") or {}).get("Umur"))

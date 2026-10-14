@@ -60,7 +60,7 @@ Semua dalam satuan mg/dL.
 ## 2 · Siapa yang masuk daftar ini (Syarat)
 
 Pasien (per NIK) masuk daftar jika punya **minimal satu kunjungan CKG**
-(kunjungan yang tercatat di ePus DAN ASIK) pada tahun itu, **DAN** hasil
+(kunjungan yang tercatat di Medisy DAN ASIK) pada tahun itu, **DAN** hasil
 pemeriksaan lemak darahnya memenuhi **salah satu** ambang berikut:
 
 - **Kolesterol Total 200 mg/dL ke atas**; ATAU
@@ -158,7 +158,7 @@ kunjungan, sedangkan kertas kerja ini dihitung per satu tahun pelaporan.
 
 Karena pemeriksaan lemak darah **jarang dilakukan**. Di CKG, paket pemeriksaan
 profil lipid hanya disediakan untuk **usia 40 tahun ke atas DAN penyandang
-hipertensi dan/atau diabetes**. Di luar itu, ePuskesmas jarang mencatat
+hipertensi dan/atau diabetes**. Di luar itu, Medisy jarang mencatat
 pemeriksaan lemak darah pada kunjungan biasa.
 
 Kolom kosong berarti pemeriksaannya **tidak tercatat** — bukan kesalahan
@@ -168,23 +168,23 @@ berguna kertas kerja ini.
 ## 6 · Dari mana tiap angka diambil (sumber data)
 
 Untuk bagian **hasil pemeriksaan saat CKG**: **ASIK** (data skrining CKG)
-adalah sumber utama, **ePuskesmas** mengisi yang kosong — per kolom, jadi satu
-pasien bisa punya Kolesterol Total dari ASIK dan Trigliserida dari ePuskesmas.
-Di panel detail pasien ada label kecil **ASIK** / **ePus** yang menunjukkan
+adalah sumber utama, **Medisy** mengisi yang kosong — per kolom, jadi satu
+pasien bisa punya Kolesterol Total dari ASIK dan Trigliserida dari Medisy.
+Di panel detail pasien ada label kecil **ASIK** / **Medisy** yang menunjukkan
 sumbernya.
 
-Untuk bagian **Follow Up**: selalu dari **ePuskesmas** (kunjungan bulan-bulan
+Untuk bagian **Follow Up**: selalu dari **Medisy** (kunjungan bulan-bulan
 berikutnya memang tercatat di sana).
 
 Identitas (nama, jenis kelamin, tanggal lahir, no. telepon, alamat) juga ASIK
-dulu, ePuskesmas mengisi yang kosong.
+dulu, Medisy mengisi yang kosong.
 
 Tanggal Berkunjung = tanggal kunjungan CKG **paling awal** pada tahun itu.
 
 Kolom Riwayat HT dan Riwayat DM memakai catatan diagnosis yang sama persis
 dengan yang dipakai Registri Hipertensi dan Registri Diabetes Melitus, jadi
 artinya konsisten antar halaman: jawaban skrining CKG di ASIK, diagnosis pada
-tatalaksana di ASIK, atau diagnosis di ePuskesmas. Cukup salah satu; sekali
+tatalaksana di ASIK, atau diagnosis di Medisy. Cukup salah satu; sekali
 tercatat, tetap **Ya**.
 
 ## 7 · Kolom Jenis Obat — hanya obat penurun lemak darah
@@ -202,7 +202,7 @@ Golongan yang dikenali (Formularium Nasional untuk puskesmas):
 - **Penghambat penyerapan kolesterol** — Ezetimib
 - **Pengikat asam empedu** — Kolestiramin (Cholestyramine)
 
-Kalau obat pasien tidak muncul: pastikan resepnya tercatat di ePuskesmas (atau
+Kalau obat pasien tidak muncul: pastikan resepnya tercatat di Medisy (atau
 peresepan tercatat pada tatalaksana lipid di ASIK), dan obatnya memang obat
 penurun lemak darah.
 

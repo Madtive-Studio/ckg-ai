@@ -1,14 +1,16 @@
 # Loop-agent container image (PLAN §11, §14).
 #
 # Base on ckg-backend:latest — it ALREADY carries the exact Python deps the
-# scraper and the verify_converter regression need, plus Chromium (installed via
-# `playwright install --with-deps chromium`). We only add what the agent itself
+# Medisy client and the converter tests / verify_converter regression need. The
+# agent talks to the Medisy API over HTTP, so no browser is used. We only add what the agent itself
 # needs on top: Node + OpenCode (the coding agent), git + gh (branch + PR), and
 # the entrypoint. This keeps the image small and its deps in lock-step with prod.
 #
 # Build (from repo root, after `docker build` of ckg-backend:latest):
 #   docker build -f loop-agent/Dockerfile -t ckg-loop-agent:latest .
-FROM ckg-backend:latest
+# BASE_IMAGE lets CI build on the pushed registry image of the same release; the default keeps the local `docker build` above working.
+ARG BASE_IMAGE=ckg-backend:latest
+FROM ${BASE_IMAGE}
 
 USER root
 ENV DEBIAN_FRONTEND=noninteractive

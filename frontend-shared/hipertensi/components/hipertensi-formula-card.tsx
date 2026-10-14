@@ -86,7 +86,7 @@ export function HipertensiFormulaCard() {
               </p>
               <p>
                 <b>(1) Sudah tercatat sebagai pasien hipertensi</b> — ada diagnosis
-                hipertensi di ePuskesmas, atau pasien menjawab &quot;Ya&quot; saat ditanya
+                hipertensi di Medisy, atau pasien menjawab &quot;Ya&quot; saat ditanya
                 &quot;pernah dinyatakan tekanan darah tinggi?&quot; di skrining CKG → kolom
                 Riwayat = Ya.
               </p>
@@ -102,7 +102,7 @@ export function HipertensiFormulaCard() {
             </Section>
             <Section title="2 · Dari mana angka tensinya?">
               <p>
-                <b>TD 1</b>: pemeriksaan di ePuskesmas pada hari kunjungan CKG.
+                <b>TD 1</b>: pemeriksaan di Medisy pada hari kunjungan CKG.
               </p>
               <p>
                 <b>TD 2</b>: dari data skrining CKG (ASIK). Sering kosong — artinya
@@ -114,10 +114,10 @@ export function HipertensiFormulaCard() {
                 Interpretasi untuk melihatnya.
               </p>
               <p>
-                <b>Sumber tiap nilai (ASIK / ePus)</b>: ASIK = data skrining CKG
-                (sumber utama); ePus = ePuskesmas (pelengkap saat ASIK kosong). Buka
+                <b>Sumber tiap nilai (ASIK / Medisy)</b>: ASIK = data skrining CKG
+                (sumber utama); Medisy (pelengkap saat ASIK kosong). Buka
                 baris pasien untuk melihat tag pada TD, Riwayat HT, dan Obat — TD 1
-                kadang justru dari ASIK. Follow Up selalu dari ePuskesmas.
+                kadang justru dari ASIK. Follow Up selalu dari Medisy.
               </p>
             </Section>
             <Section title="3 · Arti label">

@@ -58,7 +58,12 @@ MODELS = {"deepseek": "deepseek-v4-flash", "gpt": "gpt-4o-mini", "oss": "openai/
 
 def load_converter(source):
     mod = importlib.import_module(f"app.services.{source}_to_asik")
+    global CRUMBS
+    CRUMBS = getattr(mod, f"{source.upper()}_BREADCRUMBS", None)   # None → merge's default (EPUS) table
     return getattr(mod, f"{source}_to_asik")
+
+
+CRUMBS = None
 
 
 def norm(v):
@@ -105,7 +110,7 @@ def run_pipeline(cfg, converted, asik, prompt, nik):
     merged = M._complete_source_fields(merged, converted, asik)
     merged = M._rebuild_identitas(merged, converted, asik)
     merged = M._backfill_asik_questions(merged, M._extract_asik_form_names(asik))
-    merged = M._overwrite_epus_questions(merged)
+    merged = M._overwrite_epus_questions(merged, CRUMBS)
     merged = M._normalize_status_flags(merged)
     merged = M._fill_template_reasoning(merged)
     merged = M._drop_orphan_conditional_children(merged)

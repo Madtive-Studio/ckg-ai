@@ -87,7 +87,7 @@ export default function PuskesmasPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nama</TableHead>
-              <TableHead>EPUS</TableHead>
+              <TableHead>Medisy</TableHead>
               <TableHead>ASIK</TableHead>
               <TableHead className="w-[120px]">Aksi</TableHead>
             </TableRow>

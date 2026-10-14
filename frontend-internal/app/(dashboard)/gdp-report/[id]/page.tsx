@@ -123,7 +123,7 @@ export default function GdpReportDetailPage({
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Cancel GDP report job?"
-        description="This stops the orchestrator and cascade-cancels its child ASIK / EPUS scrape jobs. Already-upserted patient data is kept."
+        description="This stops the orchestrator and cascade-cancels its child ASIK / Medisy scrape jobs. Already-upserted patient data is kept."
         confirmLabel="Cancel job"
         destructive
         loading={cancel.isPending}
@@ -164,7 +164,7 @@ export default function GdpReportDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              EPUS jobs
+              Medisy jobs
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
@@ -176,7 +176,7 @@ export default function GdpReportDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              EPUS failed
+              Medisy failed
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">

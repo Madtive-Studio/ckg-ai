@@ -10,22 +10,32 @@ from app.config import settings
 from app.core.security import decrypt_json, encrypt_json
 from app.models.patient import MatchStatus, Patient
 from app.models.scrape_job import ScrapeKind
-from app.services.birthdate import birth_date_from_asik, birth_date_from_epus
+from app.services.birthdate import birth_date_from_asik, birth_date_from_epus, birth_date_from_medisy
 
 
 def _extract_tandai_ckg(epus_entry: Any) -> bool | None:
-    """ckg.sudah_ckg from one EPUS patient entry. None when no ckg key."""
+    """The "sudah CKG" flag of one clinic-source entry: ``ckg.is_ckg`` of a Medisy bundle (the visit
+    matched the CKG rule), or ``ckg.sudah_ckg`` of a legacy EPUS entry. None when there is no ckg key."""
     if not isinstance(epus_entry, dict):
         return None
     ckg = epus_entry.get("ckg")
-    if not isinstance(ckg, dict) or "sudah_ckg" not in ckg:
+    if not isinstance(ckg, dict):
+        return None
+    if "is_ckg" in ckg:
+        return bool(ckg.get("is_ckg"))
+    if "sudah_ckg" not in ckg:
         return None
     return bool(ckg.get("sudah_ckg"))
 
 
 def _extract_epus_ruangan(epus_entry: Any) -> str:
+    """The room of one clinic-source entry: ``visit.room.name`` of a Medisy bundle, or the legacy
+    EPUS ``Poli/Ruangan``. Part of the row key, so it is capped to the column width."""
     if not isinstance(epus_entry, dict):
         return ""
+    visit = epus_entry.get("visit")
+    if isinstance(visit, dict):
+        return ((visit.get("room") or {}).get("name") or "").strip()[:64]
     dp = epus_entry.get("data_pasien") or {}
     val = dp.get("Poli/Ruangan")
     return (val or "").strip()
@@ -66,7 +76,7 @@ def upsert_from_scrape(
             db, puskesmas_id, nik, nama, encrypted, parsed_date, birth_date,
             has_mandiri=_mandiri_complete(raw_data),
         )
-    birth_date = birth_date_from_epus(raw_data)
+    birth_date = birth_date_from_epus(raw_data) or birth_date_from_medisy(raw_data)
     return _upsert_epus(
         db, puskesmas_id, nik, nama, raw_data, encrypted, parsed_date, birth_date
     )

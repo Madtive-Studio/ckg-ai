@@ -36,7 +36,7 @@ import type { MatchStatus } from "@shared/patients/types";
 
 const MATCH_STATUS_LABEL: Record<MatchStatus, string> = {
   asik_only: "Hanya ASIK",
-  epus_only: "Hanya EPUS",
+  epus_only: "Hanya Medisy",
   matched: "Cocok",
 };
 
@@ -199,7 +199,7 @@ export function PatientList() {
             <SelectContent>
               <SelectItem value="all">Semua status</SelectItem>
               <SelectItem value="asik_only">Hanya ASIK</SelectItem>
-              <SelectItem value="epus_only">Hanya EPUS</SelectItem>
+              <SelectItem value="epus_only">Hanya Medisy</SelectItem>
               <SelectItem value="matched">Cocok</SelectItem>
             </SelectContent>
           </Select>

@@ -32,6 +32,7 @@ import { SchoolCronCard } from "@/components/school/school-cron-card";
 import { usePuskesmas } from "@/lib/hooks/use-puskesmas";
 import { useScrapeJobList } from "@/lib/hooks/use-scrape";
 import type { CredKind } from "@/lib/api/puskesmas";
+import { SOURCE_NAME } from "@/lib/source-names";
 
 export default function PuskesmasDetailPage({
   params,
@@ -83,7 +84,7 @@ export default function PuskesmasDetailPage({
             <Card key={kind}>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-base">{kind.toUpperCase()}</CardTitle>
+                  <CardTitle className="text-base">{SOURCE_NAME[kind]}</CardTitle>
                   {isCredSet !== undefined && (
                     <span
                       className={`text-xs font-medium px-1.5 py-0.5 rounded-md ${

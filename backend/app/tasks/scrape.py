@@ -33,6 +33,7 @@ from app.models.patient import Patient
 from app.models.puskesmas import Puskesmas
 from app.models.scrape_job import ScrapeJob, ScrapeKind, ScrapeStatus
 from app.models.school_patient import SchoolPatient
+from app.tasks.medisy_scrape import run_medisy_scrape
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ def _resolve_scrapers_root() -> Path:
     here = Path(__file__).resolve()
     for parent in here.parents:
         candidate = parent / "scrapers"
-        if (candidate / "asik").is_dir() and (candidate / "epus").is_dir():
+        if (candidate / "asik").is_dir():
             return candidate
     return here.parents[2] / "scrapers"
 
@@ -208,40 +209,9 @@ def _build_config(
             "scrape_tatalaksana": True,
             "captcha_solver": _build_captcha_solver(db),
         }
-    # Multi-date EPUS (GDP orchestrator) leaves date_iso None — --dates CLI
-    # arg supplies the date list, so the cfg's filters.date stays absent and
-    # the scraper falls back to the CLI value per date.
-    filters: dict[str, str] = {
-        "status_periksa": "3",
-        # "ruangan_id": "0001",  # filter removed — "0" = all ruangan (revert to "0001" to restore UMUM-only)
-        "ruangan_id": "0",
-        "limit": "100",
-    }
-    if date_iso:
-        filters["date"] = _iso_to_ddmmyyyy(date_iso)
-    if nik:
-        filters["search_key"] = nik
-    return {
-        "base_url": base_url,
-        "login_path": "/login",
-        "target_path": "/pelayanan",
-        "headless": headless,
-        "slow_mo": 0,
-        "timeout": 60000,
-        "credentials": {
-            "email": creds.get("email", ""),
-            "password": creds.get("password", ""),
-        },
-        "filters": filters,
-    }
-
-
-# ASIK CLI takes ISO date (YYYY-MM-DD); EPUS CLI takes DDMMYYYY. Divergence
-# preserved to match the upstream scrapers — do not unify without changing
-# scrapers/{asik,epus}/scraper.py too.
-def _iso_to_ddmmyyyy(iso: str) -> str:
-    y, m, d = iso.split("-")
-    return f"{d}-{m}-{y}"
+    # Only the ASIK portal is scraped with a browser. The clinic-record source (ScrapeKind.EPUS) is read from
+    # Medisy's API — see tasks/medisy_scrape.py.
+    raise ValueError(f"{kind.value} is not scraped with a browser")
 
 
 def _extract_patients(
@@ -282,31 +252,7 @@ def _extract_patients(
                 continue
             rows.append((nik, nama, entry, date_iso))
     else:
-        # EPUS multi-date: {"by_date": {iso: {"patients": [...]}}}
-        # EPUS single-date: {"patients": [...]}
-        raw_entries_e: list[tuple[dict, str | None]] = []
-        by_date = output.get("by_date") or {}
-        if by_date:
-            for date_iso, day in by_date.items():
-                for e in (day.get("patients") or []):
-                    raw_entries_e.append((e, date_iso))
-        else:
-            for e in (output.get("patients") or []):
-                raw_entries_e.append((e, None))
-        scraped_count = len(raw_entries_e)
-        for entry, date_iso in raw_entries_e:
-            data = entry.get("data_pasien") or {}
-            nik = (data.get("NIK") or "").strip()
-            # Label varies by ePuskesmas tenant: kotabekasi uses "Nama Pasien",
-            # jaksel uses "Nama". Scraper preserves raw HTML label verbatim.
-            nama = (data.get("Nama Pasien") or data.get("Nama") or "").strip()
-            if not nik:
-                skipped.append({
-                    "source_id": str(entry.get("pelayanan_id") or ""),
-                    "reason": "missing NIK",
-                })
-                continue
-            rows.append((nik, nama, entry, date_iso))
+        raise ValueError(f"{kind.value} output is not extracted here (the clinic source goes through services/medisy_adapter)")
     return rows, skipped, scraped_count
 
 
@@ -454,6 +400,14 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
 
         scrape_job_crud.mark_running(db, job, self.request.id or "", datetime.now(UTC))
 
+        if kind == ScrapeKind.EPUS:
+            # The clinic-record source is Medisy's API: no browser, no subprocess.
+            run_medisy_scrape(
+                db, redis_client, job, puskesmas, creds, patient_nik,
+                cancel_key=_cancel_key(job_id), log_key=log_key, chan=chan,
+            )
+            return
+
         with tempfile.TemporaryDirectory(prefix=f"scrape-{kind.value}-") as tmp:
             tmp_path = Path(tmp)
             cfg_path = tmp_path / "config.json"
@@ -470,8 +424,8 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
             elif kind == ScrapeKind.ASIK_SEKOLAH:
                 session_dir = _asik_sekolah_session_dir(job.puskesmas_id)
 
-            # ASIK and ASIK_SEKOLAH both live on the ASIK portal; only EPUS uses epus_url.
-            base_url = puskesmas.epus_url if kind == ScrapeKind.EPUS else puskesmas.asik_url
+            # ASIK and ASIK_SEKOLAH both live on the ASIK portal.
+            base_url = puskesmas.asik_url
             base_url_full = f"https://{base_url}" if base_url else None
             try:
                 cfg = _build_config(
@@ -489,8 +443,7 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
             llm_config_id_str = (cfg.get("captcha_solver") or {}).get("llm_config_id")
 
             # ASIK per-NIK uses a separate scraper module that searches by NIK
-            # instead of date-paginating tabs. ePus per-NIK reuses the puskesmas-wide
-            # scraper with --nik so it inherits the existing config / pagination.
+            # instead of date-paginating tabs.
             if kind == ScrapeKind.ASIK and patient_nik is not None:
                 scraper_dir = SCRAPERS_ROOT / "asik_patient"
             else:
@@ -574,46 +527,7 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
                             if niks:
                                 cmd += ["--niks", ",".join(niks)]
             else:
-                if job.date_filters and patient_nik is None:
-                    # EPUS multi-date (GDP orchestrator). One browser session
-                    # walks every date; per-record date drives the upsert.
-                    try:
-                        epus_dates_iso = [str(d) for d in json.loads(job.date_filters) if d]
-                    except (ValueError, TypeError) as exc:
-                        scrape_job_crud.mark_failed(
-                            db, job, f"invalid date_filters: {exc}", datetime.now(UTC)
-                        )
-                        return
-                    if not epus_dates_iso:
-                        scrape_job_crud.mark_failed(
-                            db, job, "date_filters is empty", datetime.now(UTC)
-                        )
-                        return
-                    epus_dates_dd = ",".join(_iso_to_ddmmyyyy(d) for d in epus_dates_iso)
-                    cmd += ["--dates", epus_dates_dd, headless_flag]
-                    if job.target_niks:
-                        try:
-                            niks = [str(n) for n in json.loads(job.target_niks) if n]
-                        except (ValueError, TypeError) as exc:
-                            scrape_job_crud.mark_failed(
-                                db, job, f"invalid target_niks: {exc}", datetime.now(UTC)
-                            )
-                            return
-                        if niks:
-                            cmd += ["--niks", ",".join(niks)]
-                else:
-                    # ePus always needs a date (per-NIK uses patient.filter_date).
-                    assert job.date_filter, "epus scrape requires date_filter"
-                    cmd += ["--date", _iso_to_ddmmyyyy(job.date_filter), headless_flag]
-                    if patient_nik is not None:
-                        cmd += ["--nik", patient_nik]
-                # Concurrent per-patient processing. EPUS_PATIENT_WORKERS env
-                # overrides default (5). Set to "1" to disable concurrency
-                # (legacy sequential mode). Retry on transient errors and
-                # 30s per-tab timeout are baked into the scraper's
-                # _parallel_fetch; tune via EPUS_FETCH_TIMEOUT / EPUS_FETCH_RETRIES.
-                epus_pw = os.environ.get("EPUS_PATIENT_WORKERS", "5")
-                cmd += ["--patient-workers", epus_pw]
+                raise ValueError(f"{kind.value} is not scraped with a browser")
 
             t0 = time.monotonic()
             # Headed Chromium needs an X display. Linux worker container has
@@ -646,14 +560,6 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
             cancelled = False
             timed_out = False
             scrape_timeout_s = max(1, int(settings.SCRAPE_SUBPROCESS_TIMEOUT_SECONDS))
-            # Progressive per-date upsert state. EPUS multi-date scraper drops
-            # OUTPUT_DIR/by_date/<ISO>.json after each finished date with
-            # matches. Worker polls between cancel-flag ticks, upserts +
-            # commits per-date so a mid-run cancel preserves earlier dates.
-            consumed_dates: set[str] = set()
-            inserted_progressive = 0
-            updated_progressive = 0
-            by_date_dir = output_dir / "by_date"
             # Progressive per-school upsert state for ASIK_SEKOLAH: the scraper
             # writes OUTPUT_DIR/school_*.json after each completed school. Polling
             # + committing per school here means a mid-run cancel/crash preserves
@@ -694,34 +600,6 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
                         except subprocess.TimeoutExpired:
                             proc.kill()
                         break
-
-                    if kind == ScrapeKind.EPUS and by_date_dir.exists():
-                        for f in sorted(by_date_dir.glob("*.json")):
-                            iso = f.stem
-                            if iso in consumed_dates:
-                                continue
-                            try:
-                                day_payload = json.loads(f.read_text())
-                            except (json.JSONDecodeError, OSError):
-                                continue
-                            mini = {"by_date": {iso: day_payload}}
-                            day_rows, _, _ = _extract_patients(kind, mini)
-                            try:
-                                for nik, nama, raw, per_record_date in day_rows:
-                                    eff = per_record_date or iso
-                                    res = patient_crud.upsert_from_scrape(
-                                        db, job.puskesmas_id, kind, nik, nama, raw, eff,
-                                    )
-                                    if res == "inserted":
-                                        inserted_progressive += 1
-                                    else:
-                                        updated_progressive += 1
-                                db.commit()
-                                consumed_dates.add(iso)
-                            except Exception:
-                                db.rollback()
-                                log.exception("progressive upsert failed for iso=%s", iso)
-                                # leave file unconsumed — retry next tick
 
                     if kind == ScrapeKind.ASIK_SEKOLAH:
                         for f in sorted(output_dir.glob("school_*.json")):
@@ -947,8 +825,8 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
                     raise
             else:
                 patients, skipped, scraped_count = _extract_patients(kind, output)
-                inserted = inserted_progressive
-                updated = updated_progressive
+                inserted = 0
+                updated = 0
                 try:
                     for nik, nama, raw, per_record_date in patients:
                         effective_date = per_record_date or job.date_filter
@@ -956,9 +834,6 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
                             skipped.append({
                                 "source_id": nik, "reason": "missing date for upsert",
                             })
-                            continue
-                        if effective_date in consumed_dates:
-                            # already upserted progressively during subprocess run
                             continue
                         result = patient_crud.upsert_from_scrape(
                             db, job.puskesmas_id, kind, nik, nama, raw, effective_date

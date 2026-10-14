@@ -219,7 +219,7 @@ export function LipidRegistryView({
                 Loading registri dislipidemia…
               </div>
               <div className="text-xs">
-                First-time computation decrypts EPUS + ASIK records for this
+                First-time computation decrypts Medisy + ASIK records for this
                 puskesmas + year. Result is cached for 30 hours.
               </div>
             </div>

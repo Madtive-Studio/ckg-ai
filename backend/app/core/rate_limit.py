@@ -149,6 +149,27 @@ def enforce_llm_test_rate_limit(principal_id: uuid.UUID) -> None:
         )
 
 
+MEDISY_TEST_RATE_LIMIT_MAX = 10
+MEDISY_TEST_RATE_LIMIT_WINDOW_SECONDS = 60
+
+
+def enforce_medisy_test_rate_limit(principal_id: uuid.UUID) -> None:
+    """Throttle "Test connection" calls to Medisy per principal.
+
+    Each test decrypts a stored token and makes a real outbound call to a clinic's server, so cap
+    it — enough for iterating on a setup, not for hammering the clinic (which has its own limits).
+    """
+    window = MEDISY_TEST_RATE_LIMIT_WINDOW_SECONDS
+    pid_key = f"rl:medisytest:principal:{principal_id}"
+    (count,) = _fixed_window_counts((pid_key,), window)
+    if count > MEDISY_TEST_RATE_LIMIT_MAX:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            "Too many test-connection requests. Try again later.",
+            headers={"Retry-After": str(window)},
+        )
+
+
 CHATBOT_RATE_LIMIT_MAX = 10
 CHATBOT_RATE_LIMIT_WINDOW_SECONDS = 60
 

@@ -1,4 +1,4 @@
-"""Birth-date extraction from patient source blobs (EPUS / ASIK).
+"""Birth-date extraction from patient source blobs (Medisy / legacy EPUS / ASIK).
 
 Canonical home for parsing a `datetime.date` out of the raw scraped blobs so
 the denormalized `Patient.birth_date` column (the umur/age list filter) can be
@@ -45,6 +45,20 @@ def birth_date_from_epus(epus: Any) -> date | None:
         return None
 
 
+def birth_date_from_medisy(bundle: Any) -> date | None:
+    """Birth date from a Medisy visit bundle: ``patient.date_of_birth`` ("YYYY-MM-DD").
+    None when absent or not a real date (Medisy returns null for a missing/zero date)."""
+    if not isinstance(bundle, dict):
+        return None
+    raw = (bundle.get("patient") or {}).get("date_of_birth")
+    if not isinstance(raw, str):
+        return None
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        return None
+
+
 def birth_date_from_asik(asik: Any) -> date | None:
     """Birth date from raw ASIK ``detail_data.data_individu`` "Tanggal Lahir"
     ("DD NamaBulan YYYY", e.g. "25 Januari 2000")."""
@@ -68,5 +82,6 @@ def birth_date_from_asik(asik: Any) -> date | None:
 
 
 def birth_date_for_patient(epus: Any, asik: Any) -> date | None:
-    """EPUS-wins: the EPUS birth date if parseable, else the ASIK one."""
-    return birth_date_from_epus(epus) or birth_date_from_asik(asik)
+    """Clinic-source wins: its birth date if parseable (a Medisy bundle or a legacy EPUS blob),
+    else the ASIK one."""
+    return birth_date_from_epus(epus) or birth_date_from_medisy(epus) or birth_date_from_asik(asik)

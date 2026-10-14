@@ -190,11 +190,11 @@
       "modul": "Skrining Pertumbuhan",
       "layanan_name": "Skrining Berat Lahir",
       "layanan_code": "LPM000008",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 3,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Berat Lahir",
@@ -211,8 +211,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[hipotiroid_kongenital].berat_lahir_gram (grams; sent only between 200 and 8000)",
+          "covered_by_converter": true
         },
         {
           "label": "Panjang Badan Lahir (unpublished)",
@@ -241,8 +241,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "anamnesis.vitals.weight_kg (converted kg -> g: ASIK's unit for this question is grams)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -305,7 +305,7 @@
       "in_audit": true,
       "audit_form_title": "Demografi Dewasa Laki-Laki",
       "question_count": 3,
-      "covered_question_count": 1,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Status Perkawinan",
@@ -351,7 +351,7 @@
             "Cerai Hidup"
           ],
           "live_name": "LPM000056|FRM000006|PPM00000172|text",
-          "epus_source": "Data Pasien > Status Perkawinan",
+          "epus_source": "patient.marital_status",
           "covered_by_converter": true
         },
         {
@@ -408,8 +408,8 @@
             "Penyandang disabilitas"
           ],
           "live_name": "LPM000056|FRM000006|PPM00000299|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "patient.disability (kk_pendaftaran.disabilitas)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -429,7 +429,7 @@
       "in_audit": true,
       "audit_form_title": "Demografi Dewasa Perempuan",
       "question_count": 4,
-      "covered_question_count": 2,
+      "covered_question_count": 3,
       "questions": [
         {
           "label": "Status Perkawinan",
@@ -477,7 +477,7 @@
             "Cerai Hidup"
           ],
           "live_name": "LPM000063|FRM000007|PPM00000172|text",
-          "epus_source": "Data Pasien > Status Perkawinan",
+          "epus_source": "patient.marital_status",
           "covered_by_converter": true
         },
         {
@@ -534,7 +534,7 @@
             "Tidak"
           ],
           "live_name": "LPM000063|FRM000007|PPM00000173|text",
-          "epus_source": "Anamnesa > Periksa Fisik > Status Hamil",
+          "epus_source": "programs.kia.hamil (an active record turns it on; absence is not 'Tidak')",
           "covered_by_converter": true
         },
         {
@@ -564,8 +564,8 @@
             "Penyandang disabilitas"
           ],
           "live_name": "LPM000063|FRM000007|PPM00000299|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "patient.disability (kk_pendaftaran.disabilitas)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -587,7 +587,7 @@
       "in_audit": true,
       "audit_form_title": "Demografi Lansia",
       "question_count": 2,
-      "covered_question_count": 1,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Status Perkawinan",
@@ -632,7 +632,7 @@
             "Cerai Hidup"
           ],
           "live_name": "LPM000064|FRM000008|PPM00000172|text",
-          "epus_source": "Data Pasien > Status Perkawinan",
+          "epus_source": "patient.marital_status",
           "covered_by_converter": true
         },
         {
@@ -662,8 +662,8 @@
             "Penyandang disabilitas"
           ],
           "live_name": "LPM000064|FRM000008|PPM00000299|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "patient.disability (kk_pendaftaran.disabilitas)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -988,11 +988,11 @@
       "modul": "SKRINING TUBERKULOSIS",
       "layanan_name": "Tuberkulosis - Skrining Nakes Usia 10-14 tahun",
       "layanan_code": "LPM000135",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Faktor Risiko dan Skrining X-Ray TB (Dewasa & Lansia)",
       "question_count": 18,
-      "covered_question_count": 0,
+      "covered_question_count": 6,
       "questions": [
         {
           "label": "Tuberkulosis - Gejala TB 01 - Batuk (Dewasa)",
@@ -1190,8 +1190,8 @@
             "Tidak batuk"
           ],
           "live_name": "LPM000133|FRM000182|PPM00000694|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah berat badan Anda turun tanpa penyebab jelas/ BB tidak naik/ nafsu makan turun?",
@@ -1220,8 +1220,8 @@
             "Tidak"
           ],
           "live_name": "LPM000133|FRM000182|PPM00000480|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].bb_turun",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda mengalami demam hilang timbul tanpa sebab yang jelas?",
@@ -1250,8 +1250,8 @@
             "Tidak"
           ],
           "live_name": "LPM000133|FRM000182|PPM00000481|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].demam",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda mengalami berkeringat di malam hari tanpa kegiatan?",
@@ -1280,8 +1280,8 @@
             "Tidak"
           ],
           "live_name": "LPM000133|FRM000182|PPM00000482|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].berkeringat_malam",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah pasien memiliki pembesaran kelenjar getah bening?",
@@ -1310,8 +1310,8 @@
             "Tidak"
           ],
           "live_name": "LPM000133|FRM000182|PPM00000483|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].pembesaran_kgb",
+          "covered_by_converter": true
         },
         {
           "label": "Risiko Tuberkulosis Dewasa",
@@ -1358,8 +1358,8 @@
             "Tidak"
           ],
           "live_name": "LPM000133|FRM000182|PPM00000495|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].pemeriksaan_foto_toraks / abnormalitas_tbc",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil rontgen (foto toraks)",
@@ -2267,11 +2267,11 @@
       "modul": "Kanker Usus",
       "layanan_name": "Kanker Usus",
       "layanan_code": "LPM000060",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Faktor Risiko Kanker Usus",
       "question_count": 5,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Apakah ada anggota keluarga Anda, yang pernah dinyatakan menderita kanker kolorektal atau kanker usus?",
@@ -2306,8 +2306,8 @@
             "Tidak"
           ],
           "live_name": "LPM000060|FRM000027|PPM00000175|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm_questionnaire[Q0020 1.1]",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda merokok?",
@@ -2336,8 +2336,8 @@
             "Tidak"
           ],
           "live_name": "LPM000060|FRM000027|PPM00000288|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm_questionnaire[Q0013 1.4 Status merokok]",
+          "covered_by_converter": true
         },
         {
           "label": "Usia - skor APCS",
@@ -2716,7 +2716,7 @@
             "Tidak batuk"
           ],
           "live_name": "LPM000131|FRM000180|PPM00000477|text",
-          "epus_source": "penyakit_khusus.ICDX A15-A19 (TB) → Ya >2 minggu",
+          "epus_source": "screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)",
           "covered_by_converter": true
         }
       ],
@@ -3215,7 +3215,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000093|PPM00000248|number",
-          "epus_source": "Anamnesa > Periksa Fisik > Berat Badan",
+          "epus_source": "anamnesis.vitals.weight_kg (fallback screenings[diabetes_melitus].bb)",
           "covered_by_converter": true
         },
         {
@@ -3231,7 +3231,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000093|PPM00000086|number",
-          "epus_source": "Anamnesa > Periksa Fisik > Tinggi Badan",
+          "epus_source": "anamnesis.vitals.height_cm (fallback screenings[diabetes_melitus].tb)",
           "covered_by_converter": true
         },
         {
@@ -3263,7 +3263,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000093|PPM00000202|number",
-          "epus_source": "Anamnesa > Periksa Fisik > Lingkar Perut",
+          "epus_source": "anamnesis.vitals.waist_cm (fallback screenings[diabetes_melitus].lingkar_perut)",
           "covered_by_converter": true
         }
       ],
@@ -3305,7 +3305,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000072|FRM000051|PPM00000248|number",
-          "epus_source": "Anamnesa > Periksa Fisik > Berat Badan",
+          "epus_source": "anamnesis.vitals.weight_kg (fallback screenings[diabetes_melitus].bb)",
           "covered_by_converter": true
         },
         {
@@ -3321,7 +3321,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000072|FRM000051|PPM00000086|number",
-          "epus_source": "Anamnesa > Periksa Fisik > Tinggi Badan",
+          "epus_source": "anamnesis.vitals.height_cm (fallback screenings[diabetes_melitus].tb)",
           "covered_by_converter": true
         },
         {
@@ -3353,7 +3353,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000072|FRM000051|PPM00000090|number",
-          "epus_source": "Anamnesa > Periksa Fisik > Lingkar Perut",
+          "epus_source": "anamnesis.vitals.waist_cm (fallback screenings[diabetes_melitus].lingkar_perut)",
           "covered_by_converter": true
         }
       ],
@@ -3417,11 +3417,11 @@
       "modul": "Jantung dan Stroke",
       "layanan_name": "Skrining Jantung (Pemeriksaan EKG - hanya penyandang HIPERTENSI)",
       "layanan_code": "LPM000034",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Hasil Pemeriksaan - Skrining Jantung",
       "question_count": 2,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Hasil Pemeriksaan EKG",
@@ -3455,8 +3455,8 @@
             "Abnormal"
           ],
           "live_name": "LPM000034|FRM000057|PPM00000200|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[risiko_jantung].kardiovaskular_ekg",
+          "covered_by_converter": true
         },
         {
           "label": "Pemeriksaan EKG",
@@ -4110,11 +4110,11 @@
       "modul": "Kanker Leher Rahim",
       "layanan_name": "Kanker Leher Rahim",
       "layanan_code": "LPM000062",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Kanker Leher Rahim",
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Apakah pernah melakukan hubungan intim/seksual?",
@@ -4147,8 +4147,8 @@
             "Tidak"
           ],
           "live_name": "LPM000062|FRM000088|PPM00000171|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_serviks].pernah_hubungan_seksual",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -4163,11 +4163,11 @@
       "modul": "Jiwa",
       "layanan_name": "Kesehatan Jiwa",
       "layanan_code": "LPM000023",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Kesehatan Jiwa",
       "question_count": 6,
-      "covered_question_count": 0,
+      "covered_question_count": 4,
       "questions": [
         {
           "label": "Dalam 2 minggu terakhir, seberapa sering anda kurang/ tidak bersemangat dalam melakukan kegiatan sehari-hari?",
@@ -4220,8 +4220,8 @@
             "Hampir setiap hari"
           ],
           "live_name": "LPM000023|FRM000067|PPM00000192|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kesehatan_jiwa].question1 (kategori_usia Dewasa, PHQ-2)",
+          "covered_by_converter": true
         },
         {
           "label": "Dalam 2 minggu terakhir, seberapa sering anda merasa murung, tertekan, atau putus asa?",
@@ -4262,8 +4262,8 @@
             "Hampir setiap hari"
           ],
           "live_name": "LPM000023|FRM000067|PPM00000193|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kesehatan_jiwa].question2 (kategori_usia Dewasa, PHQ-2)",
+          "covered_by_converter": true
         },
         {
           "label": "Gejala Depresi",
@@ -4320,8 +4320,8 @@
             "Hampir setiap hari"
           ],
           "live_name": "LPM000023|FRM000067|PPM00000194|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kesehatan_jiwa].question3 (kategori_usia Dewasa, GAD-2)",
+          "covered_by_converter": true
         },
         {
           "label": "Dalam 2 minggu terakhir, seberapa sering anda tidak mampu mengendalikan rasa khawatir?",
@@ -4362,8 +4362,8 @@
             "Hampir setiap hari"
           ],
           "live_name": "LPM000023|FRM000067|PPM00000195|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kesehatan_jiwa].question4 (kategori_usia Dewasa, GAD-2)",
+          "covered_by_converter": true
         },
         {
           "label": "Gejala Kecemasan",
@@ -4402,11 +4402,11 @@
       "modul": "SKRINING PERKEMBANGAN",
       "layanan_name": "Skrining Perkembangan Balita 3-6 Tahun",
       "layanan_code": "LPM000050",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Hasil Pemeriksaan Kuesioner GPPH",
@@ -4437,8 +4437,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[GPPH].hasil_pemeriksaan",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -4449,11 +4449,11 @@
       "modul": "SKRINING PERKEMBANGAN",
       "layanan_name": "Skrining Perkembangan Balita 3-6 Tahun",
       "layanan_code": "LPM000050",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Hasil pemeriksaan KMPE",
@@ -4484,8 +4484,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[KMPE].hasil_pemeriksaan",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -4496,11 +4496,11 @@
       "modul": "SKRINING PERKEMBANGAN",
       "layanan_name": "Skrining Perkembangan Balita 12-17 Bln",
       "layanan_code": "LPM000168",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Hasil pemeriksaan KPSP",
@@ -4535,8 +4535,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[KPSP].hasil_pemeriksaan",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -4551,11 +4551,11 @@
       "modul": "SKRINING PERKEMBANGAN",
       "layanan_name": "Skrining Perkembangan Balita 18 Bulan -2 Tahun",
       "layanan_code": "LPM000049",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Apakah anak Anda memiliki satu atau lebih kondisi berikut ini: 1) Masalah interaksi dengan orang lain seperti kontak mata tidak adekuat; 2) Masalah bahasa dan bicara seperti kosakata bermakna kurang dari 50 dan anak belum mampu merangkai kata, belum bisa menunjuk sesuatu, belum paham instruksi sederhana, atau bicara bahasa planet; 3) Memiliki perilaku berulang tanpa tujuan atau perilaku aneh seperti senang melihat benda berputar, menjejerkan mainan, gerakan stereotipik (flapping, clapping, body rocking), preokupasi terhadap suatu benda, masalah sensoris",
@@ -4581,8 +4581,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[M-CHAT-R].hasil_pemeriksaan",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -4624,11 +4624,11 @@
       "modul": "Geriatri",
       "layanan_name": "Skrining Geriatri (Usia >=60 thn/lansia)",
       "layanan_code": "LPM000025",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Mobilisasi - Pemeriksaan Lanjutan (SPPB)",
       "question_count": 10,
-      "covered_question_count": 0,
+      "covered_question_count": 5,
       "questions": [
         {
           "label": "Tes keseimbangan: berdiri selama 10 detik dengan kaki di masing-masing : Berdiri berdampingan",
@@ -4654,8 +4654,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000033|PPM00000125|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[short_physical_performance].question1a",
+          "covered_by_converter": true
         },
         {
           "label": "Tes keseimbangan: berdiri selama 10 detik dengan kaki di masing-masing : Berdiri semi tandem",
@@ -4681,8 +4681,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000033|PPM00000127|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[short_physical_performance].question1b",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS Lanjutan-Keterbatasan Mobilisasi 02",
@@ -4730,8 +4730,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000033|PPM00000130|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[short_physical_performance].question1c",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS Lanjutan-Keterbatasan Mobilisasi 03",
@@ -4789,8 +4789,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000033|PPM00000132|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[short_physical_performance].question2",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS Lanjutan-Keterbatasan Mobilisasi 04",
@@ -4848,8 +4848,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000033|PPM00000133|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[short_physical_performance].question3",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS Lanjutan Keterbatasan Mobilisasi-05",
@@ -4898,11 +4898,11 @@
       "modul": "Calon Pengantin",
       "layanan_name": "Pemeriksaan Calon Pengantin Perempuan",
       "layanan_code": "LPM000125",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Calon Pengantin Perempuan",
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Kadar Hemoglobin",
@@ -4924,8 +4924,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000125|FRM000205|PPM00000583|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[Hemoglobin].result",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -4980,11 +4980,11 @@
       "modul": "Hati/Hepatitis",
       "layanan_name": "Skrining Laboratorium =>40 thn Perempuan Fungsi Ginjal, Hati, Profil Lipid",
       "layanan_code": "LPM000167",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Fibrosis/Sirosis Hati",
       "question_count": 3,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Nilai SGOT",
@@ -4999,8 +4999,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000045|PPM00000102|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[SGOT].result",
+          "covered_by_converter": true
         },
         {
           "label": "Pemeriksaan Trombosit",
@@ -5015,8 +5015,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000045|PPM00000103|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[Trombosit].result",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil APRI Score (hitung manual dari kalkulator online APRI Score)",
@@ -5043,11 +5043,11 @@
       "modul": "Geriatri",
       "layanan_name": "Skrining Geriatri (Usia >=60 thn/lansia)",
       "layanan_code": "LPM000025",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
       "question_count": 11,
-      "covered_question_count": 0,
+      "covered_question_count": 10,
       "questions": [
         {
           "label": "Dapat mengendalikan rangsang buang air besar (BAB)?",
@@ -5062,8 +5062,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question1",
+          "covered_by_converter": true
         },
         {
           "label": "Dapat mengendalikan rangsang berkemih/buar air kecil (BAK)?",
@@ -5078,8 +5078,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question2",
+          "covered_by_converter": true
         },
         {
           "label": "Membersihkan diri (seka wajah, sisir rambut, sikat gigi)?",
@@ -5094,8 +5094,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question3",
+          "covered_by_converter": true
         },
         {
           "label": "Penggunaan jamban (keluar masuk jamban, melepas/memakai celana, membersihkan, menyiram)?",
@@ -5110,8 +5110,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question4",
+          "covered_by_converter": true
         },
         {
           "label": "Makan dan Minum (jika makan harus berupa potongan, dianggap dibantu)",
@@ -5126,8 +5126,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question5",
+          "covered_by_converter": true
         },
         {
           "label": "Berubah sikap dari berbaring ke duduk",
@@ -5142,8 +5142,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question6",
+          "covered_by_converter": true
         },
         {
           "label": "Berpindah/berjalan",
@@ -5158,8 +5158,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question7",
+          "covered_by_converter": true
         },
         {
           "label": "Memakai baju",
@@ -5174,8 +5174,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question8",
+          "covered_by_converter": true
         },
         {
           "label": "Naik turun tangga",
@@ -5190,8 +5190,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question9",
+          "covered_by_converter": true
         },
         {
           "label": "Mandi",
@@ -5206,8 +5206,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[activity_living].question10",
+          "covered_by_converter": true
         },
         {
           "label": "Interpretasi ADL",
@@ -5363,11 +5363,11 @@
       "modul": "SKRINING GIGI",
       "layanan_name": "Skrining Gigi - Anak",
       "layanan_code": "LPM000094",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Berapa jumlah gigi karies?",
@@ -5416,8 +5416,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies (1 / 2 / 3 -> ASIK \"1.0\" / \"2.0\" / \"3.0\")",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -5436,11 +5436,11 @@
       "modul": "SKRINING TALASEMIA DAN DIABETES",
       "layanan_name": "Pemeriksaan Gula Darah Anak",
       "layanan_code": "LPM000118",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 4,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Apakah Anak Anda pernah dinyatakan diabetes atau kencing manis oleh Dokter?",
@@ -5466,8 +5466,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "diagnoses / history.diagnoses ICD E10-E14 (R-DIAG: only turns 'Ya' on)",
+          "covered_by_converter": true
         },
         {
           "label": "Sudah Berapa Bulan Anak Anda Didiagnosis Diabetes Melitus Oleh Dokter? Isi Total Bulan Sejak didiagnosis dokter hingga saat ini, misal didiagnosis 1 tahun yang lalu = 12, dst",
@@ -5498,8 +5498,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "anamnesis.vitals.gds",
+          "covered_by_converter": true
         },
         {
           "label": "Gula Darah Anak dan Remaja",
@@ -5530,7 +5530,7 @@
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Gula Darah Dewasa Lansia",
       "question_count": 9,
-      "covered_question_count": 4,
+      "covered_question_count": 6,
       "questions": [
         {
           "label": "Apakah Anda pernah dinyatakan diabetes atau kencing manis oleh Dokter?",
@@ -5572,7 +5572,7 @@
             "Tidak"
           ],
           "live_name": "LPM000073|FRM000256|PPM00000160|text",
-          "epus_source": "PTM > Riwayat PTM pada Diri Sendiri > Penyakit Diabetes",
+          "epus_source": "screenings[diabetes_melitus].question5_anamnesis (R-UNIFORM)",
           "covered_by_converter": true
         },
         {
@@ -5588,8 +5588,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[diabetes_melitus].lama_diabetes_bulan (only when the history answer is Ya)",
+          "covered_by_converter": true
         },
         {
           "label": "Gula Darah Sewaktu (GDS) (mg/dl)",
@@ -5604,7 +5604,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000256|PPM00000731|number",
-          "epus_source": "PTM > Pemeriksaan > Pemeriksaan Gula",
+          "epus_source": "anamnesis.vitals.gds (fallback screenings[diabetes_melitus].gds_hasil)",
           "covered_by_converter": true
         },
         {
@@ -5620,8 +5620,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000256|PPM00000732|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[diabetes_melitus].gds_2",
+          "covered_by_converter": true
         },
         {
           "label": "Gula Darah Puasa (GDP) (mg/dl)",
@@ -5636,7 +5636,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000256|PPM00000733|number",
-          "epus_source": "PTM > Pemeriksaan > Pemeriksaan Gula Darah Puasa",
+          "epus_source": "anamnesis.vitals.gdp (fallback screenings[diabetes_melitus].gdp_hasil)",
           "covered_by_converter": true
         },
         {
@@ -5652,7 +5652,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000256|PPM00000734|number",
-          "epus_source": "PTM > Pemeriksaan > Pemeriksaan Gula Darah 2 Jam PP",
+          "epus_source": "screenings[diabetes_melitus].gula_darah_2jam_pp",
           "covered_by_converter": true
         },
         {
@@ -5827,11 +5827,11 @@
       "modul": "SKRINING TALASEMIA DAN DIABETES",
       "layanan_name": "Pemeriksaan Gula Darah - Remaja",
       "layanan_code": "LPM000120",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 5,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Apakah Anak Anda pernah dinyatakan diabetes atau kencing manis oleh Dokter?",
@@ -5857,8 +5857,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "diagnoses / history.diagnoses ICD E10-E14 (R-DIAG: only turns 'Ya' on)",
+          "covered_by_converter": true
         },
         {
           "label": "Sudah Berapa Bulan Anak Anda Didiagnosis Diabetes Melitus Oleh Dokter? Isi Total Bulan Sejak didiagnosis dokter hingga saat ini, misal didiagnosis 1 tahun yang lalu = 12, dst",
@@ -5889,8 +5889,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "anamnesis.vitals.gds",
+          "covered_by_converter": true
         },
         {
           "label": "Gula Darah Anak dan Remaja",
@@ -5933,11 +5933,11 @@
       "modul": "Hati/Hepatitis",
       "layanan_name": "Skrining Laboratorium =>40 thn Perempuan Fungsi Ginjal, Hati, Profil Lipid",
       "layanan_code": "LPM000167",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Hepatitis",
       "question_count": 3,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Hasil Rapid Test Hepatitis B",
@@ -5966,8 +5966,8 @@
             "HBsAg Reaktif"
           ],
           "live_name": "LPM000166|FRM000044|PPM00000022|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[HBsAg].result (R-DIAG: or diagnoses B16/B18.0/B18.1 -> Reaktif)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Rapid Test Hepatitis C",
@@ -5996,8 +5996,8 @@
             "Anti HCV Reaktif"
           ],
           "live_name": "LPM000166|FRM000044|PPM00000039|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[Anti HCV].result (R-DIAG: or diagnoses B17.1/B18.2 -> Reaktif)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan VL HCV RNA Hepatitis C",
@@ -6079,7 +6079,7 @@
             "Non Reaktif"
           ],
           "live_name": "LPM000177|FRM000188|PPM00000069|text",
-          "epus_source": "penyakit_khusus.ICDX B20-B24 → Reaktif; else Konseling HIV.Hasil",
+          "epus_source": "lab[ANTI HIV].result (R-DIAG: or diagnoses B20-B24 -> Reaktif)",
           "covered_by_converter": true
         },
         {
@@ -6236,7 +6236,7 @@
             "Curiga kanker"
           ],
           "live_name": "LPM000036|FRM000060|PPM00000092|text",
-          "epus_source": "PTM > Pemeriksaan IVA dan Sadanis > Hasil IVA (Negatif→Normal; Positif→Curiga kanker)",
+          "epus_source": "screenings[kanker_serviks].result_of_inspekulo_checkup (only when is_inspekulo_performed = 1)",
           "covered_by_converter": true
         },
         {
@@ -6266,7 +6266,7 @@
             "Positif"
           ],
           "live_name": "LPM000036|FRM000060|PPM00000093|text",
-          "epus_source": "PTM > Pemeriksaan IVA dan Sadanis > Hasil IVA",
+          "epus_source": "screenings[kanker_serviks].result_of_iva_checkup (only when is_iva_performed = 1; Negatif / Positif)",
           "covered_by_converter": true
         }
       ],
@@ -6282,11 +6282,11 @@
       "modul": null,
       "layanan_name": null,
       "layanan_code": "LPM000114",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Kadar CO (Hanya Diisi Apabila Merokok atau Terpapar Asap Rokok)",
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Kadar CO Pernapasan",
@@ -6299,8 +6299,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000114|FRM000186|PPM00000545|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].kadar_co",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -6858,7 +6858,7 @@
             "Tidak"
           ],
           "live_name": "LPM000070|FRM000101|PPM00000250|text",
-          "epus_source": "PTM > Faktor Risiko > Merokok",
+          "epus_source": "screenings[puma].question_child_3_* (R-ZERO)",
           "covered_by_converter": true
         },
         {
@@ -6890,7 +6890,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
+          "epus_source": "screenings[puma].question_child_3_3 (smokers only)",
           "covered_by_converter": true
         },
         {
@@ -6920,7 +6920,7 @@
             "Tidak"
           ],
           "live_name": "LPM000070|FRM000101|PPM00000088|text",
-          "epus_source": "PTM > Faktor Risiko > Apakah Anda pernah merasa napas pendek ketika Anda berjalan lebih cepat pada jalan yang datar atau pada jalan yang sedikit menanjak?",
+          "epus_source": "screenings[puma].question4 (R-ZERO)",
           "covered_by_converter": true
         },
         {
@@ -6950,7 +6950,7 @@
             "Tidak"
           ],
           "live_name": "LPM000070|FRM000101|PPM00000100|text",
-          "epus_source": "PTM > Faktor Risiko > Apakah Anda biasanya mempunyai dahak yang berasal dari paru atau kesulitan mengeluarkan dahak saat Anda sedang tidak menderita selesma/flu?",
+          "epus_source": "screenings[puma].question5 (R-ZERO)",
           "covered_by_converter": true
         },
         {
@@ -6980,7 +6980,7 @@
             "Tidak"
           ],
           "live_name": "LPM000070|FRM000101|PPM00000104|text",
-          "epus_source": "PTM > Faktor Risiko > Apakah Anda biasanya batuk saat Anda sedang tidak menderita selesma/flu?",
+          "epus_source": "screenings[puma].question6 (R-ZERO)",
           "covered_by_converter": true
         },
         {
@@ -7010,7 +7010,7 @@
             "Tidak"
           ],
           "live_name": "LPM000070|FRM000101|PPM00000107|text",
-          "epus_source": "PTM > Faktor Risiko > Apakah Dokter atau tenaga medis lainnya pernah meminta Anda untuk melakukan pemeriksaan spirometri atau peak flow meter (meniup ke dalam suatu alat) untuk mengetahui fungsi paru anda?",
+          "epus_source": "screenings[puma].question7 (R-ZERO)",
           "covered_by_converter": true
         },
         {
@@ -7128,7 +7128,7 @@
             "Non Reaktif"
           ],
           "live_name": "LPM000177|FRM000191|PPM00000056|text",
-          "epus_source": "penyakit_khusus.ICDX A50-A53 → Reaktif",
+          "epus_source": "lab[sifilis].result (R-DIAG: or diagnoses A50-A53 -> Reaktif)",
           "covered_by_converter": true
         }
       ],
@@ -7418,11 +7418,11 @@
       "modul": "SKRINING TUBERKULOSIS",
       "layanan_name": "Tuberkulosis - Skrining Nakes Dewasa & Lansia",
       "layanan_code": "LPM000133",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Pemeriksaan Tuberkulosis (Dewasa & Lansia)",
       "question_count": 8,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Apakah anda ada kontak dengan pasien Tuberkulosis (TBC)?",
@@ -7458,8 +7458,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000133|FRM000184|PPM00000387|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].kontak_tbc (only 'Tidak Ada')",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah jeanis TBC dari pasien Tuberkulosis (TBC) yang berkontak dengan anda?",
@@ -7522,8 +7522,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000133|FRM000184|PPM00000504|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].metode_pemeriksaan_tb (TCM, BTA Mikroskopis only; Foto Toraks / Klinis have no ASIK option)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan TCM",
@@ -7672,11 +7672,11 @@
       "modul": "SKRINING TUBERKULOSIS",
       "layanan_name": "Tuberkulosis - Skrining Nakes Anak 1-9 tahun",
       "layanan_code": "LPM000129",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 10,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Apakah anda ada kontak dengan pasien Tuberkulosis (TBC)?",
@@ -7712,8 +7712,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].kontak_tbc (only 'Tidak Ada')",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah jenis TBC dari pasien Tuberkulosis (TBC) yang berkontak dengan anda?",
@@ -8060,11 +8060,11 @@
       "modul": "IMS",
       "layanan_name": "Penapisan dan Pemeriksaan HIV & Sifilis Anak",
       "layanan_code": "LPM000174",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 2,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Apakah bayi/anak lahir dari Ibu dengan Sifilis?",
@@ -8117,8 +8117,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "diagnoses / history.diagnoses ICD A50-A53 (R-DIAG)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -8728,11 +8728,11 @@
       "modul": "Geriatri",
       "layanan_name": "Skrining Geriatri (Usia >=60 thn/lansia)",
       "layanan_code": "LPM000025",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Penurunan Kognitif - Tindak Lanjut (Mini Cog-Clock Draw)",
       "question_count": 4,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Mintalah pasien untuk mendengarkan dengan cermat dan mengingat tiga kata dgn pilihan : versi 1: Pisang, bulan, kursi ; versi 2 ; pemimpin, musim meja ; versi 3 : desa, dapur, bayi",
@@ -8785,8 +8785,8 @@
             "Salah"
           ],
           "live_name": "LPM000025|FRM000030|PPM00000115|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[pemeriksaan_cog | skilas].clock_drawing_test (Normal -> Benar; Abnormal -> Salah)",
+          "covered_by_converter": true
         },
         {
           "label": "Mintalah pasien untuk MENGULANG 3 kata yang disebutkan pada pertanyaan no 1",
@@ -8827,8 +8827,8 @@
             "Tidak dapat mengingat/mengulang kata"
           ],
           "live_name": "LPM000025|FRM000030|PPM00000108|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[pemeriksaan_cog].instruction1",
+          "covered_by_converter": true
         },
         {
           "label": "Intepretasi Mini-Cog",
@@ -8859,7 +8859,7 @@
       "in_audit": true,
       "audit_form_title": "Perilaku Merokok",
       "question_count": 9,
-      "covered_question_count": 1,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Apakah Anda merokok dalam setahun terakhir ini?",
@@ -8896,7 +8896,7 @@
             "Tidak"
           ],
           "live_name": "LPM000057|FRM000064|PPM00000183|text",
-          "epus_source": "PTM > Faktor Risiko > Merokok",
+          "epus_source": "programs.ptm_questionnaire[Q0013 1.4 Status merokok] (1.1 = 0 when never smoked)",
           "covered_by_converter": true
         },
         {
@@ -9076,8 +9076,8 @@
             "Tidak"
           ],
           "live_name": "LPM000057|FRM000064|PPM00000218|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm_questionnaire[Q0013 1.5]",
+          "covered_by_converter": true
         },
         {
           "label": "Derajat Merokok (Indeks Brinkman)",
@@ -9112,11 +9112,11 @@
       "modul": "Hati/Hepatitis",
       "layanan_name": "Skrining Laboratorium =>40 thn Perempuan Fungsi Ginjal, Hati, Profil Lipid",
       "layanan_code": "LPM000167",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "POCT Lipid Panel (Khusus usia >=40 thn dan penyandang HT dan/atau DM)",
       "question_count": 6,
-      "covered_question_count": 0,
+      "covered_question_count": 4,
       "questions": [
         {
           "label": "Kolesterol Total",
@@ -9136,8 +9136,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000047|PPM00000010|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[KOLESTEROL TOTAL].result",
+          "covered_by_converter": true
         },
         {
           "label": "Masukkan nilai HDL",
@@ -9168,8 +9168,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000047|PPM00000026|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[LDL CHOLESTEROL].result",
+          "covered_by_converter": true
         },
         {
           "label": "Trigliserida",
@@ -9184,8 +9184,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000047|PPM00000029|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[TRIGLISERIDA].result",
+          "covered_by_converter": true
         },
         {
           "label": "Interpretasi Dislipidemia",
@@ -9216,8 +9216,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000047|PPM00000021|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[HDL CHOLESTEROL].result",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -9979,11 +9979,11 @@
       "modul": "Riwayat Imunisasi Rutin Balita",
       "layanan_name": "Riwayat Imunisasi Rutin Balita",
       "layanan_code": "LPM000112",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 22,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Apakah anak pernah memperoleh imunisasi saat usia 0 sd 24 bulan",
@@ -10084,8 +10084,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.immunization.imunisasi[].hb0_kurang_24_jam (latest answered row)",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah anak anda sudah pernah menerima imunisasi BCG pada usia <1 bulan?",
@@ -10576,11 +10576,11 @@
       "modul": "Riwayat Imunisasi Tetanus (Status T)",
       "layanan_name": "Riwayat Imunisasi Tetanus(Status T)",
       "layanan_code": "LPM000113",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Riwayat Imunisasi Tetanus(Status T) - Hanya untuk Catin",
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Apakah anda pernah mendapatkan imunisasi tetanus minimal 2 kali? (imunisasi tetanus biasanya didapatkan pada vaksin DPT saat bayi, vaksin TT/Td saat usia sekolah dasar)",
@@ -10620,8 +10620,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000113|FRM000172|PPM00000505|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[imunisasi_tetanus_wus].imunisasi_tetanus (>= T2)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -10636,11 +10636,11 @@
       "modul": "Geriatri",
       "layanan_name": "Skrining Geriatri (Usia >=60 thn/lansia)",
       "layanan_code": "LPM000025",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "SKILAS Mobilisasi - Lansia",
       "question_count": 1,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Tes Berdiri di kursi: Berdiri dari kursi lima kali tanpa bantuan tangan. Apakah orang tersebut dapat berdiri dari kursi utuh sebanyak lima kali dalam 14 detik ?",
@@ -10669,8 +10669,8 @@
             "Tidak"
           ],
           "live_name": "LPM000025|FRM000032|PPM00000122|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[skilas].question2",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -10681,11 +10681,11 @@
       "modul": "Geriatri",
       "layanan_name": "Skrining Geriatri (Usia >=60 thn/lansia)",
       "layanan_code": "LPM000025",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "SKILAS Pemeriksaan Gejala Depresi - Lansia",
       "question_count": 3,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Apakah dalam 2 minggu terakhir Anda merasa sedih, tertekan, atau putus asa?",
@@ -10700,8 +10700,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[skilas].question6a",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah dalam 2 minggu terakhir Anda sedikit minat atau kesenangan dalam melakukan sesuatu?",
@@ -10716,8 +10716,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[skilas].question6b",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS-Gejala Depresi-Interpretasi",
@@ -10744,11 +10744,11 @@
       "modul": "Geriatri",
       "layanan_name": "Skrining Geriatri (Usia >=60 thn/lansia)",
       "layanan_code": "LPM000025",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "SKILAS Penurunan Kognitif - Lansia",
       "question_count": 4,
-      "covered_question_count": 0,
+      "covered_question_count": 3,
       "questions": [
         {
           "label": "Apakah dapat mengingat tiga kata: bunga, pintu, nasi (contoh)?",
@@ -10779,8 +10779,8 @@
             "Tidak"
           ],
           "live_name": "LPM000025|FRM000029|PPM00000037|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[skilas].question1 (recall outcome)",
+          "covered_by_converter": true
         },
         {
           "label": "Tanggal berapakah hari ini secara lengkap (tanggal/bulan/tahun)? atau- Dimanakah Anda saat ini (Puskesmas, rumah, klinik, dll)?",
@@ -10815,8 +10815,8 @@
             "Tidak Tahu"
           ],
           "live_name": "LPM000025|FRM000029|PPM00000066|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[skilas].question1 (orientation outcome)",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah peserta dapat mengingat tiga kata sebelumnya?",
@@ -10845,8 +10845,8 @@
             "Tidak"
           ],
           "live_name": "LPM000025|FRM000029|PPM00000085|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[skilas].question1 (recall outcome)",
+          "covered_by_converter": true
         },
         {
           "label": "Interpretasi SKILAS Penurunan Kognitif",
@@ -11074,11 +11074,11 @@
       "modul": "Hati/Hepatitis",
       "layanan_name": "Skrining Laboratorium =>40 thn Laki-laki Gula Darah, Fungsi Ginjal, Hati, Profil Lipid",
       "layanan_code": "LPM000166",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Skrining Fungsi Ginjal Laki-Laki (hanya untuk =>40 tahun dengan risiko HT DM)",
       "question_count": 4,
-      "covered_question_count": 0,
+      "covered_question_count": 4,
       "questions": [
         {
           "label": "Hasil Pemeriksaan Kreatinin",
@@ -11093,8 +11093,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000244|PPM00000112|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[Kreatinin].result",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan Ureum",
@@ -11114,8 +11114,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000244|PPM00000099|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[Ureum].result",
+          "covered_by_converter": true
         },
         {
           "label": "Usia",
@@ -11130,8 +11130,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000244|PPM00000691|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "patient.age.years (derived)",
+          "covered_by_converter": true
         },
         {
           "label": "Nilai Hasil pemeriksaan (e-LFG (CKD-EPI))",
@@ -11146,8 +11146,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000244|PPM00000761|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[eGFR].result",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -11163,11 +11163,11 @@
       "modul": "Hati/Hepatitis",
       "layanan_name": "Skrining Laboratorium =>40 thn Perempuan Fungsi Ginjal, Hati, Profil Lipid",
       "layanan_code": "LPM000167",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Skrining Fungsi Ginjal Perempuan (hanya untuk =>40 tahun dengan risiko HT DM)",
       "question_count": 7,
-      "covered_question_count": 0,
+      "covered_question_count": 4,
       "questions": [
         {
           "label": "Hasil Pemeriksaan Kreatinin",
@@ -11182,8 +11182,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000167|FRM000245|PPM00000112|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[Kreatinin].result",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan Ureum",
@@ -11198,8 +11198,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000167|FRM000245|PPM00000099|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[Ureum].result",
+          "covered_by_converter": true
         },
         {
           "label": "Usia",
@@ -11214,8 +11214,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000167|FRM000245|PPM00000691|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "patient.age.years (derived)",
+          "covered_by_converter": true
         },
         {
           "label": "Nilai Hasil pemeriksaan (e-LFG (CKD-EPI))",
@@ -11230,8 +11230,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000167|FRM000245|PPM00000730|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[eGFR].result",
+          "covered_by_converter": true
         },
         {
           "label": "Fungsi Ginjal  (Ureum)",
@@ -11342,11 +11342,11 @@
       "modul": "Kanker Paru",
       "layanan_name": "Skrining Kanker Paru (Laki-Laki >=45 Tahun) - Penapisan Risiko Kanker Paru",
       "layanan_code": "LPM000105",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Penapisan Risiko Kanker Paru",
       "question_count": 7,
-      "covered_question_count": 0,
+      "covered_question_count": 6,
       "questions": [
         {
           "label": "Apakah Anda merokok dalam setahun terakhir ini?",
@@ -11378,8 +11378,8 @@
             "Tidak"
           ],
           "live_name": "LPM000105|FRM000138|PPM00000561|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm_questionnaire[Q0013 1.4 Status merokok]",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda pernah memiliki riwayat merokok dalam 15 tahun terakhir?",
@@ -11405,8 +11405,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].riwayat_merokok_15th",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda terpapar atau menghirup asap rokok dari orang lain di rumah, lingkungan atau tempat kerja dalam 1 bulan terakhir?",
@@ -11435,8 +11435,8 @@
             "Tidak"
           ],
           "live_name": "LPM000105|FRM000138|PPM00000563|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm_questionnaire[Q0013 1.5]",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah memiliki riwayat kanker paru pada keluarga (ayah/ibu/saudara kandung)?",
@@ -11465,8 +11465,8 @@
             "Tidak"
           ],
           "live_name": "LPM000105|FRM000138|PPM00000402|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm_questionnaire[Q0019 1.2]",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda sedang mengalami salah satu atau lebih gejala berikut dan telah diobati tetapi tidak sembuh-sembuh : batuk dalam jangka waktu yang lama / batuk berdarah/ sesak napas/ nyeri dada/ leher bengkak/ terdapat benjolan pada leher?",
@@ -11495,8 +11495,8 @@
             "Tidak"
           ],
           "live_name": "LPM000105|FRM000138|PPM00000564|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].gejala_kanker_paru",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda pernah memiliki riwayat penyakit TBC atau PPOK?",
@@ -11525,8 +11525,8 @@
             "Tidak"
           ],
           "live_name": "LPM000105|FRM000138|PPM00000565|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm_questionnaire[Q0019 1.7]",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Penapisan Risiko Kanker Paru",
@@ -11556,11 +11556,11 @@
       "modul": "Kanker Paru",
       "layanan_name": "Skrining Kanker Paru (Laki-laki =>45 tahun)",
       "layanan_code": "LPM000028",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Skrining Kanker Paru (Usia =>45 thn)",
       "question_count": 11,
-      "covered_question_count": 0,
+      "covered_question_count": 7,
       "questions": [
         {
           "label": "Jenis Kelamin - skor APCS",
@@ -11657,8 +11657,8 @@
             "Tidak pernah didiagnosis menderita kanker"
           ],
           "live_name": "LPM000028|FRM000041|PPM00000017|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].question3 / programs.ptm_questionnaire[Q0019 1.1]",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah ada keluarga (ayah/ibu/saudara kandung) didiagnosis/menderita kanker sebelumnya?",
@@ -11693,8 +11693,8 @@
             "Tidak ada keluarga yang terdiagnosis kanker"
           ],
           "live_name": "LPM000028|FRM000041|PPM00000028|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].question4 / programs.ptm_questionnaire[Q0019 1.2]",
+          "covered_by_converter": true
         },
         {
           "label": "Riwayat merokok/paparan asap rokok",
@@ -11735,8 +11735,8 @@
             "Tidak pernah merokok"
           ],
           "live_name": "LPM000028|FRM000041|PPM00000291|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].question5 (only options with identical meaning) / programs.ptm_questionnaire[Q0019 1.3]",
+          "covered_by_converter": true
         },
         {
           "label": "Riwayat tempat kerja mengandung zat karsinogenik (Pertambangan/ pabrik/ bengkel/ garmen/ bangunan/ laboratorium/ sopir/ galangan kapal, dll)?",
@@ -11771,8 +11771,8 @@
             "Tidak tempat kerja mengandung zat karsinogenik"
           ],
           "live_name": "LPM000028|FRM000041|PPM00000041|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].question6 / programs.ptm_questionnaire[Q0019 1.4]",
+          "covered_by_converter": true
         },
         {
           "label": "Lingkungan tempat tinggal berpotensi tinggi (lingkungan dekat pabrik/pertambangan/buangan sampah, dll)?",
@@ -11807,8 +11807,8 @@
             "Tidak memiliki tempat tinggal berpotensi tinggi"
           ],
           "live_name": "LPM000028|FRM000041|PPM00000050|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].question7 / programs.ptm_questionnaire[Q0019 1.5]",
+          "covered_by_converter": true
         },
         {
           "label": "Lingkungan dalam rumah yang tidak sehat (ventilasi buruk/atap dari asbes/lantai tanah, dapur tungku, dll)?",
@@ -11843,8 +11843,8 @@
             "Memiliki lingkungan dalam rumah yang sehat"
           ],
           "live_name": "LPM000028|FRM000041|PPM00000055|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].question8 / programs.ptm_questionnaire[Q0019 1.6]",
+          "covered_by_converter": true
         },
         {
           "label": "Pernah didiagnosis penyakit paru kronik?",
@@ -11879,8 +11879,8 @@
             "Tidak pernah didiagnosis penyakit paru kronik"
           ],
           "live_name": "LPM000028|FRM000041|PPM00000057|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[kanker_paru].question9 / programs.ptm_questionnaire[Q0019 1.7]",
+          "covered_by_converter": true
         },
         {
           "label": "Interpretasi Ca Paru",
@@ -11944,7 +11944,7 @@
       "in_audit": true,
       "audit_form_title": "Skrining Kanker Payudara",
       "question_count": 3,
-      "covered_question_count": 2,
+      "covered_question_count": 3,
       "questions": [
         {
           "label": "Pemeriksaan yang dilakukan",
@@ -11975,7 +11975,7 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000035|FRM000059|PPM00000067|text",
-          "epus_source": "constant 'SADANIS' (EPUS never does USG Payudara)",
+          "epus_source": "screenings[risiko_kanker_payudara].checkup_result1 / hasil_usg_payudara (SADANIS first)",
           "covered_by_converter": true
         },
         {
@@ -12007,7 +12007,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "PTM > Pemeriksaan IVA dan Sadanis > Hasil Sanadis (value-map)",
+          "epus_source": "screenings[risiko_kanker_payudara].checkup_result1 (Tidak ada benjolan -> Normal; Benjolan; Curiga Kanker)",
           "covered_by_converter": true
         },
         {
@@ -12039,8 +12039,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[risiko_kanker_payudara].hasil_usg_payudara (Normal; Kista Simpleks -> Simple cyst)",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -12056,11 +12056,11 @@
       "modul": "Gigi",
       "layanan_name": "Skrining Gigi - Dewasa >=25 tahun",
       "layanan_code": "LPM000032",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Skrining Karies dan Gigi Hilang",
       "question_count": 2,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Gigi karies",
@@ -12100,8 +12100,8 @@
             "Tidak"
           ],
           "live_name": "LPM000032|FRM000055|PPM00000025|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[gigi_dewasa].question4",
+          "covered_by_converter": true
         },
         {
           "label": "Gigi hilang/dicabut",
@@ -12130,8 +12130,8 @@
             "Tidak"
           ],
           "live_name": "LPM000032|FRM000055|PPM00000035|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[gigi_dewasa].question3",
+          "covered_by_converter": true
         }
       ],
       "demos_union": [
@@ -12220,11 +12220,11 @@
       "modul": "Hati/Hepatitis",
       "layanan_name": "Skrining Laboratorium =>40 thn Perempuan Fungsi Ginjal, Hati, Profil Lipid",
       "layanan_code": "LPM000167",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Skrining Kerusakan Ginjal (hanya untuk =>40 tahun dengan risiko HT DM)",
       "question_count": 3,
-      "covered_question_count": 0,
+      "covered_question_count": 1,
       "questions": [
         {
           "label": "Konsentrasi Albumin Urin",
@@ -12239,8 +12239,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000166|FRM000248|PPM00000595|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "lab[Microalbuminuria].result",
+          "covered_by_converter": true
         },
         {
           "label": "Konsentrasi Kreatinin Urin",
@@ -12283,11 +12283,11 @@
       "modul": "SKRINING LANJUTAN TALASEMIA",
       "layanan_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
       "layanan_code": "LPM000019",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 8,
-      "covered_question_count": 0,
+      "covered_question_count": 5,
       "questions": [
         {
           "label": "Hasil Pemeriksaan Hemoglobin (Hb) dalam g/dL",
@@ -12304,8 +12304,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].hb_result (> 0; not g/L)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan MCV",
@@ -12320,8 +12320,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].mcv_result (> 0)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan MCH",
@@ -12336,8 +12336,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].mch_result (> 0)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan Eritrosit / RBC Count",
@@ -12352,8 +12352,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].rbc_result (> 0)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Pemeriksaan Red cell distribution width (RDW)",
@@ -12368,8 +12368,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[thalasemia].rdw_result (> 0)",
+          "covered_by_converter": true
         },
         {
           "label": "Indeks Mentzer",
@@ -12430,11 +12430,11 @@
       "modul": "Geriatri",
       "layanan_name": "Skrining Geriatri (Usia >=60 thn/lansia)",
       "layanan_code": "LPM000025",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "SKILAS Malnutrisi",
       "question_count": 6,
-      "covered_question_count": 0,
+      "covered_question_count": 3,
       "questions": [
         {
           "label": "Apakah berat badan Anda berkurang >3 kg dalam 3 bulan terakhir atau pakaian menjadi lebih longgar?",
@@ -12458,8 +12458,8 @@
             "Tidak"
           ],
           "live_name": "LPM000025|FRM000034|PPM00000126|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[skilas].question3a / screenings[gizi].penurunan_bb (unambiguous answers only)",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah Anda hilang nafsu makan Atau mengalami kesulitan makan (misal batuk atau tersedak saat makan, menggunakan selang makan/sonde)?",
@@ -12483,8 +12483,8 @@
             "Tidak"
           ],
           "live_name": "LPM000025|FRM000034|PPM00000128|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[skilas].question3b / screenings[gizi].asupan_makanan (Ya only)",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS-Malnutrisi-02",
@@ -12530,8 +12530,8 @@
             "Tidak"
           ],
           "live_name": "LPM000025|FRM000034|PPM00000129|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[skilas].question3c",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS-Malnutrisi-03",
@@ -12580,11 +12580,11 @@
       "modul": "Geriatri",
       "layanan_name": "Skrining Geriatri (Usia >=60 thn/lansia)",
       "layanan_code": "LPM000025",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Skrining Malnutrisi - Pemeriksaan Lanjutan (MNA-SF)",
       "question_count": 14,
-      "covered_question_count": 0,
+      "covered_question_count": 6,
       "questions": [
         {
           "label": "Apakah anda mengalami penurunan asupan makanan dalam 3 bulan terakhir disebabkan kehilangan nafsu makan, gangguan saluran cerna, kesulitan mengunyah atau menelan?",
@@ -12610,8 +12610,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000035|PPM00000131|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[pengkajian_nutrisi].penapisan1",
+          "covered_by_converter": true
         },
         {
           "label": "Penurunan berat badan dalam tiga bulan terakhir ?",
@@ -12637,8 +12637,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000035|PPM00000134|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[pengkajian_nutrisi].penapisan2",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS Lanjutan-Malnutrisi-02 (MNASF)",
@@ -12686,8 +12686,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000035|PPM00000136|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[pengkajian_nutrisi].penapisan3",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS Lanjutan-Malnutrisi-03 (MNASF)",
@@ -12733,8 +12733,8 @@
             "Tidak"
           ],
           "live_name": "LPM000025|FRM000035|PPM00000137|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[pengkajian_nutrisi].penapisan4",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS Lanjutan-Malnutrisi-04 (MNASF)",
@@ -12782,8 +12782,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000035|PPM00000138|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[pengkajian_nutrisi].penapisan5",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS Lanjutan-Malnutrisi-05 (MNASF)",
@@ -12836,8 +12836,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000025|FRM000035|PPM00000140|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[pengkajian_nutrisi].penapisan6",
+          "covered_by_converter": true
         },
         {
           "label": "SKILAS Lanjutan-Malnutrisi-06 (MNASF)",
@@ -12930,11 +12930,11 @@
       "modul": "Gigi",
       "layanan_name": "Skrining Gigi - Dewasa >=25 tahun",
       "layanan_code": "LPM000032",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Skrining Penyakit Periodontal",
       "question_count": 2,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Penyakit Periodontal",
@@ -12963,8 +12963,8 @@
             "Tidak"
           ],
           "live_name": "LPM000032|FRM000056|PPM00000044|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[gigi_dewasa | gigi_lansia].penyakit_periodontal (Tidak Ada -> Tidak; Gingivitis / Periodontitis -> Ya)",
+          "covered_by_converter": true
         },
         {
           "label": "Gigi Goyang",
@@ -12993,8 +12993,8 @@
             "Tidak"
           ],
           "live_name": "LPM000032|FRM000056|PPM00000070|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[gigi_dewasa | gigi_lansia].gigi_goyang",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -13005,11 +13005,11 @@
       "modul": "SKRINING PERTUMBUHAN",
       "layanan_name": "Skrining Pertumbuhan - Balita dan Anak Prasekolah 1- 5 Tahun",
       "layanan_code": "LPM000013",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 7,
-      "covered_question_count": 0,
+      "covered_question_count": 3,
       "questions": [
         {
           "label": "Berat Badan Balita",
@@ -13024,8 +13024,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "anamnesis.vitals.weight_kg",
+          "covered_by_converter": true
         },
         {
           "label": "Pengukuran Tinggi Badan (cm)",
@@ -13040,8 +13040,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "anamnesis.vitals.height_cm",
+          "covered_by_converter": true
         },
         {
           "label": "Posisi Pengukuran",
@@ -13067,8 +13067,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "anamnesis.vitals.measurement_position (kk_kunjungan.posisi_pengukuran: Berdiri / Telentang)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil BB/U",
@@ -13313,7 +13313,7 @@
       "in_audit": true,
       "audit_form_title": "Skrining Telinga dan Mata (18-39 tahun)",
       "question_count": 9,
-      "covered_question_count": 3,
+      "covered_question_count": 4,
       "questions": [
         {
           "label": "Apa Hasil Pemeriksaan Telinga Luar (serumen impaksi)?",
@@ -13348,7 +13348,7 @@
             "Ada serumen impaksi"
           ],
           "live_name": "LPM000031|FRM000042|PPM00000559|text",
-          "epus_source": "PTM > Gangguan Pendengaran > Serumen > Telinga Kanan/Kiri",
+          "epus_source": "programs.ptm.fase_pendengaran.serumen_impeksi_right/left",
           "covered_by_converter": true
         },
         {
@@ -13375,8 +13375,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000031|FRM000042|PPM00000560|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm.fase_pendengaran.omsk_congek_right_ear/left_ear",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil pemeriksaan tajam pendengaran",
@@ -13405,7 +13405,7 @@
             "Curiga gangguan pendengaran"
           ],
           "live_name": "LPM000031|FRM000042|PPM00000020|text",
-          "epus_source": "PTM > Gangguan Pendengaran > Curiga Tuli Kongenital > Telinga Kanan/Kiri",
+          "epus_source": "programs.ptm.fase_pendengaran.tajam_pendengaran_right/left",
           "covered_by_converter": true
         },
         {
@@ -13462,7 +13462,7 @@
             "Curiga gangguan penglihatan (visus <6/12)"
           ],
           "live_name": "LPM000031|FRM000042|PPM00000040|text",
-          "epus_source": "PTM > Gangguan Penglihatan > Kelainan Refraksi > Mata Kanan/Kiri",
+          "epus_source": "screenings[ptm_mata].visus_kanan/visus_kiri over *_denominator (Snellen ratio, 6/12 = Normal boundary)",
           "covered_by_converter": true
         },
         {
@@ -13612,7 +13612,7 @@
       "in_audit": true,
       "audit_form_title": "Skrining Telinga dan Mata (=>40 tahun)",
       "question_count": 10,
-      "covered_question_count": 4,
+      "covered_question_count": 5,
       "questions": [
         {
           "label": "Apa Hasil Pemeriksaan Telinga Luar (serumen impaksi)?",
@@ -13647,7 +13647,7 @@
             "Ada serumen impaksi"
           ],
           "live_name": "LPM000054|FRM000099|PPM00000559|text",
-          "epus_source": "PTM > Gangguan Pendengaran > Serumen > Telinga Kanan/Kiri",
+          "epus_source": "programs.ptm.fase_pendengaran.serumen_impeksi_right/left",
           "covered_by_converter": true
         },
         {
@@ -13674,8 +13674,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000054|FRM000099|PPM00000560|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm.fase_pendengaran.omsk_congek_right_ear/left_ear",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil pemeriksaan tajam pendengaran",
@@ -13704,7 +13704,7 @@
             "Curiga gangguan pendengaran"
           ],
           "live_name": "LPM000054|FRM000099|PPM00000020|text",
-          "epus_source": "PTM > Gangguan Pendengaran > Curiga Tuli Kongenital > Telinga Kanan/Kiri",
+          "epus_source": "programs.ptm.fase_pendengaran.tajam_pendengaran_right/left",
           "covered_by_converter": true
         },
         {
@@ -13761,7 +13761,7 @@
             "Curiga gangguan penglihatan (visus <6/12)"
           ],
           "live_name": "LPM000054|FRM000099|PPM00000040|text",
-          "epus_source": "PTM > Gangguan Penglihatan > Kelainan Refraksi > Mata Kanan/Kiri",
+          "epus_source": "screenings[ptm_mata].visus_kanan/visus_kiri over *_denominator (Snellen ratio, 6/12 = Normal boundary)",
           "covered_by_converter": true
         },
         {
@@ -13919,7 +13919,7 @@
             "Normal"
           ],
           "live_name": "LPM000054|FRM000099|PPM00000072|text",
-          "epus_source": "PTM > Gangguan Penglihatan > Katarak > Mata Kanan/Kiri",
+          "epus_source": "screenings[ptm_mata].pupil_kanan/pupil_kiri (only OV000393 Suspek Katarak -> Curiga Katarak)",
           "covered_by_converter": true
         }
       ],
@@ -14080,11 +14080,11 @@
       "modul": "SKRINING TELINGA DAN MATA",
       "layanan_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
       "layanan_code": "LPM000015",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": false,
       "audit_form_title": null,
       "question_count": 5,
-      "covered_question_count": 0,
+      "covered_question_count": 5,
       "questions": [
         {
           "label": "Hasil Tes Daya Dengar",
@@ -14110,8 +14110,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[TDD].hasil_pemeriksaan",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah ditemukan serumen impaksi?",
@@ -14137,8 +14137,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm.fase_pendengaran.serumen_impeksi_right/left",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah ditemukan infeksi telinga?",
@@ -14164,8 +14164,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm.fase_pendengaran.omsk_congek_right_ear/left_ear",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil pemeriksaan Tes Daya Lihat",
@@ -14191,8 +14191,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.child.sdidtk[TDL].hasil_pemeriksaan",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah ditemukan selaput mata merah atau kornea keruh atau kelopak mata ada benjolan atau susah berkedip atau posisi bola mata juling atau pupil putih?",
@@ -14218,8 +14218,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[ptm_mata].kelainan_mata_anak",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -14541,7 +14541,7 @@
       "in_audit": true,
       "audit_form_title": "Tekanan Darah Dewasa Lansia",
       "question_count": 9,
-      "covered_question_count": 3,
+      "covered_question_count": 6,
       "questions": [
         {
           "label": "Apakah Anda pernah dinyatakan tekanan darah tinggi?",
@@ -14565,7 +14565,7 @@
             "Tidak"
           ],
           "live_name": "LPM000073|FRM000265|PPM00000203|text",
-          "epus_source": "PTM > Riwayat PTM pada Diri Sendiri > Penyakit Hipertensi",
+          "epus_source": "screenings[hipertensi].question1_anamnesis (R-UNIFORM)",
           "covered_by_converter": true
         },
         {
@@ -14603,8 +14603,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[hipertensi].lama_hipertensi_bulan (only when the history answer is Ya)",
+          "covered_by_converter": true
         },
         {
           "label": "Tekanan Darah Sistolik",
@@ -14619,7 +14619,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000265|PPM00000012|number",
-          "epus_source": "Anamnesa > Periksa Fisik > Sistole",
+          "epus_source": "anamnesis.vitals.systole (fallback screenings[hipertensi].sistole)",
           "covered_by_converter": true
         },
         {
@@ -14635,7 +14635,7 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000265|PPM00000019|number",
-          "epus_source": "Anamnesa > Periksa Fisik > Diastole",
+          "epus_source": "anamnesis.vitals.diastole (fallback screenings[hipertensi].diastole)",
           "covered_by_converter": true
         },
         {
@@ -14651,8 +14651,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000265|PPM00000540|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[hipertensi].sistole_2",
+          "covered_by_converter": true
         },
         {
           "label": "Tekanan darah diastolik ke-2",
@@ -14667,8 +14667,8 @@
           "live_kind": "number",
           "live_options": [],
           "live_name": "LPM000073|FRM000265|PPM00000541|number",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[hipertensi].diastole_2",
+          "covered_by_converter": true
         },
         {
           "label": "Tekanan Darah Dewasa Lansia Ke-1",
@@ -15127,11 +15127,11 @@
       "modul": "Aktivitas Fisik",
       "layanan_name": "Tingkat Aktivitas Fisik",
       "layanan_code": "LPM000002",
-      "in_converter_breadcrumbs": false,
+      "in_converter_breadcrumbs": true,
       "in_audit": true,
       "audit_form_title": "Tingkat Aktivitas Fisik (sedang dan berat)",
       "question_count": 10,
-      "covered_question_count": 0,
+      "covered_question_count": 2,
       "questions": [
         {
           "label": "Apakah Anda melakukan aktivitas fisik sedang pada kegiatan rumah tangga/domestik seperti membersihkan rumah/lingkungan (menyapu, menata perabotan), mencuci baju manual, memasak, mengasuh anak, atau mengangkat beban dengan berat < 20 kg?",
@@ -15265,8 +15265,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000002|FRM000169|PPM00000715|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm_questionnaire[Q0013 1.10] (inherited rule: sufficient activity -> Ya, insufficient -> Tidak)",
+          "covered_by_converter": true
         },
         {
           "label": "Aktivitas fisik intensitas berat adalah aktivitas yang membuat anda terengah-engah dan kesulitan berbicara",
@@ -15319,8 +15319,8 @@
           "live_kind": "dropdown",
           "live_options": [],
           "live_name": "LPM000002|FRM000169|PPM00000721|text",
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "programs.ptm_questionnaire[Q0013 1.10] (inherited rule: insufficient activity -> Tidak)",
+          "covered_by_converter": true
         },
         {
           "label": "Hasil Aktivitas Fisik Sedang Menit",
@@ -15671,7 +15671,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "Anamnesa > Periksa Fisik > Berat Badan",
+          "epus_source": "anamnesis.vitals.weight_kg",
           "covered_by_converter": true
         },
         {
@@ -15685,7 +15685,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "Anamnesa > Periksa Fisik > Tinggi Badan",
+          "epus_source": "anamnesis.vitals.height_cm",
           "covered_by_converter": true
         }
       ],
@@ -15714,7 +15714,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "Anamnesa > Periksa Fisik > Sistole",
+          "epus_source": "anamnesis.vitals.systole",
           "covered_by_converter": true
         },
         {
@@ -15728,7 +15728,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "Anamnesa > Periksa Fisik > Diastole",
+          "epus_source": "anamnesis.vitals.diastole",
           "covered_by_converter": true
         }
       ],
@@ -15757,7 +15757,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "Anamnesa > Periksa Fisik > Tinggi Badan",
+          "epus_source": "anamnesis.vitals.height_cm",
           "covered_by_converter": true
         },
         {
@@ -15801,7 +15801,7 @@
       "in_audit": true,
       "audit_form_title": "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)",
       "question_count": 6,
-      "covered_question_count": 1,
+      "covered_question_count": 4,
       "questions": [
         {
           "label": "Apakah anak Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh?",
@@ -15814,7 +15814,7 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": "Anamnesa > Anamnesa > Keluhan Utama + Lama Sakit",
+          "epus_source": "screenings[tb_anak].batuk_anak",
           "covered_by_converter": true
         },
         {
@@ -15828,8 +15828,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].bb_turun",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah anak anda mengalami demam hilang timbul tanpa sebab yang jelas lebih dari 2 minggu?",
@@ -15842,8 +15842,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].demam",
+          "covered_by_converter": true
         },
         {
           "label": "Apakah anak Anda mengalami lesu atau malaise, anak kurang aktif bermain?",
@@ -15884,8 +15884,8 @@
           "live_kind": null,
           "live_options": [],
           "live_name": null,
-          "epus_source": null,
-          "covered_by_converter": false
+          "epus_source": "screenings[tbc].pemeriksaan_foto_toraks / abnormalitas_tbc",
+          "covered_by_converter": true
         }
       ],
       "demos_union": []
@@ -15893,22 +15893,17 @@
   ],
   "epus_paths_index": [
     {
-      "path": "Anamnesa > Periksa Fisik > Berat Badan",
+      "path": "anamnesis.vitals.diastole",
       "destinations": [
         {
-          "form_name": "Gizi (BB - TB - Lingkar Perut) Laki-laki",
-          "frm_code": "FRM000093",
-          "label": "Berat Badan (Kg)"
-        },
-        {
-          "form_name": "Gizi (BB - TB - Lingkar Perut) Perempuan",
-          "frm_code": "FRM000051",
-          "label": "Berat Badan (Kg)"
+          "form_name": "Tekanan Darah Anak dan Remaja",
+          "frm_code": null,
+          "label": "Tekanan Darah Diastol"
         }
       ]
     },
     {
-      "path": "Anamnesa > Periksa Fisik > Diastole",
+      "path": "anamnesis.vitals.diastole (fallback screenings[hipertensi].diastole)",
       "destinations": [
         {
           "form_name": "Tekanan Darah Dewasa Lansia",
@@ -15918,22 +15913,97 @@
       ]
     },
     {
-      "path": "Anamnesa > Periksa Fisik > Lingkar Perut",
+      "path": "anamnesis.vitals.gdp (fallback screenings[diabetes_melitus].gdp_hasil)",
       "destinations": [
         {
-          "form_name": "Gizi (BB - TB - Lingkar Perut) Laki-laki",
-          "frm_code": "FRM000093",
-          "label": "Pengukuran Lingkar Perut"
-        },
-        {
-          "form_name": "Gizi (BB - TB - Lingkar Perut) Perempuan",
-          "frm_code": "FRM000051",
-          "label": "Pengukuran Lingkar Perut"
+          "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
+          "frm_code": "FRM000256",
+          "label": "Gula Darah Puasa (GDP) (mg/dl)"
         }
       ]
     },
     {
-      "path": "Anamnesa > Periksa Fisik > Sistole",
+      "path": "anamnesis.vitals.gds",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gula Darah Anak",
+          "frm_code": "FRM000195",
+          "label": "Gula Darah Sewaktu (GDS)"
+        },
+        {
+          "form_name": "Pemeriksaan Gula Darah Remaja",
+          "frm_code": "FRM000197",
+          "label": "Gula Darah Sewaktu (GDS)"
+        }
+      ]
+    },
+    {
+      "path": "anamnesis.vitals.gds (fallback screenings[diabetes_melitus].gds_hasil)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
+          "frm_code": "FRM000256",
+          "label": "Gula Darah Sewaktu (GDS) (mg/dl)"
+        }
+      ]
+    },
+    {
+      "path": "anamnesis.vitals.height_cm",
+      "destinations": [
+        {
+          "form_name": "Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun",
+          "frm_code": "FRM000016",
+          "label": "Pengukuran Tinggi Badan (cm)"
+        },
+        {
+          "form_name": "Gizi Anak Sekolah",
+          "frm_code": null,
+          "label": "Tinggi Badan"
+        },
+        {
+          "form_name": "Skrining Pertumbuhan - Balita dan Anak Prasekolah 5-6 Tahun",
+          "frm_code": null,
+          "label": "Pengukuran Tinggi Badan (cm)"
+        }
+      ]
+    },
+    {
+      "path": "anamnesis.vitals.height_cm (fallback screenings[diabetes_melitus].tb)",
+      "destinations": [
+        {
+          "form_name": "Gizi (BB - TB - Lingkar Perut) Laki-laki",
+          "frm_code": "FRM000093",
+          "label": "Pengukuran Tinggi Badan (cm)"
+        },
+        {
+          "form_name": "Gizi (BB - TB - Lingkar Perut) Perempuan",
+          "frm_code": "FRM000051",
+          "label": "Pengukuran Tinggi Badan (cm)"
+        }
+      ]
+    },
+    {
+      "path": "anamnesis.vitals.measurement_position (kk_kunjungan.posisi_pengukuran: Berdiri / Telentang)",
+      "destinations": [
+        {
+          "form_name": "Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun",
+          "frm_code": "FRM000016",
+          "label": "Posisi Pengukuran"
+        }
+      ]
+    },
+    {
+      "path": "anamnesis.vitals.systole",
+      "destinations": [
+        {
+          "form_name": "Tekanan Darah Anak dan Remaja",
+          "frm_code": null,
+          "label": "Tekanan Darah Sistol"
+        }
+      ]
+    },
+    {
+      "path": "anamnesis.vitals.systole (fallback screenings[hipertensi].sistole)",
       "destinations": [
         {
           "form_name": "Tekanan Darah Dewasa Lansia",
@@ -15943,32 +16013,287 @@
       ]
     },
     {
-      "path": "Anamnesa > Periksa Fisik > Status Hamil",
-      "destinations": [
-        {
-          "form_name": "Demografi Dewasa Perempuan",
-          "frm_code": "FRM000007",
-          "label": "Apakah Anda sedang hamil?"
-        }
-      ]
-    },
-    {
-      "path": "Anamnesa > Periksa Fisik > Tinggi Badan",
+      "path": "anamnesis.vitals.waist_cm (fallback screenings[diabetes_melitus].lingkar_perut)",
       "destinations": [
         {
           "form_name": "Gizi (BB - TB - Lingkar Perut) Laki-laki",
           "frm_code": "FRM000093",
-          "label": "Pengukuran Tinggi Badan (cm)"
+          "label": "Pengukuran Lingkar Perut"
         },
         {
           "form_name": "Gizi (BB - TB - Lingkar Perut) Perempuan",
           "frm_code": "FRM000051",
-          "label": "Pengukuran Tinggi Badan (cm)"
+          "label": "Pengukuran Lingkar Perut"
         }
       ]
     },
     {
-      "path": "Data Pasien > Status Perkawinan",
+      "path": "anamnesis.vitals.weight_kg",
+      "destinations": [
+        {
+          "form_name": "Skrining Pertumbuhan - Balita dan Anak Prasekolah 1-5 Tahun",
+          "frm_code": "FRM000016",
+          "label": "Berat Badan Balita"
+        },
+        {
+          "form_name": "Gizi Anak Sekolah",
+          "frm_code": null,
+          "label": "Berat Badan"
+        }
+      ]
+    },
+    {
+      "path": "anamnesis.vitals.weight_kg (converted kg -> g: ASIK's unit for this question is grams)",
+      "destinations": [
+        {
+          "form_name": "Berat Lahir",
+          "frm_code": "FRM000010",
+          "label": "Berat Badan Saat Ini (usia >24 jam)"
+        }
+      ]
+    },
+    {
+      "path": "anamnesis.vitals.weight_kg (fallback screenings[diabetes_melitus].bb)",
+      "destinations": [
+        {
+          "form_name": "Gizi (BB - TB - Lingkar Perut) Laki-laki",
+          "frm_code": "FRM000093",
+          "label": "Berat Badan (Kg)"
+        },
+        {
+          "form_name": "Gizi (BB - TB - Lingkar Perut) Perempuan",
+          "frm_code": "FRM000051",
+          "label": "Berat Badan (Kg)"
+        }
+      ]
+    },
+    {
+      "path": "diagnoses / history.diagnoses ICD A50-A53 (R-DIAG)",
+      "destinations": [
+        {
+          "form_name": "Penapisan dan Pemeriksaan Sifilis Anak",
+          "frm_code": "FRM000264",
+          "label": "Hasil Pemeriksaan Rapid Test Sifilis"
+        }
+      ]
+    },
+    {
+      "path": "diagnoses / history.diagnoses ICD E10-E14 (R-DIAG: only turns 'Ya' on)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gula Darah Anak",
+          "frm_code": "FRM000195",
+          "label": "Apakah Anak Anda pernah dinyatakan diabetes atau kencing manis oleh Dokter?"
+        },
+        {
+          "form_name": "Pemeriksaan Gula Darah Remaja",
+          "frm_code": "FRM000197",
+          "label": "Apakah Anak Anda pernah dinyatakan diabetes atau kencing manis oleh Dokter?"
+        }
+      ]
+    },
+    {
+      "path": "lab[ANTI HIV].result (R-DIAG: or diagnoses B20-B24 -> Reaktif)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan HIV",
+          "frm_code": "FRM000188",
+          "label": "Hasil Pemeriksaan Rapid Test HIV"
+        }
+      ]
+    },
+    {
+      "path": "lab[Anti HCV].result (R-DIAG: or diagnoses B17.1/B18.2 -> Reaktif)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Hepatitis",
+          "frm_code": "FRM000044",
+          "label": "Hasil Rapid Test Hepatitis C"
+        }
+      ]
+    },
+    {
+      "path": "lab[HBsAg].result (R-DIAG: or diagnoses B16/B18.0/B18.1 -> Reaktif)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Hepatitis",
+          "frm_code": "FRM000044",
+          "label": "Hasil Rapid Test Hepatitis B"
+        }
+      ]
+    },
+    {
+      "path": "lab[HDL CHOLESTEROL].result",
+      "destinations": [
+        {
+          "form_name": "POCT Lipid Panel (Khusus usia >=40 thn dan penyandang HT dan/atau DM)",
+          "frm_code": "FRM000047",
+          "label": "HDL"
+        }
+      ]
+    },
+    {
+      "path": "lab[Hemoglobin].result",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Calon Pengantin Perempuan",
+          "frm_code": "FRM000205",
+          "label": "Kadar Hemoglobin"
+        }
+      ]
+    },
+    {
+      "path": "lab[KOLESTEROL TOTAL].result",
+      "destinations": [
+        {
+          "form_name": "POCT Lipid Panel (Khusus usia >=40 thn dan penyandang HT dan/atau DM)",
+          "frm_code": "FRM000047",
+          "label": "Kolesterol Total"
+        }
+      ]
+    },
+    {
+      "path": "lab[Kreatinin].result",
+      "destinations": [
+        {
+          "form_name": "Skrining Fungsi Ginjal Laki-Laki (hanya untuk =>40 tahun dengan risiko HT DM)",
+          "frm_code": "FRM000244",
+          "label": "Hasil Pemeriksaan Kreatinin"
+        },
+        {
+          "form_name": "Skrining Fungsi Ginjal Perempuan (hanya untuk =>40 tahun dengan risiko HT DM)",
+          "frm_code": "FRM000245",
+          "label": "Hasil Pemeriksaan Kreatinin"
+        }
+      ]
+    },
+    {
+      "path": "lab[LDL CHOLESTEROL].result",
+      "destinations": [
+        {
+          "form_name": "POCT Lipid Panel (Khusus usia >=40 thn dan penyandang HT dan/atau DM)",
+          "frm_code": "FRM000047",
+          "label": "LDL"
+        }
+      ]
+    },
+    {
+      "path": "lab[Microalbuminuria].result",
+      "destinations": [
+        {
+          "form_name": "Skrining Kerusakan Ginjal (hanya untuk =>40 tahun dengan risiko HT DM)",
+          "frm_code": "FRM000248",
+          "label": "Konsentrasi Albumin Urin"
+        }
+      ]
+    },
+    {
+      "path": "lab[SGOT].result",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Fibrosis/Sirosis Hati",
+          "frm_code": "FRM000045",
+          "label": "Nilai SGOT"
+        }
+      ]
+    },
+    {
+      "path": "lab[TRIGLISERIDA].result",
+      "destinations": [
+        {
+          "form_name": "POCT Lipid Panel (Khusus usia >=40 thn dan penyandang HT dan/atau DM)",
+          "frm_code": "FRM000047",
+          "label": "Trigliserida"
+        }
+      ]
+    },
+    {
+      "path": "lab[Trombosit].result",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Fibrosis/Sirosis Hati",
+          "frm_code": "FRM000045",
+          "label": "Pemeriksaan Trombosit"
+        }
+      ]
+    },
+    {
+      "path": "lab[Ureum].result",
+      "destinations": [
+        {
+          "form_name": "Skrining Fungsi Ginjal Laki-Laki (hanya untuk =>40 tahun dengan risiko HT DM)",
+          "frm_code": "FRM000244",
+          "label": "Hasil Pemeriksaan Ureum"
+        },
+        {
+          "form_name": "Skrining Fungsi Ginjal Perempuan (hanya untuk =>40 tahun dengan risiko HT DM)",
+          "frm_code": "FRM000245",
+          "label": "Hasil Pemeriksaan Ureum"
+        }
+      ]
+    },
+    {
+      "path": "lab[eGFR].result",
+      "destinations": [
+        {
+          "form_name": "Skrining Fungsi Ginjal Laki-Laki (hanya untuk =>40 tahun dengan risiko HT DM)",
+          "frm_code": "FRM000244",
+          "label": "Nilai Hasil pemeriksaan (e-LFG (CKD-EPI))"
+        },
+        {
+          "form_name": "Skrining Fungsi Ginjal Perempuan (hanya untuk =>40 tahun dengan risiko HT DM)",
+          "frm_code": "FRM000245",
+          "label": "Nilai Hasil pemeriksaan (e-LFG (CKD-EPI))"
+        }
+      ]
+    },
+    {
+      "path": "lab[sifilis].result (R-DIAG: or diagnoses A50-A53 -> Reaktif)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Sifilis",
+          "frm_code": "FRM000191",
+          "label": "Hasil Pemeriksaan Rapid Test Sifilis"
+        }
+      ]
+    },
+    {
+      "path": "patient.age.years (derived)",
+      "destinations": [
+        {
+          "form_name": "Skrining Fungsi Ginjal Laki-Laki (hanya untuk =>40 tahun dengan risiko HT DM)",
+          "frm_code": "FRM000244",
+          "label": "Usia"
+        },
+        {
+          "form_name": "Skrining Fungsi Ginjal Perempuan (hanya untuk =>40 tahun dengan risiko HT DM)",
+          "frm_code": "FRM000245",
+          "label": "Usia"
+        }
+      ]
+    },
+    {
+      "path": "patient.disability (kk_pendaftaran.disabilitas)",
+      "destinations": [
+        {
+          "form_name": "Demografi Dewasa Laki-Laki",
+          "frm_code": "FRM000006",
+          "label": "Apakah Anda penyandang disabilitas?"
+        },
+        {
+          "form_name": "Demografi Dewasa Perempuan",
+          "frm_code": "FRM000007",
+          "label": "Apakah Anda penyandang disabilitas?"
+        },
+        {
+          "form_name": "Demografi Lansia",
+          "frm_code": "FRM000008",
+          "label": "Apakah Anda penyandang disabilitas?"
+        }
+      ]
+    },
+    {
+      "path": "patient.marital_status",
       "destinations": [
         {
           "form_name": "Demografi Dewasa Laki-Laki",
@@ -15988,53 +16313,178 @@
       ]
     },
     {
-      "path": "PTM > Faktor Risiko > Apakah Anda biasanya batuk saat Anda sedang tidak menderita selesma/flu?",
+      "path": "programs.child.sdidtk[GPPH].hasil_pemeriksaan",
       "destinations": [
         {
-          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
-          "frm_code": "FRM000101",
-          "label": "Apakah Anda biasanya batuk saat sedang tidak menderita selesma/flu?"
+          "form_name": "Kuesioner Gangguan Pemusatan Perhatian dan Hiperaktivitas (GPPH) - bila ada indikasi",
+          "frm_code": "FRM000086",
+          "label": "Hasil Pemeriksaan Kuesioner GPPH"
         }
       ]
     },
     {
-      "path": "PTM > Faktor Risiko > Apakah Anda biasanya mempunyai dahak yang berasal dari paru atau kesulitan mengeluarkan dahak saat Anda sedang tidak menderita selesma/flu?",
+      "path": "programs.child.sdidtk[KMPE].hasil_pemeriksaan",
       "destinations": [
         {
-          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
-          "frm_code": "FRM000101",
-          "label": "Apakah Anda biasanya mempunyai dahak yang berasal dari paru atau kesulitan mengeluarkan dahak saat Anda sedang tidak menderita selesma/flu?"
+          "form_name": "Kuesioner Masalah Perilaku dan Emosional (KMPE) - Jika terindikasi memiliki masalah perilaku dan emosi",
+          "frm_code": "FRM000018",
+          "label": "Hasil pemeriksaan KMPE"
         }
       ]
     },
     {
-      "path": "PTM > Faktor Risiko > Apakah Anda pernah merasa napas pendek ketika Anda berjalan lebih cepat pada jalan yang datar atau pada jalan yang sedikit menanjak?",
+      "path": "programs.child.sdidtk[KPSP].hasil_pemeriksaan",
       "destinations": [
         {
-          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
-          "frm_code": "FRM000101",
-          "label": "Apakah Anda pernah merasa napas pendek ketika berjalan lebih cepat pada jalan yang datar atau pada jalan yang sedikit menanjak?"
+          "form_name": "Kuesioner Pra Skrining Perkembangan (KPSP)",
+          "frm_code": "FRM000017",
+          "label": "Hasil pemeriksaan KPSP"
         }
       ]
     },
     {
-      "path": "PTM > Faktor Risiko > Apakah Dokter atau tenaga medis lainnya pernah meminta Anda untuk melakukan pemeriksaan spirometri atau peak flow meter (meniup ke dalam suatu alat) untuk mengetahui fungsi paru anda?",
+      "path": "programs.child.sdidtk[M-CHAT-R].hasil_pemeriksaan",
       "destinations": [
         {
-          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
-          "frm_code": "FRM000101",
-          "label": "Apakah Dokter atau tenaga medis lainnya pernah meminta Anda untuk melakukan pemeriksaan spirometri atau peak flow meter (meniup ke dalam suatu alat) untuk mengetahui fungsi paru?"
+          "form_name": "M-CHAT - 1. Penapisan",
+          "frm_code": "FRM000095",
+          "label": "Apakah anak Anda memiliki satu atau lebih kondisi berikut ini: 1) Masalah interaksi dengan orang lain seperti kontak mata tidak adekuat; 2) Masalah bahasa dan bicara seperti kosakata bermakna kurang dari 50 dan anak belum mampu merangkai kata, belum bisa menunjuk sesuatu, belum paham instruksi sederhana, atau bicara bahasa planet; 3) Memiliki perilaku berulang tanpa tujuan atau perilaku aneh seperti senang melihat benda berputar, menjejerkan mainan, gerakan stereotipik (flapping, clapping, body rocking), preokupasi terhadap suatu benda, masalah sensoris"
         }
       ]
     },
     {
-      "path": "PTM > Faktor Risiko > Merokok",
+      "path": "programs.child.sdidtk[TDD].hasil_pemeriksaan",
       "destinations": [
         {
-          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
-          "frm_code": "FRM000101",
-          "label": "Apakah anda sedang/mempunyai riwayat merokok?"
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Hasil Tes Daya Dengar"
+        }
+      ]
+    },
+    {
+      "path": "programs.child.sdidtk[TDL].hasil_pemeriksaan",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Hasil pemeriksaan Tes Daya Lihat"
+        }
+      ]
+    },
+    {
+      "path": "programs.immunization.imunisasi[].hb0_kurang_24_jam (latest answered row)",
+      "destinations": [
+        {
+          "form_name": "Riwayat Imunisasi Rutin Balita",
+          "frm_code": "FRM000171",
+          "label": "Apakah anak anda sudah pernah menerima imunisasi Hepatitis B pada usia <24 jam?"
+        }
+      ]
+    },
+    {
+      "path": "programs.kia.hamil (an active record turns it on; absence is not 'Tidak')",
+      "destinations": [
+        {
+          "form_name": "Demografi Dewasa Perempuan",
+          "frm_code": "FRM000007",
+          "label": "Apakah Anda sedang hamil?"
+        }
+      ]
+    },
+    {
+      "path": "programs.ptm.fase_pendengaran.omsk_congek_right_ear/left_ear",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata (18-39 tahun)",
+          "frm_code": "FRM000042",
+          "label": "Apa Hasil Pemeriksaan Telinga Luar (infeksi telinga)?"
         },
+        {
+          "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
+          "frm_code": "FRM000099",
+          "label": "Apa Hasil Pemeriksaan Telinga Luar (infeksi telinga)?"
+        },
+        {
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Apakah ditemukan infeksi telinga?"
+        }
+      ]
+    },
+    {
+      "path": "programs.ptm.fase_pendengaran.serumen_impeksi_right/left",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata (18-39 tahun)",
+          "frm_code": "FRM000042",
+          "label": "Apa Hasil Pemeriksaan Telinga Luar (serumen impaksi)?"
+        },
+        {
+          "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
+          "frm_code": "FRM000099",
+          "label": "Apa Hasil Pemeriksaan Telinga Luar (serumen impaksi)?"
+        },
+        {
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Apakah ditemukan serumen impaksi?"
+        }
+      ]
+    },
+    {
+      "path": "programs.ptm.fase_pendengaran.tajam_pendengaran_right/left",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata (18-39 tahun)",
+          "frm_code": "FRM000042",
+          "label": "Hasil pemeriksaan tajam pendengaran"
+        },
+        {
+          "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
+          "frm_code": "FRM000099",
+          "label": "Hasil pemeriksaan tajam pendengaran"
+        }
+      ]
+    },
+    {
+      "path": "programs.ptm_questionnaire[Q0013 1.10] (inherited rule: insufficient activity -> Tidak)",
+      "destinations": [
+        {
+          "form_name": "Tingkat Aktivitas Fisik (sedang dan berat)",
+          "frm_code": "FRM000169",
+          "label": "Apakah Anda melakukan olahraga intensitas berat seperti bersepeda cepat (>16 km/jam), jalan cepat (>7 km/jam), lari, sepak bola, futsal, bulutangkis, tenis, basket dan lompat tali?"
+        }
+      ]
+    },
+    {
+      "path": "programs.ptm_questionnaire[Q0013 1.10] (inherited rule: sufficient activity -> Ya, insufficient -> Tidak)",
+      "destinations": [
+        {
+          "form_name": "Tingkat Aktivitas Fisik (sedang dan berat)",
+          "frm_code": "FRM000169",
+          "label": "Apakah Anda melakukan olahraga intensitas sedang seperti latihan beban < 20 kg, senam aerobic, yoga, bermain bola, bersepeda dan berenang (santai)?"
+        }
+      ]
+    },
+    {
+      "path": "programs.ptm_questionnaire[Q0013 1.4 Status merokok]",
+      "destinations": [
+        {
+          "form_name": "Faktor Risiko Kanker Usus",
+          "frm_code": "FRM000027",
+          "label": "Apakah Anda merokok?"
+        },
+        {
+          "form_name": "Skrining Kanker Paru (Laki-Laki >=45 Tahun) - Penapisan Risiko Kanker Paru",
+          "frm_code": "FRM000138",
+          "label": "Apakah Anda merokok dalam setahun terakhir ini?"
+        }
+      ]
+    },
+    {
+      "path": "programs.ptm_questionnaire[Q0013 1.4 Status merokok] (1.1 = 0 when never smoked)",
+      "destinations": [
         {
           "form_name": "Perilaku Merokok",
           "frm_code": "FRM000064",
@@ -16043,72 +16493,162 @@
       ]
     },
     {
-      "path": "PTM > Gangguan Pendengaran > Curiga Tuli Kongenital > Telinga Kanan/Kiri",
+      "path": "programs.ptm_questionnaire[Q0013 1.5]",
       "destinations": [
         {
-          "form_name": "Skrining Telinga dan Mata (18-39 tahun)",
-          "frm_code": "FRM000042",
-          "label": "Hasil pemeriksaan tajam pendengaran"
+          "form_name": "Perilaku Merokok",
+          "frm_code": "FRM000064",
+          "label": "Apakah Anda terpapar asap rokok atau menghirup asap rokok dari orang lain dalam sebulan terakhir?"
         },
         {
-          "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
-          "frm_code": "FRM000099",
-          "label": "Hasil pemeriksaan tajam pendengaran"
+          "form_name": "Skrining Kanker Paru (Laki-Laki >=45 Tahun) - Penapisan Risiko Kanker Paru",
+          "frm_code": "FRM000138",
+          "label": "Apakah Anda terpapar atau menghirup asap rokok dari orang lain di rumah, lingkungan atau tempat kerja dalam 1 bulan terakhir?"
         }
       ]
     },
     {
-      "path": "PTM > Gangguan Pendengaran > Serumen > Telinga Kanan/Kiri",
+      "path": "programs.ptm_questionnaire[Q0019 1.2]",
       "destinations": [
         {
-          "form_name": "Skrining Telinga dan Mata (18-39 tahun)",
-          "frm_code": "FRM000042",
-          "label": "Apa Hasil Pemeriksaan Telinga Luar (serumen impaksi)?"
-        },
-        {
-          "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
-          "frm_code": "FRM000099",
-          "label": "Apa Hasil Pemeriksaan Telinga Luar (serumen impaksi)?"
+          "form_name": "Skrining Kanker Paru (Laki-Laki >=45 Tahun) - Penapisan Risiko Kanker Paru",
+          "frm_code": "FRM000138",
+          "label": "Apakah memiliki riwayat kanker paru pada keluarga (ayah/ibu/saudara kandung)?"
         }
       ]
     },
     {
-      "path": "PTM > Gangguan Penglihatan > Katarak > Mata Kanan/Kiri",
+      "path": "programs.ptm_questionnaire[Q0019 1.7]",
       "destinations": [
         {
-          "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
-          "frm_code": "FRM000099",
-          "label": "Hasil pemeriksaan pupil"
+          "form_name": "Skrining Kanker Paru (Laki-Laki >=45 Tahun) - Penapisan Risiko Kanker Paru",
+          "frm_code": "FRM000138",
+          "label": "Apakah Anda pernah memiliki riwayat penyakit TBC atau PPOK?"
         }
       ]
     },
     {
-      "path": "PTM > Gangguan Penglihatan > Kelainan Refraksi > Mata Kanan/Kiri",
+      "path": "programs.ptm_questionnaire[Q0020 1.1]",
       "destinations": [
         {
-          "form_name": "Skrining Telinga dan Mata (18-39 tahun)",
-          "frm_code": "FRM000042",
-          "label": "Apa hasil skrining tajam penglihatan?"
-        },
-        {
-          "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
-          "frm_code": "FRM000099",
-          "label": "Apa hasil skrining tajam penglihatan?"
+          "form_name": "Faktor Risiko Kanker Usus",
+          "frm_code": "FRM000027",
+          "label": "Apakah ada anggota keluarga Anda, yang pernah dinyatakan menderita kanker kolorektal atau kanker usus?"
         }
       ]
     },
     {
-      "path": "PTM > Pemeriksaan > Pemeriksaan Gula",
+      "path": "screenings[activity_living].question1",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Dapat mengendalikan rangsang buang air besar (BAB)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[activity_living].question10",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Mandi"
+        }
+      ]
+    },
+    {
+      "path": "screenings[activity_living].question2",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Dapat mengendalikan rangsang berkemih/buar air kecil (BAK)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[activity_living].question3",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Membersihkan diri (seka wajah, sisir rambut, sikat gigi)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[activity_living].question4",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Penggunaan jamban (keluar masuk jamban, melepas/memakai celana, membersihkan, menyiram)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[activity_living].question5",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Makan dan Minum (jika makan harus berupa potongan, dianggap dibantu)"
+        }
+      ]
+    },
+    {
+      "path": "screenings[activity_living].question6",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Berubah sikap dari berbaring ke duduk"
+        }
+      ]
+    },
+    {
+      "path": "screenings[activity_living].question7",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Berpindah/berjalan"
+        }
+      ]
+    },
+    {
+      "path": "screenings[activity_living].question8",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Memakai baju"
+        }
+      ]
+    },
+    {
+      "path": "screenings[activity_living].question9",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gangguan Fungsional/Barthel Index - Lansia",
+          "frm_code": "FRM000040",
+          "label": "Naik turun tangga"
+        }
+      ]
+    },
+    {
+      "path": "screenings[diabetes_melitus].gds_2",
       "destinations": [
         {
           "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
           "frm_code": "FRM000256",
-          "label": "Gula Darah Sewaktu (GDS) (mg/dl)"
+          "label": "Gula Darah Sewaktu Kedua (GDS 2). Lakukan jika hasil GDS 1 Prediabetes (≥140-199mg/dl) atau Hiperglikemia (≥200mg/dl) dan BELUM PERNAH didiagnosis Diabetes"
         }
       ]
     },
     {
-      "path": "PTM > Pemeriksaan > Pemeriksaan Gula Darah 2 Jam PP",
+      "path": "screenings[diabetes_melitus].gula_darah_2jam_pp",
       "destinations": [
         {
           "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
@@ -16118,47 +16658,17 @@
       ]
     },
     {
-      "path": "PTM > Pemeriksaan > Pemeriksaan Gula Darah Puasa",
+      "path": "screenings[diabetes_melitus].lama_diabetes_bulan (only when the history answer is Ya)",
       "destinations": [
         {
           "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
           "frm_code": "FRM000256",
-          "label": "Gula Darah Puasa (GDP) (mg/dl)"
+          "label": "Sudah Berapa Bulan Anda Didiagnosis Diabetes Melitus Oleh Dokter? Isi Total Bulan Sejak didiagnosis dokter hingga saat ini, misal didiagnosis 1 tahun yang lalu = 12, dst"
         }
       ]
     },
     {
-      "path": "PTM > Pemeriksaan IVA dan Sadanis > Hasil IVA",
-      "destinations": [
-        {
-          "form_name": "Pemeriksaan Inspekulo dan IVA",
-          "frm_code": "FRM000060",
-          "label": "Pemeriksaan Inspeksi Visual Asam Asetat (IVA)"
-        }
-      ]
-    },
-    {
-      "path": "PTM > Pemeriksaan IVA dan Sadanis > Hasil IVA (Negatif→Normal; Positif→Curiga kanker)",
-      "destinations": [
-        {
-          "form_name": "Pemeriksaan Inspekulo dan IVA",
-          "frm_code": "FRM000060",
-          "label": "Pemeriksaan Inspekulo"
-        }
-      ]
-    },
-    {
-      "path": "PTM > Pemeriksaan IVA dan Sadanis > Hasil Sanadis (value-map)",
-      "destinations": [
-        {
-          "form_name": "Skrining Kanker Payudara",
-          "frm_code": "FRM000059",
-          "label": "Hasil pemeriksaan SADANIS"
-        }
-      ]
-    },
-    {
-      "path": "PTM > Riwayat PTM pada Diri Sendiri > Penyakit Diabetes",
+      "path": "screenings[diabetes_melitus].question5_anamnesis (R-UNIFORM)",
       "destinations": [
         {
           "form_name": "Pemeriksaan Gula Darah Dewasa Lansia",
@@ -16168,7 +16678,77 @@
       ]
     },
     {
-      "path": "PTM > Riwayat PTM pada Diri Sendiri > Penyakit Hipertensi",
+      "path": "screenings[gigi_dewasa | gigi_lansia].gigi_goyang",
+      "destinations": [
+        {
+          "form_name": "Skrining Penyakit Periodontal",
+          "frm_code": "FRM000056",
+          "label": "Gigi Goyang"
+        }
+      ]
+    },
+    {
+      "path": "screenings[gigi_dewasa | gigi_lansia].penyakit_periodontal (Tidak Ada -> Tidak; Gingivitis / Periodontitis -> Ya)",
+      "destinations": [
+        {
+          "form_name": "Skrining Penyakit Periodontal",
+          "frm_code": "FRM000056",
+          "label": "Penyakit Periodontal"
+        }
+      ]
+    },
+    {
+      "path": "screenings[gigi_dewasa].question3",
+      "destinations": [
+        {
+          "form_name": "Skrining Karies dan Gigi Hilang",
+          "frm_code": "FRM000055",
+          "label": "Gigi hilang/dicabut"
+        }
+      ]
+    },
+    {
+      "path": "screenings[gigi_dewasa].question4",
+      "destinations": [
+        {
+          "form_name": "Skrining Karies dan Gigi Hilang",
+          "frm_code": "FRM000055",
+          "label": "Gigi karies"
+        }
+      ]
+    },
+    {
+      "path": "screenings[gigi_mulut_balita | gigi_mulut_remaja].jumlah_gigi_karies (1 / 2 / 3 -> ASIK \"1.0\" / \"2.0\" / \"3.0\")",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Gigi - Anak",
+          "frm_code": "FRM000131",
+          "label": "Berapa jumlah gigi karies?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[hipertensi].diastole_2",
+      "destinations": [
+        {
+          "form_name": "Tekanan Darah Dewasa Lansia",
+          "frm_code": "FRM000265",
+          "label": "Tekanan darah diastolik ke-2"
+        }
+      ]
+    },
+    {
+      "path": "screenings[hipertensi].lama_hipertensi_bulan (only when the history answer is Ya)",
+      "destinations": [
+        {
+          "form_name": "Tekanan Darah Dewasa Lansia",
+          "frm_code": "FRM000265",
+          "label": "Sudah Berapa Bulan Anda Didiagnosis Hipertensi Oleh Dokter? Isi Total Bulan Sejak didiagnosis dokter hingga saat ini, misal didiagnosis 1 tahun yang lalu = 12, dst"
+        }
+      ]
+    },
+    {
+      "path": "screenings[hipertensi].question1_anamnesis (R-UNIFORM)",
       "destinations": [
         {
           "form_name": "Tekanan Darah Dewasa Lansia",
@@ -16178,7 +16758,402 @@
       ]
     },
     {
-      "path": "constant 'SADANIS' (EPUS never does USG Payudara)",
+      "path": "screenings[hipertensi].sistole_2",
+      "destinations": [
+        {
+          "form_name": "Tekanan Darah Dewasa Lansia",
+          "frm_code": "FRM000265",
+          "label": "Tekanan Darah Sistolik Ke-2"
+        }
+      ]
+    },
+    {
+      "path": "screenings[hipotiroid_kongenital].berat_lahir_gram (grams; sent only between 200 and 8000)",
+      "destinations": [
+        {
+          "form_name": "Berat Lahir",
+          "frm_code": "FRM000010",
+          "label": "Berat Lahir"
+        }
+      ]
+    },
+    {
+      "path": "screenings[imunisasi_tetanus_wus].imunisasi_tetanus (>= T2)",
+      "destinations": [
+        {
+          "form_name": "Riwayat Imunisasi Tetanus(Status T) - Hanya untuk Catin",
+          "frm_code": "FRM000172",
+          "label": "Apakah anda pernah mendapatkan imunisasi tetanus minimal 2 kali? (imunisasi tetanus biasanya didapatkan pada vaksin DPT saat bayi, vaksin TT/Td saat usia sekolah dasar)"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].gejala_kanker_paru",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-Laki >=45 Tahun) - Penapisan Risiko Kanker Paru",
+          "frm_code": "FRM000138",
+          "label": "Apakah Anda sedang mengalami salah satu atau lebih gejala berikut dan telah diobati tetapi tidak sembuh-sembuh : batuk dalam jangka waktu yang lama / batuk berdarah/ sesak napas/ nyeri dada/ leher bengkak/ terdapat benjolan pada leher?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].kadar_co",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Kadar CO (Hanya Diisi Apabila Merokok atau Terpapar Asap Rokok)",
+          "frm_code": "FRM000186",
+          "label": "Kadar CO Pernapasan"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].question3 / programs.ptm_questionnaire[Q0019 1.1]",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-laki, =>45 thn)",
+          "frm_code": "FRM000041",
+          "label": "Apakah pernah didiagnosis/menderita kanker?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].question4 / programs.ptm_questionnaire[Q0019 1.2]",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-laki, =>45 thn)",
+          "frm_code": "FRM000041",
+          "label": "Apakah ada keluarga (ayah/ibu/saudara kandung) didiagnosis/menderita kanker sebelumnya?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].question5 (only options with identical meaning) / programs.ptm_questionnaire[Q0019 1.3]",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-laki, =>45 thn)",
+          "frm_code": "FRM000041",
+          "label": "Riwayat merokok/paparan asap rokok"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].question6 / programs.ptm_questionnaire[Q0019 1.4]",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-laki, =>45 thn)",
+          "frm_code": "FRM000041",
+          "label": "Riwayat tempat kerja mengandung zat karsinogenik (Pertambangan/ pabrik/ bengkel/ garmen/ bangunan/ laboratorium/ sopir/ galangan kapal, dll)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].question7 / programs.ptm_questionnaire[Q0019 1.5]",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-laki, =>45 thn)",
+          "frm_code": "FRM000041",
+          "label": "Lingkungan tempat tinggal berpotensi tinggi (lingkungan dekat pabrik/pertambangan/buangan sampah, dll)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].question8 / programs.ptm_questionnaire[Q0019 1.6]",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-laki, =>45 thn)",
+          "frm_code": "FRM000041",
+          "label": "Lingkungan dalam rumah yang tidak sehat (ventilasi buruk/atap dari asbes/lantai tanah, dapur tungku, dll)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].question9 / programs.ptm_questionnaire[Q0019 1.7]",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-laki, =>45 thn)",
+          "frm_code": "FRM000041",
+          "label": "Pernah didiagnosis penyakit paru kronik?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_paru].riwayat_merokok_15th",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Paru (Laki-Laki >=45 Tahun) - Penapisan Risiko Kanker Paru",
+          "frm_code": "FRM000138",
+          "label": "Apakah Anda pernah memiliki riwayat merokok dalam 15 tahun terakhir?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_serviks].pernah_hubungan_seksual",
+      "destinations": [
+        {
+          "form_name": "Kanker Leher Rahim",
+          "frm_code": "FRM000088",
+          "label": "Apakah pernah melakukan hubungan intim/seksual?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_serviks].result_of_inspekulo_checkup (only when is_inspekulo_performed = 1)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Inspekulo dan IVA",
+          "frm_code": "FRM000060",
+          "label": "Pemeriksaan Inspekulo"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kanker_serviks].result_of_iva_checkup (only when is_iva_performed = 1; Negatif / Positif)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Inspekulo dan IVA",
+          "frm_code": "FRM000060",
+          "label": "Pemeriksaan Inspeksi Visual Asam Asetat (IVA)"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kesehatan_jiwa].question1 (kategori_usia Dewasa, PHQ-2)",
+      "destinations": [
+        {
+          "form_name": "Kesehatan Jiwa",
+          "frm_code": "FRM000067",
+          "label": "Dalam 2 minggu terakhir, seberapa sering anda kurang/ tidak bersemangat dalam melakukan kegiatan sehari-hari?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kesehatan_jiwa].question2 (kategori_usia Dewasa, PHQ-2)",
+      "destinations": [
+        {
+          "form_name": "Kesehatan Jiwa",
+          "frm_code": "FRM000067",
+          "label": "Dalam 2 minggu terakhir, seberapa sering anda merasa murung, tertekan, atau putus asa?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kesehatan_jiwa].question3 (kategori_usia Dewasa, GAD-2)",
+      "destinations": [
+        {
+          "form_name": "Kesehatan Jiwa",
+          "frm_code": "FRM000067",
+          "label": "Dalam 2 minggu terakhir, seberapa sering anda merasa gugup, cemas, atau gelisah?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[kesehatan_jiwa].question4 (kategori_usia Dewasa, GAD-2)",
+      "destinations": [
+        {
+          "form_name": "Kesehatan Jiwa",
+          "frm_code": "FRM000067",
+          "label": "Dalam 2 minggu terakhir, seberapa sering anda tidak mampu mengendalikan rasa khawatir?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[pemeriksaan_cog | skilas].clock_drawing_test (Normal -> Benar; Abnormal -> Salah)",
+      "destinations": [
+        {
+          "form_name": "Penurunan Kognitif - Tindak Lanjut (Mini Cog-Clock Draw)",
+          "frm_code": "FRM000030",
+          "label": "Katakan seluruh frase berikut sesuai urutannya:  “Tolong gambar sebuah jam pada lembar ini. Mulailah dengan menggambar sebuah lingkaran besar. Kemudian, tuliskan angka-angka pada lingkaran dan atur jarum jam mengarah pukul 11:10 (11 lewat 10 menit).”Bila subjek tidak dapat menyelesaikan gambar jam dalam waktu 3 menit, hentikan pemeriksaan langkah ini dan lanjut ke langkah ke-3.\""
+        }
+      ]
+    },
+    {
+      "path": "screenings[pemeriksaan_cog].instruction1",
+      "destinations": [
+        {
+          "form_name": "Penurunan Kognitif - Tindak Lanjut (Mini Cog-Clock Draw)",
+          "frm_code": "FRM000030",
+          "label": "Mintalah pasien untuk MENGULANG 3 kata yang disebutkan pada pertanyaan no 1"
+        }
+      ]
+    },
+    {
+      "path": "screenings[pengkajian_nutrisi].penapisan1",
+      "destinations": [
+        {
+          "form_name": "Skrining Malnutrisi - Pemeriksaan Lanjutan (MNSF)",
+          "frm_code": "FRM000035",
+          "label": "Apakah anda mengalami penurunan asupan makanan dalam 3 bulan terakhir disebabkan kehilangan nafsu makan, gangguan saluran cerna, kesulitan mengunyah atau menelan?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[pengkajian_nutrisi].penapisan2",
+      "destinations": [
+        {
+          "form_name": "Skrining Malnutrisi - Pemeriksaan Lanjutan (MNSF)",
+          "frm_code": "FRM000035",
+          "label": "Penurunan berat badan dalam tiga bulan terakhir ?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[pengkajian_nutrisi].penapisan3",
+      "destinations": [
+        {
+          "form_name": "Skrining Malnutrisi - Pemeriksaan Lanjutan (MNSF)",
+          "frm_code": "FRM000035",
+          "label": "Kemampuan melakukan mobilitas ?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[pengkajian_nutrisi].penapisan4",
+      "destinations": [
+        {
+          "form_name": "Skrining Malnutrisi - Pemeriksaan Lanjutan (MNSF)",
+          "frm_code": "FRM000035",
+          "label": "Menderita stress psikologis atau penyakit akut dalam tiga bulan terakhir ?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[pengkajian_nutrisi].penapisan5",
+      "destinations": [
+        {
+          "form_name": "Skrining Malnutrisi - Pemeriksaan Lanjutan (MNSF)",
+          "frm_code": "FRM000035",
+          "label": "Mengalami masalah neuropsikologis?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[pengkajian_nutrisi].penapisan6",
+      "destinations": [
+        {
+          "form_name": "Skrining Malnutrisi - Pemeriksaan Lanjutan (MNSF)",
+          "frm_code": "FRM000035",
+          "label": "Berapa Nilai IMT (Indeks Massa Tubuh)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[ptm_mata].kelainan_mata_anak",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000021",
+          "label": "Apakah ditemukan selaput mata merah atau kornea keruh atau kelopak mata ada benjolan atau susah berkedip atau posisi bola mata juling atau pupil putih?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[ptm_mata].pupil_kanan/pupil_kiri (only OV000393 Suspek Katarak -> Curiga Katarak)",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
+          "frm_code": "FRM000099",
+          "label": "Hasil pemeriksaan pupil"
+        }
+      ]
+    },
+    {
+      "path": "screenings[ptm_mata].visus_kanan/visus_kiri over *_denominator (Snellen ratio, 6/12 = Normal boundary)",
+      "destinations": [
+        {
+          "form_name": "Skrining Telinga dan Mata (18-39 tahun)",
+          "frm_code": "FRM000042",
+          "label": "Apa hasil skrining tajam penglihatan?"
+        },
+        {
+          "form_name": "Skrining Telinga dan Mata (=>40 tahun)",
+          "frm_code": "FRM000099",
+          "label": "Apa hasil skrining tajam penglihatan?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[puma].question4 (R-ZERO)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
+          "frm_code": "FRM000101",
+          "label": "Apakah Anda pernah merasa napas pendek ketika berjalan lebih cepat pada jalan yang datar atau pada jalan yang sedikit menanjak?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[puma].question5 (R-ZERO)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
+          "frm_code": "FRM000101",
+          "label": "Apakah Anda biasanya mempunyai dahak yang berasal dari paru atau kesulitan mengeluarkan dahak saat Anda sedang tidak menderita selesma/flu?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[puma].question6 (R-ZERO)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
+          "frm_code": "FRM000101",
+          "label": "Apakah Anda biasanya batuk saat sedang tidak menderita selesma/flu?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[puma].question7 (R-ZERO)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
+          "frm_code": "FRM000101",
+          "label": "Apakah Dokter atau tenaga medis lainnya pernah meminta Anda untuk melakukan pemeriksaan spirometri atau peak flow meter (meniup ke dalam suatu alat) untuk mengetahui fungsi paru?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[puma].question_child_3_* (R-ZERO)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
+          "frm_code": "FRM000101",
+          "label": "Apakah anda sedang/mempunyai riwayat merokok?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[puma].question_child_3_3 (smokers only)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan PPOK (Skrining PUMA)",
+          "frm_code": "FRM000101",
+          "label": "Jika Perokok Aktif, berapa bungkus per tahun?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[risiko_jantung].kardiovaskular_ekg",
+      "destinations": [
+        {
+          "form_name": "Hasil Pemeriksaan - Skrining Jantung",
+          "frm_code": "FRM000057",
+          "label": "Hasil Pemeriksaan EKG"
+        }
+      ]
+    },
+    {
+      "path": "screenings[risiko_kanker_payudara].checkup_result1 (Tidak ada benjolan -> Normal; Benjolan; Curiga Kanker)",
+      "destinations": [
+        {
+          "form_name": "Skrining Kanker Payudara",
+          "frm_code": "FRM000059",
+          "label": "Hasil pemeriksaan SADANIS"
+        }
+      ]
+    },
+    {
+      "path": "screenings[risiko_kanker_payudara].checkup_result1 / hasil_usg_payudara (SADANIS first)",
       "destinations": [
         {
           "form_name": "Skrining Kanker Payudara",
@@ -16188,8 +17163,168 @@
       ]
     },
     {
-      "path": "penyakit_khusus.ICDX A15-A19 (TB) → Ya >2 minggu",
+      "path": "screenings[risiko_kanker_payudara].hasil_usg_payudara (Normal; Kista Simpleks -> Simple cyst)",
       "destinations": [
+        {
+          "form_name": "Skrining Kanker Payudara",
+          "frm_code": "FRM000059",
+          "label": "Hasil pemeriksaan USG Payudara"
+        }
+      ]
+    },
+    {
+      "path": "screenings[short_physical_performance].question1a",
+      "destinations": [
+        {
+          "form_name": "Mobilisasi - Pemeriksaan Lanjutan (SPBB)",
+          "frm_code": "FRM000033",
+          "label": "Tes keseimbangan: berdiri selama 10 detik dengan kaki di masing-masing : Berdiri berdampingan"
+        }
+      ]
+    },
+    {
+      "path": "screenings[short_physical_performance].question1b",
+      "destinations": [
+        {
+          "form_name": "Mobilisasi - Pemeriksaan Lanjutan (SPBB)",
+          "frm_code": "FRM000033",
+          "label": "Tes keseimbangan: berdiri selama 10 detik dengan kaki di masing-masing : Berdiri semi tandem"
+        }
+      ]
+    },
+    {
+      "path": "screenings[short_physical_performance].question1c",
+      "destinations": [
+        {
+          "form_name": "Mobilisasi - Pemeriksaan Lanjutan (SPBB)",
+          "frm_code": "FRM000033",
+          "label": "Tes keseimbangan: berdiri selama 10 detik dengan kaki di masing-masing : Berdiri Tandem"
+        }
+      ]
+    },
+    {
+      "path": "screenings[short_physical_performance].question2",
+      "destinations": [
+        {
+          "form_name": "Mobilisasi - Pemeriksaan Lanjutan (SPBB)",
+          "frm_code": "FRM000033",
+          "label": "tes kecepatan berjalan: Waktu untuk berjalan sejauh empat meter"
+        }
+      ]
+    },
+    {
+      "path": "screenings[short_physical_performance].question3",
+      "destinations": [
+        {
+          "form_name": "Mobilisasi - Pemeriksaan Lanjutan (SPBB)",
+          "frm_code": "FRM000033",
+          "label": "Tes berdiri dari kursi: Waktu untuk bangkit dari kursi lima kali"
+        }
+      ]
+    },
+    {
+      "path": "screenings[skilas].question1 (orientation outcome)",
+      "destinations": [
+        {
+          "form_name": "SKILAS Penurunan Kognitif - Lansia",
+          "frm_code": "FRM000029",
+          "label": "Tanggal berapakah hari ini secara lengkap (tanggal/bulan/tahun)? atau- Dimanakah Anda saat ini (Puskesmas, rumah, klinik, dll)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[skilas].question1 (recall outcome)",
+      "destinations": [
+        {
+          "form_name": "SKILAS Penurunan Kognitif - Lansia",
+          "frm_code": "FRM000029",
+          "label": "Apakah dapat mengingat tiga kata: bunga, pintu, nasi (contoh)?"
+        },
+        {
+          "form_name": "SKILAS Penurunan Kognitif - Lansia",
+          "frm_code": "FRM000029",
+          "label": "Apakah peserta dapat mengingat tiga kata sebelumnya?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[skilas].question2",
+      "destinations": [
+        {
+          "form_name": "SKILAS Mobilisasi - Lansia",
+          "frm_code": "FRM000032",
+          "label": "Tes Berdiri di kursi: Berdiri dari kursi lima kali tanpa bantuan tangan. Apakah orang tersebut dapat berdiri dari kursi utuh sebanyak lima kali dalam 14 detik ?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[skilas].question3a / screenings[gizi].penurunan_bb (unambiguous answers only)",
+      "destinations": [
+        {
+          "form_name": "SKILAS Malnutrisi",
+          "frm_code": "FRM000034",
+          "label": "Apakah berat badan Anda berkurang >3 kg dalam 3 bulan terakhir atau pakaian menjadi lebih longgar?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[skilas].question3b / screenings[gizi].asupan_makanan (Ya only)",
+      "destinations": [
+        {
+          "form_name": "SKILAS Malnutrisi",
+          "frm_code": "FRM000034",
+          "label": "Apakah Anda hilang nafsu makan Atau mengalami kesulitan makan (misal batuk atau tersedak saat makan, menggunakan selang makan/sonde)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[skilas].question3c",
+      "destinations": [
+        {
+          "form_name": "SKILAS Malnutrisi",
+          "frm_code": "FRM000034",
+          "label": "Apakah ukuran lingkar lengan atas (LiLA) <21 cm?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[skilas].question6a",
+      "destinations": [
+        {
+          "form_name": "SKILAS Pemeriksaan Gejala Depresi - Lansia",
+          "frm_code": "FRM000038",
+          "label": "Apakah dalam 2 minggu terakhir Anda merasa sedih, tertekan, atau putus asa?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[skilas].question6b",
+      "destinations": [
+        {
+          "form_name": "SKILAS Pemeriksaan Gejala Depresi - Lansia",
+          "frm_code": "FRM000038",
+          "label": "Apakah dalam 2 minggu terakhir Anda sedikit minat atau kesenangan dalam melakukan sesuatu?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[tb_anak].batuk_anak",
+      "destinations": [
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)",
+          "frm_code": null,
+          "label": "Apakah anak Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[tbc].batuk (Tidak -> no cough; Ya -> '> 2 weeks' by clinical sign-off: Medisy has no duration)",
+      "destinations": [
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak Sekolah, Dewasa & Lansia)",
+          "frm_code": "FRM000182",
+          "label": "Apakah Anda pernah atau sedang mengalami batuk yang tidak sembuh-sembuh?"
+        },
         {
           "form_name": "Faktor Risiko TB - Dewasa & Lansia",
           "frm_code": "FRM000180",
@@ -16198,22 +17333,142 @@
       ]
     },
     {
-      "path": "penyakit_khusus.ICDX A50-A53 → Reaktif",
+      "path": "screenings[tbc].bb_turun",
       "destinations": [
         {
-          "form_name": "Pemeriksaan Sifilis",
-          "frm_code": "FRM000191",
-          "label": "Hasil Pemeriksaan Rapid Test Sifilis"
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak Sekolah, Dewasa & Lansia)",
+          "frm_code": "FRM000182",
+          "label": "Apakah berat badan Anda turun tanpa penyebab jelas/ BB tidak naik/ nafsu makan turun?"
+        },
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)",
+          "frm_code": null,
+          "label": "Apakah berat badan anak Anda turun tanpa penyebab jelas/ BB tidak naik dalam 2 bulan sebelumnya/ nafsu makan turun?"
         }
       ]
     },
     {
-      "path": "penyakit_khusus.ICDX B20-B24 → Reaktif; else Konseling HIV.Hasil",
+      "path": "screenings[tbc].berkeringat_malam",
       "destinations": [
         {
-          "form_name": "Pemeriksaan HIV",
-          "frm_code": "FRM000188",
-          "label": "Hasil Pemeriksaan Rapid Test HIV"
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak Sekolah, Dewasa & Lansia)",
+          "frm_code": "FRM000182",
+          "label": "Apakah Anda mengalami berkeringat di malam hari tanpa kegiatan?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[tbc].demam",
+      "destinations": [
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak Sekolah, Dewasa & Lansia)",
+          "frm_code": "FRM000182",
+          "label": "Apakah Anda mengalami demam hilang timbul tanpa sebab yang jelas?"
+        },
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)",
+          "frm_code": null,
+          "label": "Apakah anak anda mengalami demam hilang timbul tanpa sebab yang jelas lebih dari 2 minggu?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[tbc].kontak_tbc (only 'Tidak Ada')",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Tuberkulosis (Dewasa & Lansia)",
+          "frm_code": "FRM000184",
+          "label": "Apakah anda ada kontak dengan pasien Tuberkulosis (TBC)?"
+        },
+        {
+          "form_name": "Pemeriksaan Tuberkulosis Anak",
+          "frm_code": "FRM000178",
+          "label": "Apakah anda ada kontak dengan pasien Tuberkulosis (TBC)?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[tbc].metode_pemeriksaan_tb (TCM, BTA Mikroskopis only; Foto Toraks / Klinis have no ASIK option)",
+      "destinations": [
+        {
+          "form_name": "Pemeriksaan Tuberkulosis (Dewasa & Lansia)",
+          "frm_code": "FRM000184",
+          "label": "Metode Pemeriksaan (untuk terduga TB)"
+        }
+      ]
+    },
+    {
+      "path": "screenings[tbc].pembesaran_kgb",
+      "destinations": [
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak Sekolah, Dewasa & Lansia)",
+          "frm_code": "FRM000182",
+          "label": "Apakah pasien memiliki pembesaran kelenjar getah bening?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[tbc].pemeriksaan_foto_toraks / abnormalitas_tbc",
+      "destinations": [
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak Sekolah, Dewasa & Lansia)",
+          "frm_code": "FRM000182",
+          "label": "Apakah dilakukan pemeriksaan radiografi toraks?"
+        },
+        {
+          "form_name": "Faktor Risiko dan Skrining X-Ray TB (Anak 1-9 tahun)",
+          "frm_code": null,
+          "label": "Apakah dilakukan pemeriksaan radiografi toraks?"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].hb_result (> 0; not g/L)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan Hemoglobin (Hb) dalam g/dL"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].mch_result (> 0)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan MCH"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].mcv_result (> 0)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan MCV"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].rbc_result (> 0)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan Eritrosit / RBC Count"
+        }
+      ]
+    },
+    {
+      "path": "screenings[thalasemia].rdw_result (> 0)",
+      "destinations": [
+        {
+          "form_name": "Skrining Lanjutan Talasemia - Balita dan Anak Prasekolah",
+          "frm_code": "FRM000024",
+          "label": "Hasil Pemeriksaan Red cell distribution width (RDW)"
         }
       ]
     }

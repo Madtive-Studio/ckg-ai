@@ -38,8 +38,8 @@ import type {
 const ACTIVE_STATUSES: CronBackfillStatus[] = ["pending", "running"];
 
 const SOURCE_SCOPE_LABEL: Record<CronSourceScopeT, string> = {
-  both: "EPUS + ASIK",
-  epus_only: "EPUS only",
+  both: "Medisy + ASIK",
+  epus_only: "Medisy only",
   asik_only: "ASIK only",
   none: "Sync only (no rescrape)",
 };
@@ -111,7 +111,7 @@ export function CronBackfillListSection() {
         <div>
           <h2 className="text-lg font-semibold">Date-range backfills</h2>
           <p className="text-sm text-[var(--muted-foreground)]">
-            Run the cron pipeline (ASIK → EPUS → Merge) forward across a
+            Run the cron pipeline (ASIK → Medisy → Merge) forward across a
             range of dates for one puskesmas.
           </p>
         </div>

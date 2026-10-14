@@ -91,6 +91,10 @@ def load_breadcrumb_leaves(source):
         for path in fmap.values():
             if not path:
                 continue
+            if source == "medisy":
+                # "screenings[hipertensive].question1_anamnesis (R-UNIFORM)" → every identifier is a consumed leaf name
+                leaves.update(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", str(path)))
+                continue
             for seg in str(path).split(">"):
                 seg = _norm_leaf(seg)
                 if seg:
@@ -147,6 +151,20 @@ def walk_tables(tab, tables, sink):
                 walk(row, f"{tab} > {tname}", sink)
 
 
+def walk_medisy(bundle, sink):
+    """Flatten a Medisy bundle. Screening answers are ``{question_code, value}`` rows → one leaf per question code."""
+    for top, v in bundle.items():
+        if top in ("api_version", "_meta"):
+            continue
+        if top == "screenings" and isinstance(v, list):
+            for sc in v:
+                for a in (sc or {}).get("answers") or []:
+                    if a.get("value") not in (None, "", "-"):
+                        sink[f"screenings > {sc.get('key')} > {a.get('question_code')}"].append(a["value"])
+            continue
+        walk(v, top, sink)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", default="epus")
@@ -180,6 +198,12 @@ def main():
             continue
         n += 1
         sink = defaultdict(list)
+        if args.source == "medisy":
+            walk_medisy(raw, sink)
+            for path in sink:
+                fill[path] += 1
+                sample.setdefault(path, sink[path][0])
+            continue
         for top in ("data_pasien", "penyakit_khusus"):
             walk(raw.get(top) or ({} if top == "data_pasien" else []), top, sink)
         for tab, tv in (raw.get("tabs") or {}).items():

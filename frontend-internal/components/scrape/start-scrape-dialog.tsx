@@ -85,7 +85,7 @@ export function StartScrapeDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="asik">ASIK</SelectItem>
-                <SelectItem value="epus">EPUS</SelectItem>
+                <SelectItem value="epus">Medisy</SelectItem>
                 <SelectItem value="asik_sekolah">CKG Sekolah</SelectItem>
               </SelectContent>
             </Select>

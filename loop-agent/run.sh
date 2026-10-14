@@ -4,9 +4,9 @@
 # run.sh owns the SCAFFOLDING; the agent owns the VERDICT:
 #
 #   prepare workspace
-#     -> ONE OpenCode session (PROMPT.md: log in to the live portal, capture
-#        what it serves, run the real scraper, compare, judge; on a gap, fix
-#        and re-prove inside the same session)
+#     -> ONE OpenCode session (PROMPT.md: call the live Medisy API, capture
+#        what it serves, run our client + converter, compare, judge; on a gap,
+#        fix and re-prove inside the same session)
 #     -> reviewer (GLM-5.3) on the diff
 #     -> push branch + PR (or the patch into the log)
 #     -> LOOP_RESULT (the worker parses it into the dashboard)
@@ -31,7 +31,7 @@ git clone --quiet /seed /work || { echo "[loop] git clone failed"; exit 1; }
 cd /work || exit 1
 
 # 2. Pin checkout — acceptance tests can pin the pre-fix state. The pin
-#    rewinds the SCRAPER/CONVERTER under review; the agent then has to find
+#    rewinds the CLIENT/CONVERTER under review; the agent then has to find
 #    and close the gap live.
 if [ -n "${LOOP_PIN_REF:-}" ]; then
   echo "[loop] pinning pipeline to ${LOOP_PIN_REF}"
@@ -42,7 +42,7 @@ fi
 #     clone only has COMMITTED code, and a pin like 10db694^ predates
 #     loop-agent/ + the skills — so overlay them from /seed so the runner
 #     always executes the latest prompt + tooling EVEN WHEN UNCOMMITTED. The
-#     scraper/converter under review is left at the pinned state, NOT overlaid.
+#     client/converter under review is left at the pinned state, NOT overlaid.
 cp -rf /seed/loop-agent /work/ 2>/dev/null || true
 cp -rf /seed/.claude /work/ 2>/dev/null || true
 mkdir -p /work/backend/app/services /work/backend/app/data
@@ -73,7 +73,7 @@ fi
 python3 loop-agent/gen_opencode_config.py > /work/opencode.json || { echo "[loop] opencode config gen failed"; exit 1; }
 
 # 4a. ASIK coverage hunt list (the agent's JOB 2 targets). Non-fatal BY DESIGN:
-#     a coverage outage must never take down the portal check — the run
+#     a coverage outage must never take down the live check — the run
 #     proceeds without the file and the agent skips hunting.
 echo "[loop] generating ASIK coverage hunt list"
 if (cd backend && .venv/bin/python -m app.services.coverage_hunt --out ../loop-agent/.hunt_list.md) >/dev/null 2>&1; then
@@ -140,11 +140,15 @@ run_agent() { # run_agent <prompt-file> <label>
 }
 
 commit_code_changes() { # stage the CODE under review; echo "yes" if a commit was made
-  git add scrapers/epus backend/app/services/epus_to_asik.py 2>/dev/null || true
+  git add backend/app/integrations/medisy_client.py backend/app/services/medisy_adapter.py \
+          backend/app/services/medisy_accessors.py backend/app/services/medisy_to_asik.py \
+          backend/app/services/asik_form_labels.py backend/app/services/MEDISY_TO_ASIK_RULES.md \
+          backend/tests/test_medisy_to_asik.py backend/tests/test_medisy_accessors.py \
+          backend/tests/test_medisy_scrape.py backend/tests/test_medisy_client.py 2>/dev/null || true
   if git diff --cached --quiet; then
     echo "no"
   else
-    git commit -q -m "fix(loop-agent): ${LOOP_PUSKESMAS_NAME:-portal} — scraper/converter fix for live-check gap" || true
+    git commit -q -m "fix(loop-agent): ${LOOP_PUSKESMAS_NAME:-puskesmas} — client/converter fix for live-check gap" || true
     echo "yes"
   fi
 }
@@ -179,8 +183,8 @@ Without that file the whole run counts as crashed. Do NOT restart the check
 from scratch: your work survives in /tmp/opencode (scripts, captures,
 screenshots) and as uncommitted edits in this repo. Re-orient from that state,
 finish the remaining PROMPT steps — including STEP 6 coverage findings — and
-write loop-agent/.check_result.json NOW. If the portal is unreachable or login
-is blocked, that is ALSO a verdict: write bad_login or error with your
+write loop-agent/.check_result.json NOW. If the API is unreachable or the token
+is refused, that is ALSO a verdict: write bad_login or error with your
 findings, then stop. The one unacceptable outcome is ending without the file.
 EOF
   run_agent /work/.continue_prompt.txt "verdict continuation ${CONT_ATTEMPT}" || true
@@ -188,7 +192,7 @@ done
 
 # ---------------------------------------------------------------------------
 # STEP 6 — notes hygiene + commit whatever the agent changed.
-# HAS_FIX is decided by CODE changes only (scrapers/epus, epus_to_asik.py).
+# HAS_FIX is decided by CODE changes only (the Medisy client / adapter / converter files).
 # ---------------------------------------------------------------------------
 python3 loop-agent/notes_lint.py --fix || true
 commit_code_changes >/dev/null
@@ -225,7 +229,7 @@ if [ "${HAS_FIX}" = "yes" ] && [ "${HAS_VERDICT}" = "yes" ]; then
       [ "${VERDICT_R}" = "approve" ] && break
       [ "${VERDICT_R}" != "request_changes" ] && break   # error -> non-blocking
       # Address the review: feed the comments back to the agent; the agent
-      # re-verifies its own fix against the live portal (STEP 7 of the prompt).
+      # re-verifies its own fix against the live API (STEP 7 of the prompt).
       # The base prompt must be RENDERED (render_prompt), not the raw template.
       python3 loop-agent/render_prompt.py > /work/.review_prompt.txt
       python3 - >> /work/.review_prompt.txt <<PYEOF
@@ -233,7 +237,7 @@ import json, pathlib
 rev = json.loads(pathlib.Path("loop-agent/.review_result.json").read_text())
 print(
     "\n\nThe AI reviewer REQUESTED CHANGES on your fix. Address every comment, then "
-    "RE-RUN your live check (STEP 2-5) to prove the portal is still covered with "
+    "RE-RUN your live check (STEP 2-5) to prove the puskesmas is still covered with "
     "your changes, update .check_result.json, then stop. Comments:\n"
     + "\n".join("- " + c for c in rev.get("comments", []))
 )
@@ -346,7 +350,7 @@ out += _section("Coverage findings (ASIK questions)", "\n".join(cov_lines))
 print(out)
 
 mapped_n = sum(1 for f in cf if (f.get("status") or "").lower() == "mapped")
-title = f"loop-agent: fix ${LOOP_PUSKESMAS_NAME:-portal} scraper/converter"
+title = f"loop-agent: fix ${LOOP_PUSKESMAS_NAME:-portal} client/converter"
 pathlib.Path("loop-agent/.pr_title").write_text(title)
 PYEOF
       # Notify humans on open: reviewers get a GitHub notification, assignees get
@@ -355,7 +359,7 @@ PYEOF
       PR_EXTRA=()
       [ -n "${LOOP_PR_REVIEWERS:-}" ] && PR_EXTRA+=(--reviewer "${LOOP_PR_REVIEWERS}")
       [ -n "${LOOP_PR_ASSIGNEES:-}" ] && PR_EXTRA+=(--assignee "${LOOP_PR_ASSIGNEES}")
-      if gh pr create --base master --head "${BRANCH}" --title "$(cat loop-agent/.pr_title 2>/dev/null || echo "loop-agent: fix ${LOOP_PUSKESMAS_NAME:-portal} scraper/converter")" --body-file loop-agent/.pr_body.md "${PR_EXTRA[@]}" > loop-agent/.pr_url 2>/dev/null; then
+      if gh pr create --base master --head "${BRANCH}" --title "$(cat loop-agent/.pr_title 2>/dev/null || echo "loop-agent: fix ${LOOP_PUSKESMAS_NAME:-portal} client/converter")" --body-file loop-agent/.pr_body.md "${PR_EXTRA[@]}" > loop-agent/.pr_url 2>/dev/null; then
         PR_OPENED="yes"
         echo "[loop] PR opened: $(cat loop-agent/.pr_url)"
         # Auto-merge ONLY in auto mode, reviewer-approved, and the agent's own

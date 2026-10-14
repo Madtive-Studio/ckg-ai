@@ -6,7 +6,7 @@ kelas**. Halaman ini **hanya untuk dilihat** (read-only): tidak ada tombol ubah
 data, scrape ulang, atau merge di sini.
 
 Di menu samping, **Patients** punya dua sub-halaman: **CKG Umum** (pasien CKG biasa,
-gabungan ePuskesmas + ASIK) dan **CKG Sekolah** (halaman ini).
+gabungan Medisy + ASIK) dan **CKG Sekolah** (halaman ini).
 
 ## Sumber data — beda dengan CKG Umum
 
@@ -15,9 +15,9 @@ yaitu hasil **Pelayanan oleh Nakes** (mis. Gizi, Tekanan Darah, Gula Darah, Gigi
 Mata & Telinga, Kebugaran, dll.) beserta **tatalaksana** (tindak lanjut).
 
 Berbeda dengan CKG Umum, data sekolah **tidak digabung (merge) dengan
-ePuskesmas** dan **tidak memakai filter tanggal** — pemeriksaan sekolah ditata
+Medisy** dan **tidak memakai filter tanggal** — pemeriksaan sekolah ditata
 per **sekolah × kelas**, bukan per tanggal kunjungan. Karena itu di sini tidak
-ada status "Hanya ASIK / Hanya EPUS / Cocok".
+ada status "Hanya ASIK / Hanya Medisy / Cocok".
 
 ## Pencarian & filter
 

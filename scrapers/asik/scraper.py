@@ -60,6 +60,9 @@ from helpers import (
     SESSION_DIR,
     TAB_OPTIONS,
     APIInterceptor,
+    install_decoded_list_hook,
+    read_decoded_list,
+    reset_decoded_list,
     load_config,
     launch_persistent_context,
     restore_saved_auth_state,
@@ -155,6 +158,7 @@ class CKGPelayananScraper:
             # Listen at the context level so any tab opened via context.new_page()
             # (form tabs today, detail tabs in Phase 2) is also captured.
             context.on("response", self.interceptor.on_response)
+            install_decoded_list_hook(context)   # ASIK encodes the list response; the page decodes it, we read what it decoded
 
             try:
                 # Step 1: Login (manual CAPTCHA or headless terminal solve)
@@ -246,6 +250,7 @@ class CKGPelayananScraper:
         console.print(f"\n[bold cyan]Scraping tab: {tab_name}[/bold cyan]")
 
         self.interceptor.clear()
+        reset_decoded_list(page)
 
         # Click the tab — find the DEEPEST visible element whose own text
         # matches (avoids clicking a wrapper that swallows the event).
@@ -511,6 +516,7 @@ class CKGPelayananScraper:
                         break
 
             self.interceptor.clear()
+            reset_decoded_list(page)
             if not click_next_page(page):
                 console.print(f"  No more pages (finished at page {page_num})")
                 break
@@ -521,10 +527,12 @@ class CKGPelayananScraper:
         return enriched_rows
 
     def _records_from_list_claim(self, page: Page, wait_ms: int = 4000) -> list[dict]:
-        """Pull the most recent /api/pkg/list-claim response from the interceptor.
+        """Pull the patient list the SPA just loaded.
 
-        list-claim is fired by the SPA every time the user changes date /
-        tab / page. We wait briefly for it to land if it hasn't yet.
+        The SPA fires a list request every time the user changes date / tab / page. Older ASIK answered
+        ``/api/pkg/list-claim`` with plain JSON (read from the interceptor); current ASIK answers
+        ``/api/pkg/ssi/list-kunjungan-umum`` with an encoded payload that the page decodes itself, so the rows are
+        read from the decoded copy the page parsed. We wait briefly for the list to land if it hasn't yet.
         """
         deadline = time.time() + (wait_ms / 1000.0)
         while time.time() < deadline:
@@ -534,6 +542,9 @@ class CKGPelayananScraper:
                     data = body.get("data") or []
                     if isinstance(data, list):
                         return data
+            decoded = read_decoded_list(page)
+            if decoded:
+                return decoded
             page.wait_for_timeout(200)
         return []
 

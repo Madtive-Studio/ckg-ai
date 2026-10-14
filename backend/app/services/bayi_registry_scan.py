@@ -73,6 +73,8 @@ from sqlalchemy.orm import Session
 
 from app.core.security import decrypt_json
 from app.models.patient import Patient
+from app.services import medisy_accessors as _medisy
+from app.services.medisy_adapter import is_medisy_blob
 
 # ── labels (verbatim from the registry sheets / EPUS select options) ────────
 _IKTERUS_TIDAK = "Tidak ada ikterus"
@@ -88,7 +90,8 @@ _PJB_TERDUGA = "Terduga PJB"
 # Interpretasi values that qualify a bayi for the PJBK registry (sheet syarat:
 # "1. Waspada PJB / 2. Terduga PJB"). Matched loosely (casefold contains) so
 # minor EPUS wording drift ("Terduga PJB-K") still resolves.
-_PJB_POSITIVE_TOKENS = ("waspada", "terduga")
+# "gagal" is Medisy's failed-screen conclusion (its options are Lolos / Gagal); the others are ePuskesmas's wording.
+_PJB_POSITIVE_TOKENS = ("waspada", "terduga", "gagal")
 
 # Bayi markers — mirror scrapers/epus/patient_scraper._BAYI_NAME_RE/_UMUR_RE.
 _BAYI_NAME_RE = re.compile(r"^\s*bayi\b", re.I)
@@ -123,6 +126,8 @@ def _data_pasien(epus: Any) -> dict[str, Any]:
 def _is_bayi(epus: Any) -> bool:
     """A newborn record: nama begins with "BAYI " or Umur reads "0 Thn ...".
     NEVER key bayi logic on NIK (bayi carry the parent's NIK)."""
+    if is_medisy_blob(epus):
+        return bool(_BAYI_NAME_RE.match(str((epus.get("patient") or {}).get("name") or ""))) or _medisy.is_newborn_age(epus)
     dp = _data_pasien(epus)
     nama = str(dp.get("Nama Pasien") or dp.get("Nama") or "")
     if _BAYI_NAME_RE.match(nama):
@@ -134,6 +139,8 @@ def _parse_birthdate(epus: Any) -> str | None:
     """Birthdate ISO string from ``data_pasien`` "Tempat/Tgl Lahir" (or jaksel
     "Tempat & Tgl Lahir"), anchored on the trailing ``DD-MM-YYYY`` (mirrors
     ``hipertensi_registry_scan._parse_birthdate``)."""
+    if is_medisy_blob(epus):
+        return _medisy.identity(epus)["tanggal_lahir"]
     dp = _data_pasien(epus)
     ttl = dp.get("Tempat/Tgl Lahir") or dp.get("Tempat & Tgl Lahir")
     if ttl in (None, ""):
@@ -155,6 +162,8 @@ def _clean_nik(raw: Any) -> str:
 
 
 def _extract_identitas(epus: Any) -> dict[str, Any]:
+    if is_medisy_blob(epus):
+        return _medisy.identity(epus)
     dp = _data_pasien(epus)
     jk_raw = (dp.get("Jenis Kelamin") or "").strip()
     jk = {"L": "Laki-Laki", "P": "Perempuan"}.get(jk_raw.upper(), jk_raw)
@@ -247,6 +256,9 @@ def _extract_ikterus_klasifikasi(epus: Any) -> tuple[str, str]:
     yet). MTBM saved_detail may carry a per-section klasifikasi; when a re-scrape
     first fills it, confirm we read the IKTERUS section's code, not another
     section's — see the module docstring's deferred-verification note."""
+    if is_medisy_blob(epus):
+        label = _ikterus_label_from(_medisy.ikterus_classification(epus))
+        return (label, _SRC_EPUS) if label else ("", "")
     mtbm = _find_tab(epus, module="mtbm")
     if not mtbm:
         return "", ""
@@ -328,6 +340,17 @@ def _extract_pjb(epus: Any) -> dict[str, Any] | None:
     """PJB pulse-ox for one visit → {saturasi_tangan_kanan, saturasi_kaki,
     interpretasi, diagnosis, rujuk_eksternal} or None when the bayi has no PJB
     tab/data. The sheet wants "Tangan Kanan (%)" + "Kaki (%)"."""
+    if is_medisy_blob(epus):
+        row = _medisy.latest_pjb(epus)
+        if not row or not (row["saturasi_tangan"] or row["saturasi_kaki"] or row["kesimpulan"]):
+            return None
+        return {
+            "saturasi_tangan_kanan": _num_str(row["saturasi_tangan"]),
+            "saturasi_kaki": _num_str(row["saturasi_kaki"]),
+            "interpretasi": row["kesimpulan"] or "",
+            "diagnosis": _extract_diagnosis(epus),
+            "rujuk_eksternal": _extract_rujuk_eksternal(epus),
+        }
     pjb_tab = epus.get("tabs", {}).get("Skrining PJB") if isinstance(epus, dict) else None
     if not isinstance(pjb_tab, dict):
         pjb_tab = _find_tab(epus, module="skriningpjb")
@@ -373,6 +396,8 @@ def _pjb_qualifies(pjb: dict[str, Any] | None) -> bool:
 def _extract_diagnosis(epus: Any) -> str:
     """Best-effort diagnosis text: the Diagnosa tab's diagnosa rows, else the
     ``penyakit_khusus`` panel. De-duplicated, joined with "; ". "" when absent."""
+    if is_medisy_blob(epus):
+        return "; ".join(_medisy.diagnosis_names(epus))
     names: list[str] = []
     seen: set[str] = set()
 
@@ -407,6 +432,8 @@ def _extract_rujuk_eksternal(epus: Any) -> str:
     "Data Rujukan External" table (top-level ``rujukan.external``). Joins the
     destination facility names ("Rujukan External" column), de-duped; "" when the
     visit made no external referral."""
+    if is_medisy_blob(epus):
+        return _medisy.external_referral_destination(epus)
     if not isinstance(epus, dict):
         return ""
     dests: list[str] = []

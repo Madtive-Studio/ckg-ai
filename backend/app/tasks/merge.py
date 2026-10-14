@@ -25,7 +25,9 @@ from app.integrations.llm_chat import ChatResult, chat_complete
 from app.models.merge_job import MergeJob, MergeStatus
 from app.models.patient import MatchStatus, Patient
 from app.data.paket_map import LAINNYA_PAKET_NAME, LAINNYA_PAKET_SLUG, paket_for
-from app.services.epus_to_asik import EPUS_BREADCRUMBS, epus_to_asik
+from app.services.asik_form_labels import ASIK_FORM_LABELS
+from app.services.clinic_source import breadcrumbs_for, clinic_to_asik
+from app.services.epus_to_asik import EPUS_BREADCRUMBS
 
 log = logging.getLogger(__name__)
 
@@ -102,14 +104,15 @@ def _slugify_form(form_name: str) -> str:
 # Built once at module load — slug → ASIK form name. Used by the post-
 # processor to rewrite epus_question after the LLM emits the merged JSON.
 _SLUG_TO_FORM: dict[str, str] = {
-    _slugify_form(name): name for name in EPUS_BREADCRUMBS
+    _slugify_form(name): name for name in ASIK_FORM_LABELS      # same 63 forms for every clinic source
 }
 
 
-def _overwrite_epus_questions(merged: dict) -> dict:
+def _overwrite_epus_questions(merged: dict, breadcrumbs: dict | None = None) -> dict:
     """Replace LLM-supplied ``epus_question`` with canonical truth.
 
-    Lookup table is :data:`EPUS_BREADCRUMBS` in the converter.
+    Lookup table is the converter's breadcrumb table for the blob's source (``breadcrumbs``; Medisy's by default
+    for the caller, :data:`EPUS_BREADCRUMBS` for a legacy EPUS blob).
     Three semantic cases, each producing a definite ``epus_question``:
 
     - **Section in table, field in form's map with a string path**: use
@@ -139,7 +142,7 @@ def _overwrite_epus_questions(merged: dict) -> dict:
                 if isinstance(it, dict):
                     it["epus_question"] = None
             continue
-        field_map = EPUS_BREADCRUMBS[form_name]
+        field_map = (breadcrumbs if breadcrumbs is not None else EPUS_BREADCRUMBS)[form_name]
         for it in items:
             if not isinstance(it, dict):
                 continue
@@ -1333,7 +1336,7 @@ def _merge_one_patient(
         asik = decrypt_json(patient.scraped_asik_data) if patient.scraped_asik_data else {}
         epus = decrypt_json(patient.scraped_epus_data) if patient.scraped_epus_data else {}
         # Hybrid stage 1: deterministic conversion of EPUS into ASIK form shape.
-        converted = epus_to_asik(epus) if epus else {}
+        converted = clinic_to_asik(epus) if epus else {}
         # Hybrid stage 2: LLM reconciles the deterministic conversion against
         # the real ASIK record. Sees ONLY (converted, asik) — raw EPUS withheld.
         # Identity is withheld too: the backend builds the identitas section
@@ -1376,7 +1379,7 @@ def _merge_one_patient(
         merged = _complete_source_fields(merged, converted, asik)
         merged = _rebuild_identitas(merged, converted, asik)
         merged = _backfill_asik_questions(merged, _extract_asik_form_names(asik))
-        merged = _overwrite_epus_questions(merged)
+        merged = _overwrite_epus_questions(merged, breadcrumbs_for(epus))
         merged = _normalize_status_flags(merged)
         merged = _fill_template_reasoning(merged)
         merged = _drop_orphan_conditional_children(merged)

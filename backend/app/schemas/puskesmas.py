@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints, model_validator
 
 _BASE_URL_RE = re.compile(
     r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$"
@@ -100,6 +100,35 @@ class CredIn(BaseModel):
 class CredOut(BaseModel):
     email: str
     password: str
+
+
+class MedisyCredIn(BaseModel):
+    """Medisy's CKG API bearer token — stored in ``epus_cred`` (the clinic-source credential).
+
+    Medisy is the clinic-record source, so the "epus" credential slot now holds this instead of an
+    email/password. ``extra="forbid"`` keeps it from ever matching a body that also carries
+    email/password. The server (himed-app) refuses tokens shorter than 32 characters, so we do too.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    token: Annotated[str, StringConstraints(min_length=32, max_length=256, pattern=r"^\S+$")]
+
+
+class MedisyCredOut(BaseModel):
+    token: str
+
+
+class MedisyConnectionTestOut(BaseModel):
+    """Result of "Test connection": HTTP 200 whether or not Medisy was reachable — a failure is a
+    diagnostic result (``ok=False`` + a message that never contains the token), not an API error."""
+
+    ok: bool
+    error: str | None = None
+    clinic_name: str | None = None
+    api_version: int | None = None
+    timezone: str | None = None
+    server_time: str | None = None
+    latency_ms: int | None = None
 
 
 class PuskesmasOut(BaseModel):

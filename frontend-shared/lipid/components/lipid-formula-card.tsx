@@ -199,7 +199,7 @@ export function LipidFormulaCard() {
 
             <Section title="6 · Kenapa banyak kolom Follow Up yang kosong?">
               <p>
-                Karena pemeriksaan profil lipid <b>jarang dicatat di ePuskesmas</b>.
+                Karena pemeriksaan profil lipid <b>jarang dicatat di Medisy</b>.
                 Berbeda dengan tekanan darah yang hampir selalu diukur tiap kunjungan,
                 lipid hanya tercatat pada sebagian kecil kunjungan.
               </p>
@@ -211,7 +211,7 @@ export function LipidFormulaCard() {
               <p>
                 Kolom kosong berarti pemeriksaannya <b>tidak tercatat</b> — bukan
                 kesalahan sistem. Justru inilah yang perlu diperbaiki: makin lengkap
-                pencatatan profil lipid di ePuskesmas, makin berguna kertas kerja ini.
+                pencatatan profil lipid di Medisy, makin berguna kertas kerja ini.
               </p>
             </Section>
 
@@ -234,15 +234,15 @@ export function LipidFormulaCard() {
               <p>
                 <b>ASIK (skrining CKG) adalah sumber utama</b> untuk identitas, empat
                 nilai lipid, kedua kolom Riwayat, dan Jenis Obat. Nilai dari
-                ePuskesmas dipakai untuk mengisi bagian yang kosong di ASIK — per
+                Medisy dipakai untuk mengisi bagian yang kosong di ASIK — per
                 kolom, bukan semua-atau-tidak.
               </p>
               <p>
-                <b>Follow Up selalu dari ePuskesmas</b>, karena kunjungan setelah CKG
+                <b>Follow Up selalu dari Medisy</b>, karena kunjungan setelah CKG
                 dicatat di sana.
               </p>
               <p>
-                Tanda kecil <b>ASIK</b> / <b>ePus</b> di panel detail menunjukkan
+                Tanda kecil <b>ASIK</b> / <b>Medisy</b> di panel detail menunjukkan
                 sumber tiap nilai.
               </p>
             </Section>

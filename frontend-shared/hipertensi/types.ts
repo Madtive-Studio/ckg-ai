@@ -18,7 +18,7 @@ export const FollowUpReading = z.object({
 export type FollowUpReading = z.infer<typeof FollowUpReading>;
 
 // Per-field source of each baseline value: "ASIK" | "EPUS" | null (absent).
-// ASIK is the source of truth; ePuskesmas (EPUS) is the per-field fallback.
+// ASIK is the source of truth; Medisy is the per-field fallback.
 export const RegistrySources = z.object({
   td1: z.string().nullable().default(null),
   td2: z.string().nullable().default(null),

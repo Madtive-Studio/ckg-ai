@@ -40,6 +40,7 @@ Output JSON:
 """
 
 import argparse
+import difflib
 import json
 import os
 import re
@@ -240,8 +241,7 @@ def _fill_field(page: Page, locator, value) -> None:
     loc = locator.first
     loc.scroll_into_view_if_needed(timeout=3000)
     loc.click(timeout=8000)
-    page.keyboard.press("Control+A")
-    page.keyboard.press("Delete")
+    loc.fill("")  # clears on every OS (Control+A only moves the caret to the line start on macOS, leaving the old text)
     page.keyboard.type(str(value), delay=20)
     page.wait_for_timeout(150)
 
@@ -950,18 +950,145 @@ def _select_pekerjaan(page: Page, value: str) -> None:
     page.wait_for_timeout(300)
 
 
-def _pick_location_level(page: Page, search_placeholder: str, name: str) -> None:
+def _name_variants(name: str) -> list[str]:
+    """The ways ASIK and the clinic record may spell the SAME place: the name as given, then the KAB. <-> KABUPATEN spelling.
+    Matching stays whole-name equality (case-insensitive) — never partial — because a wrong domicile is worse than a skip."""
+    n = " ".join(str(name).split())
+    out = [n]
+    up = n.upper()
+    if up.startswith("KAB. ") or up.startswith("KAB "):
+        out.append("KABUPATEN " + n.split(" ", 1)[1].strip())
+    elif up.startswith("KABUPATEN "):
+        out.append("KAB. " + n.split(" ", 1)[1].strip())
+    return list(dict.fromkeys(out))
+
+
+def _norm_place(s: str) -> str:
+    """Letters and digits only, upper-cased — so 'Pelabuhan-ratu', 'PELABUHANRATU' and 'pelabuhan ratu' compare equal."""
+    return re.sub(r"[^A-Z0-9]", "", str(s).upper())
+
+
+def _closest_option(name: str, options: list[str], *, min_ratio: float = 0.88, margin: float = 0.05) -> str | None:
+    """The ASIK list option that is the SAME place spelled slightly differently (Medisy 'Pelabuhanratu' vs ASIK
+    'Palabuhanratu'), or None. Only a very close, UNAMBIGUOUS option qualifies: its similarity must reach ``min_ratio`` and
+    beat the runner-up by ``margin``. Used for the district and village levels only (lists narrowed by the parent)."""
+    target = _norm_place(name)
+    scored = sorted(
+        ((difflib.SequenceMatcher(None, target, _norm_place(o)).ratio(), o) for o in dict.fromkeys(options) if _norm_place(o)),
+        reverse=True,
+    )
+    if not scored or scored[0][0] < min_ratio:
+        return None
+    if len(scored) > 1 and scored[0][0] - scored[1][0] < margin:
+        return None
+    return scored[0][1]
+
+
+def _visible_options(page: Page, search_placeholder: str, limit: int = 80) -> list[str]:
+    """Texts of the options listed in the picker that owns this search box: every visible leaf text that sits BELOW the
+    search box (whatever its parent), minus the headers ("Daftar …") — independent of how ASIK nests the list."""
+    try:
+        return page.evaluate(
+            """([ph, limit]) => {
+                const input = document.querySelector(`input[placeholder="${ph}"]`);
+                if (!input) return [];
+                const box = input.getBoundingClientRect();
+                const skip = /^(memuat|tidak ada|data tidak|daftar |pilih lokasi|cari )/i;
+                const rows = [];
+                for (const el of document.querySelectorAll('body *')) {
+                    if (el.offsetParent === null) continue;
+                    // the element's OWN text (a row may also hold an icon or badge child, so it is not always a leaf)
+                    const t = Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').replace(/\\s+/g, ' ').trim();
+                    if (!t || t.length >= 60 || skip.test(t)) continue;
+                    const r = el.getBoundingClientRect();
+                    if (r.width > 0 && r.height > 0 && r.top >= box.bottom - 2 && r.left >= box.left - 40 && r.right <= box.right + 40)
+                        rows.push([r.top, t]);
+                }
+                rows.sort((a, b) => a[0] - b[0]);
+                return Array.from(new Set(rows.map(r => r[1]))).slice(0, limit);
+            }""",
+            [search_placeholder, limit],
+        )
+    except Exception:
+        return []
+
+
+def _picker_structure(page: Page, search_placeholder: str) -> str:
+    """Failure diagnostics only: tag / short class / text-line count of the ancestors of the picker's search box."""
+    try:
+        return page.evaluate(
+            """(ph) => {
+                const input = document.querySelector(`input[placeholder="${ph}"]`);
+                if (!input) return 'no input';
+                const out = [];
+                let el = input;
+                for (let i = 0; i < 9 && el; i++, el = el.parentElement) {
+                    const lines = (el.innerText || '').split('\\n').filter(t => t.trim()).length;
+                    out.push(`${el.tagName.toLowerCase()}.${(el.className || '').toString().slice(0, 28)}[${lines}]`);
+                }
+                const items = Array.from(document.querySelectorAll('li, [role=option], [class*=item], [class*=list] > div')).filter(e => e.offsetParent).length;
+                return out.join(' < ') + ' | visible li/option/item elements: ' + items;
+            }""",
+            search_placeholder,
+        )
+    except Exception as exc:  # diagnostics must never mask the real error
+        return f"structure unavailable: {exc!s:.60}"
+
+
+def _click_text_whole_ci(page: Page, text: str, *, prefer_last: bool = True, timeout: int = 5000) -> bool:
+    """Genuine-click the VISIBLE element whose whole text equals ``text``, ignoring case."""
+    loc = page.get_by_text(re.compile(rf"^\s*{re.escape(text)}\s*$", re.IGNORECASE))
+    n = loc.count()
+    for i in (range(n - 1, -1, -1) if prefer_last else range(n)):
+        el = loc.nth(i)
+        try:
+            if el.is_visible():
+                el.scroll_into_view_if_needed(timeout=2000)
+                el.click(timeout=timeout)
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def _pick_location_level(page: Page, search_placeholder: str, name: str, *, allow_close: bool = False) -> None:
     """One level of the Alamat cascade: type the name into this level's search
-    box, wait for the async list, then click the exact-name option. prefer_last
-    picks the list row over the same-named breadcrumb of the parent selection."""
+    box, wait for the async list, then click the option whose whole text equals the name (case-insensitive; the KAB. /
+    KABUPATEN spelling is tried too). prefer_last picks the list row over the same-named breadcrumb of the parent
+    selection."""
     search = page.get_by_placeholder(search_placeholder)
     if not search.count():
         raise RuntimeError(f"location search box '{search_placeholder}' not found")
-    _fill_field(page, search, name)
-    page.wait_for_timeout(1200)  # per-level list is fetched async ("Memuat data..")
-    if not _click_text(page, name, exact=True, prefer_last=True):
-        raise RuntimeError(f"location '{name}' not found under '{search_placeholder}'")
-    page.wait_for_timeout(1000)
+    for variant in _name_variants(name):
+        _fill_field(page, search, variant)
+        page.wait_for_timeout(1200)  # per-level list is fetched async ("Memuat data..")
+        if _click_text(page, variant, exact=True, prefer_last=True) or _click_text_whole_ci(page, variant):
+            page.wait_for_timeout(1000)
+            return
+    # District / village only: the parent already narrowed the list, so a single, very close spelling is the same place
+    # (ASIK follows Dukcapil spelling, the clinic may not). Anything ambiguous stays an error.
+    if allow_close:
+        # ASIK searches server-side, so a differently spelled name finds nothing; search with short fragments instead
+        # (the first letters, which a prefix search lists, and the end of the name), gather the options that appear, then take the single closest one.
+        compact = _norm_place(name)
+        options: list[str] = []
+        for fragment in dict.fromkeys(q for q in (compact[:1], compact[:2], compact[:3], compact[-6:], compact[-4:]) if q):
+            _fill_field(page, search, fragment)
+            page.wait_for_timeout(2000)
+            options += _visible_options(page, search_placeholder)
+            close = _closest_option(name, options)
+            if close:
+                _fill_field(page, search, close)
+                page.wait_for_timeout(1500)
+                if _click_text_whole_ci(page, close):
+                    console.print(f"    [yellow]location spelling differs: clinic '{name}' → ASIK '{close}'[/yellow]")
+                    page.wait_for_timeout(1000)
+                    return
+        raise RuntimeError(
+            f"location '{name}' not found under '{search_placeholder}' (options seen from fragments: "
+            f"{sorted(set(options))[:10]})"
+        )
+    raise RuntimeError(f"location '{name}' not found under '{search_placeholder}'")
 
 
 def _fill_alamat_cascade(page: Page, provinsi: str, kota: str, kecamatan: str, kelurahan: str) -> None:
@@ -971,8 +1098,8 @@ def _fill_alamat_cascade(page: Page, provinsi: str, kota: str, kecamatan: str, k
     page.wait_for_timeout(600)
     _pick_location_level(page, "Cari Provinsi", provinsi)
     _pick_location_level(page, "Cari Kabupaten/Kota", kota)
-    _pick_location_level(page, "Cari Kecamatan", kecamatan)
-    _pick_location_level(page, "Cari Kelurahan", kelurahan)  # closes the modal + fills the field
+    _pick_location_level(page, "Cari Kecamatan", kecamatan, allow_close=True)
+    _pick_location_level(page, "Cari Kelurahan", kelurahan, allow_close=True)  # closes the modal + fills the field
 
 
 def _fill_detail_alamat(page: Page, text: str) -> None:
@@ -1032,7 +1159,35 @@ def _step3_select_and_commit(page: Page, nik: str) -> str | None:
     Daftarkan click if any stage is missing, so a failure never half-commits."""
     console.print("[bold cyan]Step 10: Selanjutnya → List Data Individu[/bold cyan]")
     if not _click_selanjutnya(page):
-        raise RuntimeError("step-2 'Selanjutnya' (to step 3) not clickable")
+        # Current ASIK: the step-2 form ends in its own "Daftarkan" button that registers directly (no list/"Pilih" step).
+        final = page.get_by_role("button", name="Daftarkan", exact=True)
+        if final.count() == 1 and final.first.is_visible():
+            console.print("[bold cyan]Step 10-12: Daftarkan (COMMIT, step-2 form)[/bold cyan]")
+            final.first.scroll_into_view_if_needed(timeout=3000)
+            final.first.click(timeout=8000)
+            if not _wait_for_text(page, ["Berhasil Daftar", "No. Tiket"], timeout_ms=25000):
+                try:
+                    SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+                    page.screenshot(path=str(SCREENSHOT_DIR / "register_after_daftarkan.png"), full_page=True)
+                except Exception:
+                    pass
+                raise RuntimeError("clicked 'Daftarkan' but no 'Berhasil Daftar' confirmation appeared — check ASIK before retrying (the record may exist)")
+            ticket = _read_ticket(page)
+            console.print(f"    committed — ticket = [bold]{ticket}[/bold]")
+            _click_button_by_text(page, "Tutup", timeout=5000)  # never 'Bantu Isi Skrining Mandiri'
+            page.wait_for_timeout(1200)
+            return ticket
+        errs = page.evaluate(
+            """() => Array.from(document.querySelectorAll('*'))
+                .filter(e => e.children.length === 0 && e.offsetParent !== null && /wajib|tidak valid|harus|belum/i.test(e.textContent || ''))
+                .map(e => e.textContent.trim().slice(0, 60))"""
+        )
+        try:
+            SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(SCREENSHOT_DIR / "register_step2_selanjutnya_disabled.png"), full_page=True)
+        except Exception:
+            pass
+        raise RuntimeError(f"step-2 'Selanjutnya' (to step 3) not clickable; visible validation texts: {sorted(set(errs))[:8]}")
     if not _wait_for_text(page, ["List Data Individu"], timeout_ms=15000):
         raise RuntimeError("step-3 'List Data Individu' not shown after Selanjutnya")
     page.wait_for_timeout(800)

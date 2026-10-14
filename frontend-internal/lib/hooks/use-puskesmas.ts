@@ -17,12 +17,14 @@ import {
   getPuskesmas,
   listPuskesmas,
   setCredentials,
+  testMedisyConnection,
   updatePuskesmas,
   type CredKind,
   type PuskesmasListQuery,
 } from "@/lib/api/puskesmas";
 import type {
   CredInput,
+  MedisyCredInput,
   Page,
   Puskesmas,
   PuskesmasDetail,
@@ -198,7 +200,7 @@ export function useSetCredentials() {
     }: {
       id: string;
       kind: CredKind;
-      input: CredInput;
+      input: CredInput | MedisyCredInput;
     }) => setCredentials(id, kind, input),
     onSuccess: (_void, { id }) => {
       // Server-derived field: invalidate to refresh is_*_cred_set
@@ -217,6 +219,10 @@ export function useClearCredentials() {
       qc.invalidateQueries({ queryKey: puskesmasKeys.detail(id) });
     },
   });
+}
+
+export function useTestMedisyConnection() {
+  return useMutation({ mutationFn: (id: string) => testMedisyConnection(id) });
 }
 
 export function useDecryptCredentials() {

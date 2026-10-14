@@ -221,7 +221,7 @@ export function BayiRegistryView({
                 Loading registri bayi kuning…
               </div>
               <div className="text-xs">
-                First-time computation decrypts EPUS records for this puskesmas +
+                First-time computation decrypts Medisy records for this puskesmas +
                 year. Result is cached for 30 hours.
               </div>
             </div>

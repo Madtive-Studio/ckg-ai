@@ -97,6 +97,29 @@ export const CredIn = z.object({
 export type CredInput = z.infer<typeof CredIn>;
 export const CredOut = CredIn;
 
+// Medisy (the clinic-record source, stored under the old "epus" credential kind) takes a bearer token, not a login.
+// Same limits as the backend's MedisyCredIn.
+export const MedisyCredIn = z.object({
+  token: z
+    .string()
+    .min(32, "Token minimal 32 karakter")
+    .max(256, "Token maksimal 256 karakter")
+    .regex(/^\S+$/, "Token tidak boleh berisi spasi"),
+});
+export type MedisyCredInput = z.infer<typeof MedisyCredIn>;
+export const MedisyCredOut = MedisyCredIn;
+
+export const MedisyConnectionTestOut = z.object({
+  ok: z.boolean(),
+  error: z.string().nullable().optional(),
+  clinic_name: z.string().nullable().optional(),
+  api_version: z.number().nullable().optional(),
+  timezone: z.string().nullable().optional(),
+  server_time: z.string().nullable().optional(),
+  latency_ms: z.number().nullable().optional(),
+});
+export type MedisyConnectionTest = z.infer<typeof MedisyConnectionTestOut>;
+
 // User
 export const UserOut = z.object({
   id: z.string().uuid(),
@@ -598,7 +621,7 @@ export const CronBackfillOut = z.object({
 });
 export type CronBackfill = z.infer<typeof CronBackfillOut>;
 
-// Mapping (EPUS↔ASIK form metadata)
+// Mapping (Medisy↔ASIK form metadata)
 export const MappingChoice = z.object({
   line: z.union([z.string(), z.number()]).nullable(),
   code: z.string().nullable(),

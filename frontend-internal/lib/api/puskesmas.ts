@@ -4,11 +4,14 @@ import {
   PuskesmasOut,
   PuskesmasDetailOut,
   CredOut,
+  MedisyConnectionTestOut,
+  MedisyCredOut,
   type Puskesmas,
   type PuskesmasDetail,
   type PuskesmasCreateInput,
   type PuskesmasUpdateInput,
   type CredInput,
+  type MedisyCredInput,
   type Page,
 } from "./types";
 
@@ -52,7 +55,7 @@ export type CredKind = "epus" | "asik";
 export async function setCredentials(
   id: string,
   kind: CredKind,
-  input: CredInput,
+  input: CredInput | MedisyCredInput,
 ): Promise<void> {
   await http.put(`/puskesmas/${id}/credentials/${kind}`, input);
 }
@@ -63,5 +66,10 @@ export async function clearCredentials(id: string, kind: CredKind): Promise<void
 
 export async function decryptCredentials(id: string, kind: CredKind) {
   const { data } = await http.post(`/puskesmas/${id}/credentials/${kind}/decrypt`);
-  return CredOut.parse(data);
+  return kind === "epus" ? MedisyCredOut.parse(data) : CredOut.parse(data);
+}
+
+export async function testMedisyConnection(id: string) {
+  const { data } = await http.post(`/puskesmas/${id}/test-connection`);
+  return MedisyConnectionTestOut.parse(data);
 }

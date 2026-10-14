@@ -106,7 +106,7 @@ export function MergedDataRow({
               </div>
               <div className="p-3 bg-emerald-50">
                 <div className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-1">
-                  EPUS
+                  Medisy
                 </div>
                 {item.epus_question && (
                   <div className="text-xs text-emerald-600 mb-2 leading-snug break-words">
@@ -136,7 +136,7 @@ export function MergedDataRow({
               </span>
               {isSameMeaning && (
                 <span className="text-xs text-green-800">
-                  ASIK dan ePus berisi jawaban berbeda, tetapi maknanya sama.
+                  ASIK dan Medisy berisi jawaban berbeda, tetapi maknanya sama.
                 </span>
               )}
               {item.reasoning && (

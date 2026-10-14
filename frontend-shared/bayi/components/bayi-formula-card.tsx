@@ -55,13 +55,13 @@ export function BayiFormulaCard() {
           </div>
           <div>
             <div className="mb-1 font-semibold text-[var(--foreground)]">
-              Sumber klasifikasi (tanda EPUS / Hitung)
+              Sumber klasifikasi (tanda Medisy / Hitung)
             </div>
             <p>
-              Klasifikasi diambil dari isian EPUS bila tersedia (tanda{" "}
-              <b>EPUS</b>); jika tidak, dihitung sistem dari kuesioner &quot;Memeriksa
+              Klasifikasi diambil dari isian Medisy bila tersedia (tanda{" "}
+              <b>Medisy</b>); jika tidak, dihitung sistem dari kuesioner &quot;Memeriksa
               Ikterus&quot; (tanda <b>Hitung</b>). Diagnosis dan Rujuk Eksternal
-              selalu dari EPUS.
+              selalu dari Medisy.
             </p>
           </div>
           <div>
@@ -77,7 +77,7 @@ export function BayiFormulaCard() {
               </li>
               <li>
                 <b>Rujuk Eksternal</b> — faskes tujuan rujukan pada kunjungan itu
-                (dari tabel &quot;Data Rujukan External&quot; EPUS); kosong bila tidak
+                (dari tabel &quot;Data Rujukan External&quot; Medisy); kosong bila tidak
                 dirujuk.
               </li>
             </ul>

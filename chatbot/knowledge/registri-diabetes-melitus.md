@@ -57,7 +57,7 @@ bulan ini sudah on target?"*.
 ## 2 · Siapa yang masuk daftar ini (Syarat)
 
 Pasien (per NIK) masuk daftar jika punya **minimal satu kunjungan CKG**
-(kunjungan yang tercatat di ePus DAN ASIK) pada tahun itu, **DAN** memenuhi
+(kunjungan yang tercatat di Medisy DAN ASIK) pada tahun itu, **DAN** memenuhi
 salah satu:
 
 1. **Sudah tercatat sebagai pasien DM** — ada catatan **diagnosis** diabetes,
@@ -79,10 +79,10 @@ kunjungannya sudah cocok di kedua sumber (pasien CKG)? (b) apakah gula
 darahnya memang Normal dan tidak ada diagnosis?
 
 Sumber catatan diagnosis DM yang dipakai: jawaban skrining CKG di ASIK,
-diagnosis pada tatalaksana Gula Darah di ASIK, atau diagnosis di ePuskesmas
-(kode ICD-10 **E10–E14**, "Riwayat PTM pada Diri Sendiri" → Penyakit Diabetes,
-dan "Tandai Penyakit Kronis" → Diabetes Mellitus). Cukup salah satu; sekali
-tercatat, Riwayat DM tetap **Ya**.
+diagnosis pada tatalaksana Gula Darah di ASIK, atau diagnosis di Medisy
+(kode ICD-10 **E10–E14**, pada kunjungan itu atau sebelumnya, atau jawaban "Ya"
+pada riwayat diabetes di skrining). Cukup salah satu; sekali tercatat, Riwayat
+DM tetap **Ya**.
 
 ## 3 · Arti label Interpretasi (saat kunjungan CKG)
 
@@ -156,13 +156,13 @@ tanpa kunjungan, sedangkan kertas kerja ini dihitung per satu tahun pelaporan.
 
 ## 6 · Kenapa banyak kolom Follow Up yang kosong
 
-Karena pemeriksaan gula darah **jarang dicatat di ePuskesmas**. Berbeda dengan
+Karena pemeriksaan gula darah **jarang dicatat di Medisy**. Berbeda dengan
 tekanan darah yang hampir selalu diukur tiap kunjungan, gula darah hanya
 tercatat pada sebagian kecil kunjungan (sekitar 4% kunjungan).
 
 Kolom kosong berarti pemeriksaannya **tidak tercatat** — bukan kesalahan
 sistem. Justru inilah yang perlu diperbaiki: makin lengkap pencatatan gula
-darah di ePuskesmas, makin berguna kertas kerja ini.
+darah di Medisy, makin berguna kertas kerja ini.
 
 **HbA1C paling sering kosong** — pemeriksaannya jarang tersedia di puskesmas.
 Kolomnya tetap disediakan sesuai format dirjen dan akan terisi otomatis begitu
@@ -171,15 +171,15 @@ datanya masuk.
 ## 7 · Dari mana tiap angka diambil (sumber data)
 
 Untuk bagian **hasil pemeriksaan saat CKG**: **ASIK** (data skrining CKG)
-adalah sumber utama, **ePuskesmas** mengisi yang kosong — per kolom, jadi satu
-pasien bisa punya GDS dari ASIK dan GDP dari ePuskesmas. Di panel detail
-pasien ada label kecil **ASIK** / **ePus** yang menunjukkan sumbernya.
+adalah sumber utama, **Medisy** mengisi yang kosong — per kolom, jadi satu
+pasien bisa punya GDS dari ASIK dan GDP dari Medisy. Di panel detail
+pasien ada label kecil **ASIK** / **Medisy** yang menunjukkan sumbernya.
 
-Untuk bagian **Follow Up**: selalu dari **ePuskesmas** (kunjungan bulan-bulan
+Untuk bagian **Follow Up**: selalu dari **Medisy** (kunjungan bulan-bulan
 berikutnya memang tercatat di sana).
 
 Identitas (nama, jenis kelamin, tanggal lahir, no. telepon, alamat) juga
-ASIK dulu, ePuskesmas mengisi yang kosong.
+ASIK dulu, Medisy mengisi yang kosong.
 
 Tanggal Berkunjung = tanggal kunjungan CKG **paling awal** pada tahun itu.
 
@@ -203,7 +203,7 @@ Golongan yang dikenali (Formularium Nasional untuk puskesmas):
 - **Insulin** — semua sediaan insulin (Glargine, Aspart, Detemir, dan merek
   seperti Novorapid, Lantus, Levemir, Humalog, Humulin, Actrapid, Apidra)
 
-Kalau obat pasien tidak muncul: pastikan resepnya tercatat di ePuskesmas (atau
+Kalau obat pasien tidak muncul: pastikan resepnya tercatat di Medisy (atau
 peresepan tercatat pada tatalaksana Gula Darah di ASIK), dan obatnya memang
 obat diabetes.
 

@@ -1,0 +1,114 @@
+name: Push Docker Images
+
+# Same conventions as himed-app (.github/workflows/docker-build-push*.yml): a pushed tag builds the images and pushes them to the
+# private registry registry.medisy.id, then Discord is notified. Tag format: v<version>, e.g. v1.4.0 or v1.4.0-uat.
+#
+# Required repository secrets (same names as himed-app): DOCKER_USERNAME, DOCKER_SECRET, DISCORD_WEBHOOK.
+# Required repository variable: NEXT_PUBLIC_API_URL (public API URL baked into the two Next.js frontends at build time).
+#
+# Images pushed (all tagged with the git tag):
+#   registry.medisy.id/ckg-backend            API + celery worker + celery beat (one image, three commands)
+#   registry.medisy.id/ckg-frontend-internal
+#   registry.medisy.id/ckg-frontend-dashboard
+#   registry.medisy.id/ckg-loop-worker        backend + docker CLI (loop-agent queue worker)
+#   registry.medisy.id/ckg-loop-agent         backend + OpenCode (throwaway agent container)
+# The two loop images are built FROM the backend image of the same tag, so the backend job runs first.
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  REGISTRY: registry.medisy.id
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to private registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push ckg-backend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/ckg-backend:${{ github.ref_name }}
+          cache-from: type=gha,scope=ckg-backend
+          cache-to: type=gha,scope=ckg-backend,mode=max
+
+  images:
+    runs-on: ubuntu-latest
+    needs: backend
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ckg-frontend-internal
+            file: ./frontend-internal/Dockerfile
+            args: |
+              NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+          - name: ckg-frontend-dashboard
+            file: ./frontend-dashboard/Dockerfile
+            args: |
+              NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+          - name: ckg-loop-worker
+            file: ./loop-agent/worker.Dockerfile
+            args: |
+              BASE_IMAGE=registry.medisy.id/ckg-backend:${{ github.ref_name }}
+          - name: ckg-loop-agent
+            file: ./loop-agent/Dockerfile
+            args: |
+              BASE_IMAGE=registry.medisy.id/ckg-backend:${{ github.ref_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to private registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push ${{ matrix.name }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.file }}
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ matrix.name }}:${{ github.ref_name }}
+          build-args: ${{ matrix.args }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,scope=${{ matrix.name }},mode=max
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [backend, images]
+    if: always() && needs.backend.result == 'success' && needs.images.result == 'success'
+    steps:
+      - name: Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: |
+            🚀 **ckg-ai released: `${{ github.ref_name }}`**
+            • Repository: ${{ github.repository }}
+            • Triggered by: ${{ github.actor }}
+            • Commit: `${{ github.sha }}`
+            • Images: ${{ env.REGISTRY }}/ckg-backend, ckg-frontend-internal, ckg-frontend-dashboard, ckg-loop-worker, ckg-loop-agent

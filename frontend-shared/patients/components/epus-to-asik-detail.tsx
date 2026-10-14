@@ -84,7 +84,7 @@ export function EpusToAsikDetail({
               )}
               <p className="mt-2 text-xs text-[var(--muted-foreground)] max-w-prose">
                 Hasil pengisian formulir ASIK secara otomatis dari data
-                ePuskesmas. Field tanpa sumber di ePuskesmas dibiarkan kosong
+                Medisy. Field tanpa sumber di Medisy dibiarkan kosong
                 untuk diisi manual.
               </p>
             </div>
@@ -110,7 +110,7 @@ export function EpusToAsikDetail({
       {blocks.length === 0 && (
         <Card className="shadow-sm">
           <CardContent className="py-8 text-center text-sm text-[var(--muted-foreground)]">
-            Tidak ada form yang dapat dikonversi dari data ePuskesmas.
+            Tidak ada form yang dapat dikonversi dari data Medisy.
           </CardContent>
         </Card>
       )}
@@ -119,7 +119,7 @@ export function EpusToAsikDetail({
         <FormCard
           key={block.name}
           block={block}
-          emptyHint="Form ini tersedia di ASIK untuk pasien tetapi tidak memiliki sumber di ePuskesmas. Diisi manual saat input ke ASIK."
+          emptyHint="Form ini tersedia di ASIK untuk pasien tetapi tidak memiliki sumber di Medisy. Diisi manual saat input ke ASIK."
         />
       ))}
     </div>

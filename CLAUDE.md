@@ -342,9 +342,9 @@ The merge (`backend/app/tasks/merge.py`) is **backend-deterministic**, not LLM-d
   `_complete_source_fields` / `_rebuild_identitas` / `_normalize_status_flags`
   (it adds every one-sided/empty source field, overwrites values from source, **prunes
   anything not in a source** → zero hallucination).
-- **Clinical fields: source (ePuskesmas) wins** every conflict; ASIK fills gaps.
+- **Clinical fields: source (Medisy) wins** every conflict; ASIK fills gaps.
   **Identitas is the INVERSE — ASIK-wins**: `_rebuild_identitas` builds identity from
-  source + ASIK `detail_data`, taking the ASIK value when present and using ePuskesmas
+  source + ASIK `detail_data`, taking the ASIK value when present and using Medisy
   only to fill gaps (ASIK is the system of record for identity). Rendered first on the
   detail page.
 - Consequence: field presence/values/status are **model-independent** (all models produce

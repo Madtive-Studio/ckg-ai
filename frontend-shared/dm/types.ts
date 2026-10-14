@@ -5,7 +5,7 @@ import { z } from "zod";
 // frontend-shared/hipertensi/types.ts.
 
 // One kunjungan in a follow-up month. Expect most of these to be sparse:
-// only ~4% of ePuskesmas visits carry any glucose value (vs blood pressure,
+// only ~4% of Medisy visits carry any glucose value (vs blood pressure,
 // recorded at nearly every visit). Empty is the normal case, not an error.
 export const DmFollowUpReading = z.object({
   tanggal: z.string().nullable(), // null for a Missed Visit (month with no kunjungan)
@@ -19,7 +19,7 @@ export const DmFollowUpReading = z.object({
 export type DmFollowUpReading = z.infer<typeof DmFollowUpReading>;
 
 // Per-field source of each baseline value: "ASIK" | "EPUS" | null (absent).
-// ASIK is the source of truth; ePuskesmas (EPUS) is the per-field fallback.
+// ASIK is the source of truth; Medisy is the per-field fallback.
 // `gula_darah` is one tag for the whole reading block — the CKG values are
 // split across several ASIK layanan and merged per field, so a per-slot tag
 // would be misleading.

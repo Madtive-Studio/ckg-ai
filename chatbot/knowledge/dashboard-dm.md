@@ -2,7 +2,7 @@
 
 Halaman **Dashboard › Diabetes Melitus** menampilkan **2 grafik kohort** untuk
 satu puskesmas yang dipilih (pilih puskesmas dulu di atas). Angkanya dihitung
-dari Registri Diabetes Melitus CKG (pasien terpadan ASIK + ePuskesmas), lintas
+dari Registri Diabetes Melitus CKG (pasien terpadan ASIK + Medisy), lintas
 tahun 2025 → bulan berjalan. Sama seperti dashboard lain: hasil di-cache ~30 jam
 dan dihitung ulang otomatis tiap pagi ~05.00 WIB.
 
@@ -73,5 +73,5 @@ Tiga batang:
 
 - **"Computed <tanggal jam> · cached/fresh"** = kapan angka grafik terakhir
   dihitung. Hasil disimpan sementara (**cache ~30 jam**) dan dihitung ulang
-  otomatis tiap pagi ~05.00 WIB, jadi perubahan data ePuskesmas/ASIK baru
+  otomatis tiap pagi ~05.00 WIB, jadi perubahan data Medisy/ASIK baru
   terlihat paling lambat besok pagi.

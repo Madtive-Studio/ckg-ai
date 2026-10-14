@@ -75,8 +75,8 @@ export function StartLoopDialog({
         <DialogHeader>
           <DialogTitle>Jalankan Loop Agent</DialogTitle>
           <DialogDescription>
-            Agen login ke portal ePuskesmas puskesmas ini, membandingkan hasil
-            scraper dengan situs langsung, dan membuka PR jika ada yang terlewat.
+            Agen memanggil API Medisy puskesmas ini, membandingkan hasil klien
+            dan konverter kita dengan data langsung, dan membuka PR jika ada yang terlewat.
             Tidak pernah deploy atau menulis ke ASIK.
           </DialogDescription>
         </DialogHeader>

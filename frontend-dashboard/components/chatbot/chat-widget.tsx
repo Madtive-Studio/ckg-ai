@@ -24,7 +24,7 @@ const STARTERS: Record<ChatPage, string[]> = {
   ],
   patients: [
     "Apa yang ditampilkan halaman Pasien ini?",
-    "Apa arti status ASIK Only / EPUS Only / Matched?",
+    "Apa arti status ASIK Only / Medisy Only / Matched?",
     "Bagaimana cara kerja filter umur?",
   ],
   "school-patients": [
@@ -60,11 +60,11 @@ const STARTERS: Record<ChatPage, string[]> = {
   "bayi-kuning-ikterus": [
     "Siapa saja yang masuk registri Bayi Kuning ini?",
     "Apa beda Ikterus dan Ikterus berat?",
-    "Apa arti tanda EPUS dan Hitung?",
+    "Apa arti tanda Medisy dan Hitung?",
   ],
   "bayi-kuning-ikterus-berat": [
     "Kapan bayi dinilai Ikterus berat?",
-    "Apa arti tanda EPUS dan Hitung?",
+    "Apa arti tanda Medisy dan Hitung?",
     "Dari mana kolom Rujuk Eksternal diambil?",
   ],
   common: ["Dari mana data ini berasal?", "Apa yang bisa kamu jelaskan?"],

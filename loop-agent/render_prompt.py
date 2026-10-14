@@ -3,9 +3,9 @@
 
 Placeholders per run:
   {name}       the puskesmas name         (env LOOP_PUSKESMAS_NAME)
-  {region_url} the portal URL             (env LOOP_PORTAL_URL)
-  {region}     the portal slug for branch names (derived: poso.epuskesmas.id -> poso)
-  {detail_n}   how many patients to deep-check on BOTH sides (env LOOP_DETAIL_LIMIT, default 5)
+  {region_url} the Medisy URL             (env LOOP_PORTAL_URL)
+  {region}     the host slug for branch names (derived: clinic.medisy.id -> clinic)
+  {detail_n}   how many visits to deep-check on BOTH sides (env LOOP_DETAIL_LIMIT, default 5)
   {max_fix}    fix-pass ceiling the prompt tells the agent (env LOOP_MAX_FIX_ITERS, default 5)
 
 Prints the rendered prompt to stdout.

@@ -60,6 +60,8 @@ from sqlalchemy.orm import Session
 from app.core.security import decrypt_json
 from app.models.patient import MatchStatus, Patient
 from app.services.epus_to_asik import _detect_chronic_flags
+from app.services import medisy_accessors as _medisy
+from app.services.medisy_adapter import is_medisy_blob
 
 # Hypertension diagnosis: ICD-10 I10–I13 (essential/heart/kidney HT — the codes
 # the dirjen sheet names) plus I15 (secondary HT, still hypertension; I14 is
@@ -130,6 +132,9 @@ def _extract_td1(epus: Any) -> tuple[float | None, float | None]:
     (Sistole/Diastole), falling back per-field to ``PTM → Tekanan Darah & IMT``."""
     if not isinstance(epus, dict):
         return (None, None)
+    if is_medisy_blob(epus):
+        sys_, dia_ = _medisy.blood_pressure(epus)
+        return (None if sys_ is None else float(sys_), None if dia_ is None else float(dia_))
     tabs = epus.get("tabs") or {}
     fisik = ((tabs.get("Anamnesa") or {}).get("fields", {}) or {}).get("Periksa Fisik")
     ptm = ((tabs.get("PTM") or {}).get("fields", {}) or {}).get("Tekanan Darah & IMT")
@@ -154,6 +159,8 @@ def _riwayat_epus_hit(epus: Any) -> bool:
     consistent with the merge/converter pipeline."""
     if not isinstance(epus, dict):
         return False
+    if is_medisy_blob(epus):
+        return _medisy.has_hypertension_record(epus)
     for item in epus.get("penyakit_khusus") or []:
         if not isinstance(item, dict):
             continue
@@ -173,6 +180,8 @@ def _extract_obat(epus: Any) -> list[str]:
     dropped (the sheet's Jenis Obat columns are "List Obat Hipertensi")."""
     if not isinstance(epus, dict):
         return []
+    if is_medisy_blob(epus):
+        return [n for n in _medisy.drug_names(epus) if _HT_DRUG_RE.search(n)]
     rows = (
         ((epus.get("tabs") or {}).get("Resep") or {}).get("tables", {}) or {}
     ).get("Resep")
@@ -196,6 +205,8 @@ def _parse_birthdate(epus: Any) -> str | None:
     the place/separator/whitespace don't matter (mirrors epus_to_asik)."""
     if not isinstance(epus, dict):
         return None
+    if is_medisy_blob(epus):
+        return _medisy.identity(epus)["tanggal_lahir"]
     dp = epus.get("data_pasien") or {}
     ttl = dp.get("Tempat/Tgl Lahir") or dp.get("Tempat & Tgl Lahir")
     if ttl in (None, ""):
@@ -215,6 +226,8 @@ def _extract_identitas(epus: Any) -> dict[str, Any]:
     """Identitas fields from EPUS ``data_pasien``."""
     if not isinstance(epus, dict):
         return {}
+    if is_medisy_blob(epus):
+        return _medisy.identity(epus)
     dp = epus.get("data_pasien") or {}
     jk_raw = (dp.get("Jenis Kelamin") or "").strip()
     jk = {"L": "Laki-Laki", "P": "Perempuan"}.get(jk_raw.upper(), jk_raw)

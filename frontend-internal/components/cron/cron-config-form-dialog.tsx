@@ -137,7 +137,7 @@ export function CronConfigFormDialog({
             {existing ? "Edit jadwal cron" : "Buat jadwal cron"}
           </DialogTitle>
           <DialogDescription>
-            Menjalankan scrape ASIK + EPUS dan Merge setiap hari pada waktu Jakarta yang dipilih.
+            Menjalankan scrape ASIK + Medisy dan Merge setiap hari pada waktu Jakarta yang dipilih.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -210,7 +210,7 @@ export function CronConfigFormDialog({
             )}
             <p className="text-xs text-[var(--muted-foreground)]">
               Tiap run memproses ulang N hari terakhir hingga tanggal target,
-              sehingga ePus/ASIK yang datang terlambat — yang baru cocok dengan
+              sehingga Medisy/ASIK yang datang terlambat — yang baru cocok dengan
               tanggal lampau setelah kedua sisi tersedia — tetap ter-scrape +
               ter-merge. 1 = hanya tanggal target. Default 3.
             </p>
@@ -286,7 +286,7 @@ export function CronConfigFormDialog({
               </div>
               <p className="text-xs text-[var(--muted-foreground)]">
                 Isi pemeriksaan ASIK untuk pasien yang sudah ada di ASIK (NIK
-                cocok ePus + ASIK). Diabaikan saat mode merge adalah Tanpa merge.
+                cocok Medisy + ASIK). Diabaikan saat mode merge adalah Tanpa merge.
               </p>
               {form.watch("sync_mode") !== "off" && (
                 <div className="ml-6 flex items-center gap-2">
@@ -330,7 +330,7 @@ export function CronConfigFormDialog({
                 </p>
               )}
               <p className="text-xs text-[var(--muted-foreground)]">
-                Daftarkan pasien ePus-saja yang bertanda Tandai-CKG dan belum ada
+                Daftarkan pasien Medisy-saja yang bertanda Tandai-CKG dan belum ada
                 di ASIK — membuatnya dari awal, lalu mengisi pemeriksaannya.
                 Membutuhkan &ldquo;isi pemeriksaan&rdquo; aktif dan alamat
                 default terpasang pada puskesmas ini.

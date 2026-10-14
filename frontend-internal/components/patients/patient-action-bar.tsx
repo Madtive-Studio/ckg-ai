@@ -39,7 +39,7 @@ export function PatientActionBar({ patient }: { patient: Patient }) {
   const onRescrapeEpus = async () => {
     try {
       const job = await startScrape.mutateAsync({ kind: "epus" });
-      toast.success("Scrape ulang ePus dimulai");
+      toast.success("Scrape ulang Medisy dimulai");
       router.push(`/scrape-jobs/${job.id}`);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -63,17 +63,17 @@ export function PatientActionBar({ patient }: { patient: Patient }) {
         variant="outline"
         onClick={onRescrapeEpus}
         disabled={startScrape.isPending}
-        title="Scrape ulang data ePus pasien ini memakai tanggal filter-nya"
+        title="Scrape ulang data Medisy pasien ini memakai tanggal filter-nya"
       >
         <RefreshCw className="h-4 w-4" />
-        Scrape ulang ePus
+        Scrape ulang Medisy
       </Button>
       <Button
         size="sm"
         variant="default"
         onClick={onMerge}
         disabled={!canMerge || startMerge.isPending}
-        title={canMerge ? "Jalankan ulang merge LLM untuk pasien ini" : "Butuh data ASIK dan ePus hasil scrape sebelum merge"}
+        title={canMerge ? "Jalankan ulang merge LLM untuk pasien ini" : "Butuh data ASIK dan Medisy hasil scrape sebelum merge"}
       >
         <Sparkles className="h-4 w-4" />
         Merge dengan AI

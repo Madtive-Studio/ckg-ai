@@ -56,6 +56,9 @@ from helpers import (  # noqa: E402
     SCREENSHOT_DIR,
     SESSION_DIR,
     APIInterceptor,
+    install_decoded_list_hook,
+    read_decoded_list,
+    reset_decoded_list,
     launch_persistent_context,
     restore_saved_auth_state,
     save_auth_state,
@@ -186,9 +189,14 @@ def _fill_search_input(page: Page, nik: str) -> None:
         page.evaluate(
             f"() => {{ const i = document.querySelector('{sel}'); if (i) i.focus(); }}"
         )
-    # Clear via real selectAll + Delete (preserves Vue state)
+    # Clear via select-all + Delete (preserves Vue state); Control+A only moves the caret on macOS, so Meta+A too, then fill("") as the last resort
     page.keyboard.press("Control+A")
+    page.keyboard.press("Meta+A")
     page.keyboard.press("Delete")
+    try:
+        locator.fill("")
+    except Exception:
+        pass
     page.wait_for_timeout(100)
     # Type each digit; small delay lets per-keystroke validators run
     page.keyboard.type(nik, delay=15)
@@ -273,6 +281,10 @@ def _read_active_tab_count(page: Page) -> int | None:
 # the right one), which is exactly the per-tab signal this loop needs.
 # ---------------------------------------------------------------------------
 _SEARCH_ENDPOINT_NEEDLE = "specific-search"
+# Current ASIK answers the NIK search through the same encoded list call as the page list (no `specific-search` any more);
+# the rows come from what the page itself decoded (helpers.browser observer). The NIK search covers a RECENT window only
+# (live 2026-10-07: a 2026-09 person is found by NIK, a 2025-07 one is not), which the ASIK-year gate below already expects.
+_LIST_ENDPOINT_NEEDLE = "list-kunjungan-umum"
 
 
 def _extract_search_rows(body) -> list[dict] | None:
@@ -342,16 +354,38 @@ def _wait_search_rows(
     a check on THIS search rather than on a stale response from a previous tab.
     """
     elapsed = 0
+    answered_at: int | None = None
     while True:
         found: list[dict] | None = None
+        answered = False
         for entry in interceptor.all_responses[since:]:
-            if _SEARCH_ENDPOINT_NEEDLE not in (entry.get("url") or ""):
+            url = entry.get("url") or ""
+            if _LIST_ENDPOINT_NEEDLE in url and entry.get("status") == 200:
+                answered = True
+            if _SEARCH_ENDPOINT_NEEDLE not in url:
                 continue
             rows = _extract_search_rows(entry.get("body"))
             if rows is not None:
                 found = rows  # keep scanning — we want the LAST one
         if found is not None:
             return found
+        # Encoded list answer: the rows are what the page decoded for THIS search (the caller resets the capture first).
+        decoded = read_decoded_list(page)
+        if decoded:
+            return [
+                {
+                    "nik": str(r.get("patient_nik")).strip() if r.get("patient_nik") is not None else "",
+                    "screening_date": str(r["screening_date"]).strip() if r.get("screening_date") else None,
+                    "name": str(r.get("patient_full_name") or "").strip(),
+                }
+                for r in decoded
+            ]
+        if answered and answered_at is None:
+            answered_at = elapsed
+        # The call was answered and, after a grace period for the page to decode it, produced no patient rows: an empty
+        # result. No answer at all stays None ("cannot verify") — the caller skips the tab, never guesses.
+        if answered_at is not None and elapsed - answered_at >= 1500:
+            return []
         if elapsed >= timeout_ms:
             return None
         page.wait_for_timeout(100)
@@ -478,14 +512,14 @@ def _enumerate_forms(page: Page) -> list[dict]:
             }
             // Nakes: div.grid.grid-cols-5 rows whose anchor cell shows "Input Data"
             // (either as a real <button> or a <div class="cursor-not-allowed">).
-            // Nakes rows have exactly 4 children — col-span-2 layanan, Diperiksa,
-            // Status, Aksi. Match the Aksi cell (children[3]) text rather than
+            // Nakes rows have col-span-2 layanan, (older ASIK: Diperiksa,)
+            // Status, Aksi. Match the LAST cell (Aksi) text rather than
             // any text in the row, so the header row ("Aksi") and stray
             // grid-cols-5 elsewhere on the page are excluded.
             const nakesRows = Array.from(document.querySelectorAll('div.grid.grid-cols-5'))
                 .filter(r => {
                     if (r.offsetParent === null) return false;
-                    const aksi = r.children[3];
+                    const aksi = r.children[r.children.length - 1];  // last cell (ASIK dropped the 'Diperiksa' cell: now Layanan, Status, Aksi)
                     if (!aksi) return false;
                     return /input\\s*data/i.test((aksi.innerText || '').trim());
                 });
@@ -577,7 +611,7 @@ def _flip_diperiksa_toggle(page: Page, kind: str, idx: int) -> bool:
             const rows = Array.from(document.querySelectorAll('div.grid.grid-cols-5'))
                 .filter(r => {
                     if (r.offsetParent === null) return false;
-                    const aksi = r.children[3];
+                    const aksi = r.children[r.children.length - 1];  // last cell (ASIK dropped the 'Diperiksa' cell: now Layanan, Status, Aksi)
                     return aksi && /input\\s*data/i.test((aksi.innerText || '').trim());
                 });
             const row = rows[idx];
@@ -607,7 +641,7 @@ def _wait_input_data_button(page: Page, kind: str, idx: int, timeout_ms: int = 1
                 const rows = Array.from(document.querySelectorAll('div.grid.grid-cols-5'))
                     .filter(r => {
                         if (r.offsetParent === null) return false;
-                        const aksi = r.children[3];
+                        const aksi = r.children[r.children.length - 1];  // last cell (ASIK dropped the 'Diperiksa' cell: now Layanan, Status, Aksi)
                         return aksi && /input\\s*data/i.test((aksi.innerText || '').trim());
                     });
                 const row = rows[idx];
@@ -648,7 +682,7 @@ def _click_input_data(page: Page, kind: str, idx: int) -> bool:
             const rows = Array.from(document.querySelectorAll('div.grid.grid-cols-5'))
                 .filter(r => {
                     if (r.offsetParent === null) return false;
-                    const aksi = r.children[3];
+                    const aksi = r.children[r.children.length - 1];  // last cell (ASIK dropped the 'Diperiksa' cell: now Layanan, Status, Aksi)
                     return aksi && /input\\s*data/i.test((aksi.innerText || '').trim());
                 });
             const row = rows[idx];
@@ -736,14 +770,19 @@ class _AnswerGate:
         # exactly where the 2025 backfill investigation stalled on 2026-07-27.
         self.observed = 0
         self.last_status: int | None = None
+        self.hosts_seen: dict[str, int] = {}  # failure diagnostics: form-host response paths (no query) -> count
         page.on("response", self._on_response)
 
     def _on_response(self, resp) -> None:
         try:
             url = resp.url
+            if "form.kemkes.go.id" in url and resp.request.resource_type in ("xhr", "fetch"):
+                key = f"{resp.request.method} {url.split('?')[0].split('form.kemkes.go.id')[-1][:90]} {resp.status}"
+                self.hosts_seen[key] = self.hosts_seen.get(key, 0) + 1
             # `submit/<program_code>/skrining-layanan` (the WRITE endpoint) also
             # contains the needle — only the read counts as "answers delivered".
-            if "skrining-layanan" not in url or "/submit/" in url:
+            # Since ASIK's form-engine update the answers come from `.../form-get-one`; the older `get/skrining-layanan` is kept for old records.
+            if ("skrining-layanan" not in url and "form-get-one" not in url) or "/submit/" in url:
                 return
             self.observed += 1
             self.last_status = resp.status
@@ -1168,7 +1207,7 @@ _DRIFT_NUMBER_DEFAULTS = (
 )
 
 
-def _resolve_default(question: dict, default_values: dict) -> object | None:
+def _resolve_default(question: dict, default_values: dict, clinical: bool = True) -> object | None:
     """Safe default value for one required question, or None if we must not fill it.
 
     Prefers the documented map (built from asik_form_mapping.json); falls back to a
@@ -1176,6 +1215,9 @@ def _resolve_default(question: dict, default_values: dict) -> object | None:
     documented default returns None — we never fabricate an unknown measurement, except
     the narrow behavioural activity-frequency follow-ups in `_DRIFT_NUMBER_DEFAULTS`.
     """
+    if not clinical:
+        # Medisy records: no measurement, option or activity figure is ever invented; only a free-text placeholder.
+        return "-" if question.get("kind") == "text" else None
     norm = _normalize_default_label(question.get("label", ""))
     entry = default_values.get(norm)
     if entry and entry.get("value") is not None:
@@ -1230,7 +1272,7 @@ def _read_dropdown_options(page: Page, data_name: str) -> list[str]:
     return [t.strip() for t in texts if t and t.strip()]
 
 
-def _fill_required_defaults(page: Page, default_values: dict, max_passes: int = 4) -> list[dict]:
+def _fill_required_defaults(page: Page, default_values: dict, max_passes: int = 4, clinical: bool = True) -> list[dict]:
     """Fill every required-but-empty field with a safe default; return what we set.
 
     Loops so a default that reveals a `visibleIf` child gets the new field filled
@@ -1245,9 +1287,9 @@ def _fill_required_defaults(page: Page, default_values: dict, max_passes: int = 
             data_name = q.get("dataName")
             if not data_name or data_name in seen:
                 continue
-            value = _resolve_default(q, default_values)
+            value = _resolve_default(q, default_values, clinical)
             kind = q.get("kind")
-            if value is None and kind == "dropdown":
+            if value is None and kind == "dropdown" and clinical:
                 # Map miss on a dropdown (drift): read its live options and pick safe.
                 value = _pick_safe_option(_read_dropdown_options(page, data_name))
             if value is None:
@@ -1567,6 +1609,7 @@ def _process_form_inner(
     parent_layanan: str | None = None,
     dry_run: bool = False,
     prune_unchanged: bool = False,
+    clinical_defaults: bool = True,
 ) -> dict:
     # `layanan` is the PAKET label (sub-section in ASIK's Pelayanan oleh
     # Nakes list). `parent_layanan` is the accordion-header label above it
@@ -1684,6 +1727,7 @@ def _process_form_inner(
         record["error"] = (
             "existing answers never arrived (get/skrining-layanan not seen in "
             f"{_ANSWER_XHR_TIMEOUT_MS} ms; {detail}) — refusing to fill or submit"
+            + (f" [form-host XHRs seen: {sorted(gate.hosts_seen)[:8]}]" if gate.hosts_seen else " [no form-host XHR at all]")
         )
         console.print(f"          [red]{record['error']}[/red]")
         try:
@@ -1712,7 +1756,7 @@ def _process_form_inner(
     # Fill a SAFE DEFAULT for every REQUIRED field we have no data for, then re-check.
     # This replaces the old "abandon on any unfilled required" behavior — ASIK forces
     # required questions, so we default + log them (asik_default_fills) and submit.
-    defaults_applied = _fill_required_defaults(page, default_values)
+    defaults_applied = _fill_required_defaults(page, default_values, clinical=clinical_defaults)
     record["defaults"] = defaults_applied
     if defaults_applied:
         console.print(
@@ -1853,6 +1897,8 @@ def run(args) -> dict:
 
     # {normalized_label: {value, kind}} safe defaults for required-but-missing fields.
     default_values = cfg.get("default_values") or {}
+    # False for Medisy records: required measurements / clinical answers are left blank, never invented.
+    clinical_defaults = bool(cfg.get("clinical_defaults", True))
     # dry_run: fill everything (incl. defaults) but never click Kirim (safe testing).
     dry_run = bool(cfg.get("dry_run", False))
     # Skip forms whose every value ASIK already holds. OFF by default: the first
@@ -1924,6 +1970,7 @@ def run(args) -> dict:
 
         interceptor = APIInterceptor(verbose=False)
         context.on("response", interceptor.on_response)
+        install_decoded_list_hook(context)
 
         try:
             if shared_session:
@@ -1987,6 +2034,7 @@ def run(args) -> dict:
 
             _select_nik_filter(page)
             _mark = len(interceptor.all_responses)
+            reset_decoded_list(page)
             _fill_search_input(page, nik)
             page.wait_for_timeout(2500)
             _wait_search_rows(page, interceptor, _mark)
@@ -2029,6 +2077,7 @@ def run(args) -> dict:
                 # and re-fire the search.
                 _select_nik_filter(page)
                 mark = len(interceptor.all_responses)
+                reset_decoded_list(page)
                 _fill_search_input(page, nik)
                 page.wait_for_timeout(2500)
                 search_rows = _wait_search_rows(page, interceptor, mark)
@@ -2219,6 +2268,7 @@ def run(args) -> dict:
                     parent_layanan=row.get("parent_layanan"),
                     dry_run=dry_run,
                     prune_unchanged=prune_unchanged,
+                    clinical_defaults=clinical_defaults,
                 )
                 result["forms"].append(rec)
                 # After submit / back, ensure we are on detail page; some forms

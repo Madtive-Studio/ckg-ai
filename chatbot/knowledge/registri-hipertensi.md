@@ -34,7 +34,7 @@ terkendali), **130/85** (mulai Pre-Hipertensi), dan **rata-rata 2x ukur**.
 ## 1 · Siapa yang masuk daftar ini (Syarat)
 
 Pasien (per NIK) masuk daftar jika punya **minimal satu kunjungan CKG**
-(kunjungan yang tercatat di ePus DAN ASIK) pada tahun itu, **DAN** memenuhi
+(kunjungan yang tercatat di Medisy DAN ASIK) pada tahun itu, **DAN** memenuhi
 salah satu:
 
 1. **Sudah tercatat sebagai pasien hipertensi** — punya catatan **diagnosis**
@@ -55,44 +55,43 @@ diagnosis juga tidak masuk kertas kerja ini.
 ## 2 · Sumber setiap kolom
 
 Sumber utama untuk kolom-kolom atas adalah **data skrining CKG di ASIK**;
-**ePuskesmas** pada kunjungan yang sama dipakai sebagai **cadangan** bila ASIK
-kosong. Pengecualian: kolom **Follow Up** memakai data **ePuskesmas** (kunjungan
+**Medisy** pada kunjungan yang sama dipakai sebagai **cadangan** bila ASIK
+kosong. Pengecualian: kolom **Follow Up** memakai data **Medisy** (kunjungan
 bulan-bulan berikutnya).
 
 Di dashboard, buka (klik) baris pasien untuk melihat **tag sumber** pada tiap
-nilai: **ASIK** (biru) bila nilai itu berasal dari skrining CKG, **ePus** (hijau)
-bila dari ePuskesmas. Tag menunjukkan sumber asli untuk pasien tersebut — mis.
-TD biasanya ASIK, obat bisa dari ePuskesmas. Follow Up selalu ePuskesmas.
+nilai: **ASIK** (biru) bila nilai itu berasal dari skrining CKG, **Medisy** (hijau)
+bila dari Medisy. Tag menunjukkan sumber asli untuk pasien tersebut — mis.
+TD biasanya ASIK, obat bisa dari Medisy. Follow Up selalu Medisy.
 
 - **Identitas** (NIK, Nama, Jenis Kelamin, Tanggal Lahir, No. Telepon,
   Alamat): sumber utama **skrining ASIK**; bila sebuah kolom kosong di ASIK,
-  dipakai **pendaftaran ePuskesmas** pada kunjungan yang sama. Kalau salah,
-  perbaiki di sumbernya (ASIK / ePuskesmas).
-- **Tanggal Berkunjung**: kunjungan CKG (ePus+ASIK) **paling awal** tahun itu.
+  dipakai **pendaftaran Medisy** pada kunjungan yang sama. Kalau salah,
+  perbaiki di sumbernya (ASIK / Medisy).
+- **Tanggal Berkunjung**: kunjungan CKG (Medisy+ASIK) **paling awal** tahun itu.
   Kalau pasien ikut CKG dua kali setahun, yang dipakai yang **pertama**;
   kunjungan berikutnya tampil di Follow Up **bulan setelah** bulan skrining
   (kunjungan lain di bulan skrining yang sama tidak ditampilkan terpisah —
   sudah terwakili kolom hasil pemeriksaan).
 - **Riwayat HT (Ya/Tidak)**: "Ya" HANYA dari **catatan diagnosis** — bukan
-  dari angka tensi. Sumber utama **ASIK**, ePuskesmas sebagai cadangan; satu
+  dari angka tensi. Sumber utama **ASIK**, Medisy sebagai cadangan; satu
   saja kena → Ya:
   1. Jawaban skrining CKG (ASIK): *"Apakah Anda pernah dinyatakan tekanan darah
      tinggi?"* = **Ya**;
   2. Diagnosis pada **tatalaksana ASIK** (tindak lanjut yang dicatat nakes)
      berkode ICD hipertensi **I10–I15** atau bernama "hipertensi/hypertension";
-  3. (cadangan ePuskesmas) Diagnosis ePus penyakit khusus / PTM Diagnosa berkode
-     ICD **I10–I13, I15** atau bernama hipertensi; ePus PTM → Riwayat PTM pada
-     Diri Sendiri → Penyakit Hipertensi = Ya; atau ePus Diagnosa → Tandai
-     Penyakit Kronis → Hipertensi.
+  3. (cadangan Medisy) Diagnosis berkode ICD **I10–I13, I15** (pada kunjungan
+     itu atau sebelumnya) atau jawaban "Ya" pada riwayat hipertensi di skrining
+     Medisy.
 
   Jawaban "Ya" **melekat** (sticky): sekali tercatat Ya di salah satu sumber,
   tetap Ya — kolom kosong atau "Tidak" di sumber lain tidak menghapusnya.
 - **TD Sistolik/Diastolik 1**: pengukuran **pertama** dari **skrining CKG
   (ASIK)**. Bila ASIK tidak punya angka pengukuran pertama, dipakai pengukuran
-  **ePuskesmas** pada hari kunjungan CKG (pemeriksaan fisik; cadangan: form PTM
+  **Medisy** pada hari kunjungan CKG (pemeriksaan fisik; cadangan: form PTM
   Tekanan Darah & IMT).
 - **TD Sistolik/Diastolik 2**: pengukuran **ke-2**, hanya ada di **skrining
-  CKG (ASIK)** — ePuskesmas tidak punya kolom ini. **Sering kosong** (terisi
+  CKG (ASIK)** — Medisy tidak punya kolom ini. **Sering kosong** (terisi
   hanya ±3% pasien) karena petugas biasanya mengukur sekali saja. Kosong itu
   normal, bukan data hilang.
 - **Rerata**: rata-rata angka yang ada = (TD1 + TD2) ÷ 2; kalau TD2 kosong,
@@ -118,8 +117,8 @@ TD biasanya ASIK, obat bisa dari ePuskesmas. Follow Up selalu ePuskesmas.
   Pasien ini masuk daftar lewat Syarat nomor 2.
 - **Jenis Obat** (baseline): sumber utama **peresepan pada tatalaksana ASIK**
   (obat yang diresepkan nakes saat tindak lanjut hipertensi); bila tidak ada,
-  dipakai **resep ePuskesmas** pada kunjungan CKG. Di tiap baris Follow Up, obat
-  tetap dari **resep ePuskesmas** kunjungan itu. **Hanya obat darah tinggi**
+  dipakai **resep Medisy** pada kunjungan CKG. Di tiap baris Follow Up, obat
+  tetap dari **resep Medisy** kunjungan itu. **Hanya obat darah tinggi**
   yang ditampilkan (sesuai kolom dirjen "List Obat Hipertensi"); vitamin,
   antibiotik, obat gula, dll. sengaja tidak ikut:
   - **Antagonis kalsium (CCB)**: Amlodipin, Nifedipin, Felodipin, Nikardipin,
@@ -152,7 +151,7 @@ TD biasanya ASIK, obat bisa dari ePuskesmas. Follow Up selalu ePuskesmas.
   - Bulan lewat tanpa pemeriksaan tensi → **"Pasien Missed Visit"**
 - Kunjungan yang **tensinya tidak dicatat** tidak bisa dinilai dan tidak
   menyelamatkan bulan itu dari Missed Visit — pastikan tiap kontrol hipertensi
-  tensinya dicatat di ePuskesmas.
+  tensinya dicatat di Medisy.
 - Duplikat hasil pengambilan data (kunjungan yang sama terekam dua kali)
   otomatis digabung menjadi satu kunjungan — tidak ada kunjungan dobel.
 
@@ -202,7 +201,7 @@ bagus artinya terkendali, bukan berarti dia keluar dari daftar.
 Daftar ini berpatokan pada kunjungan skrining CKG. Kalau tensi tingginya
 terjadi di kunjungan biasa (bukan CKG) dan dia tidak punya diagnosis
 hipertensi, dia tidak masuk kertas kerja ini. Bisa juga karena data CKG-nya
-(ePus+ASIK) untuk tahun itu belum cocok/lengkap di sistem.
+(Medisy+ASIK) untuk tahun itu belum cocok/lengkap di sistem.
 
 **"Interpretasi-nya Hipertensi, tapi follow-up-nya 'terkendali'. Mana yang benar?"**
 Dua-duanya benar. Saat skrining tensinya tinggi — itu alasan dia masuk daftar.
@@ -234,7 +233,7 @@ bulan itu).
 Datang, tapi tensinya tidak diukur atau tidak tercatat. Tanpa angka tensi
 sistem tidak bisa menilai terkendali atau tidak, jadi bulan itu terhitung
 belum kontrol. Pastikan tiap kontrol hipertensi tensinya dicatat di
-ePuskesmas.
+Medisy.
 
 **"Kenapa bulan depan kosong, bukan Missed Visit?"**
 Bulan yang belum terjadi dibiarkan kosong. Missed Visit hanya untuk bulan yang
@@ -246,7 +245,7 @@ Hipertensi"). Paracetamol, vitamin, antibiotik, obat gula — sengaja tidak
 ditampilkan.
 
 **"Pasien ini rutin minum amlodipine, kok kolom obatnya kosong?"**
-Sistem hanya bisa menampilkan obat yang tercatat di Resep ePuskesmas pada
+Sistem hanya bisa menampilkan obat yang tercatat di Resep Medisy pada
 kunjungan itu. Kalau obatnya dibeli sendiri atau diresepkan di tempat lain,
 tidak ada datanya di sistem.
 
@@ -264,13 +263,13 @@ Sistem mengikuti yang terbaru — karena ini, sebagian pasien yang dulu
 berlabel Pre-Hipertensi kini berlabel Normal.
 
 **"Pasien ini sudah pindah/meninggal, kok masih Missed Visit?"**
-Sistem hanya tahu dari catatan ePuskesmas. Kalau kepindahan atau kematian
+Sistem hanya tahu dari catatan Medisy. Kalau kepindahan atau kematian
 belum dicatat, sistem menganggap dia masih pasien yang harus kontrol.
-Dicatatkan dulu di ePuskesmas, nanti laporannya mengikuti.
+Dicatatkan dulu di Medisy, nanti laporannya mengikuti.
 
-**"Angka di sini beda dengan yang saya lihat di ePuskesmas/ASIK."**
+**"Angka di sini beda dengan yang saya lihat di Medisy/ASIK."**
 Kolom Rerata adalah rata-rata dua pengukuran (umumnya keduanya dari skrining
-ASIK; ePuskesmas dipakai bila ASIK kosong), jadi bisa beda dengan satu angka
+ASIK; Medisy dipakai bila ASIK kosong), jadi bisa beda dengan satu angka
 yang Anda lihat di salah satu aplikasi. Di file Excel, klik selnya — rumusnya
 kelihatan.
 

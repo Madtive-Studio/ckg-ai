@@ -6,7 +6,7 @@ import { z } from "zod";
 
 // One kunjungan in a follow-up month. Expect these to be sparse: weight and
 // height are near-universally recorded at the CKG screening itself, but rarely
-// re-recorded on an ordinary ePuskesmas visit. Empty is the normal case, not an
+// re-recorded on an ordinary Medisy visit. Empty is the normal case, not an
 // error.
 export const ObesitasFollowUpReading = z.object({
   tanggal: z.string().nullable(), // null for a Missed Visit (control month with no kunjungan)
@@ -21,7 +21,7 @@ export const ObesitasFollowUpReading = z.object({
 export type ObesitasFollowUpReading = z.infer<typeof ObesitasFollowUpReading>;
 
 // Per-field source of each baseline value: "ASIK" | "EPUS" | null (absent).
-// ASIK is the source of truth; ePuskesmas (EPUS) is the per-field fallback.
+// ASIK is the source of truth; Medisy is the per-field fallback.
 // `antropometri` is one tag for BB and TB together — the two are merged per
 // field from one form, so a per-slot tag would be misleading. IMT has no tag at
 // all: it is derived, never sourced.

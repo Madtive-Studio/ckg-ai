@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     APP_ENV: AppEnv = "local"
+    # Local testing only: lets MedisyClient talk plain http to ``localhost:<port>`` / ``127.0.0.1:<port>`` (a local copy of the
+    # Medisy API). Ignored unless APP_ENV is "local"; every other host still has to be a bare domain over https.
+    MEDISY_ALLOW_INSECURE_LOCALHOST: bool = False
     DATABASE_URL: str
     REDIS_URL: str
     ADMIN_EMAIL: str

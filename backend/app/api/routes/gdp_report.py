@@ -42,6 +42,8 @@ from app.schemas.report_summary import (
 from app.services.dashboard_scan import DashboardSpec, DecRows, scan_dashboard_payloads
 from app.services.gdp_diagnose_export import build_gdp_diagnose_workbook
 from app.services.gdp_export import build_gdp_workbook
+from app.services import medisy_accessors as _medisy
+from app.services.medisy_adapter import is_medisy_blob
 from app.tasks.gdp_report import cancel_key
 
 log = logging.getLogger(__name__)
@@ -90,6 +92,9 @@ def _extract_lab_gdp(epus_entry: Any) -> Decimal | None:
     """
     if not isinstance(epus_entry, dict):
         return None
+    if is_medisy_blob(epus_entry):
+        v = _medisy.lab_gdp(epus_entry)
+        return None if v is None else Decimal(str(v))
     rows = (
         ((epus_entry.get("tabs") or {}).get("Laboratorium") or {})
         .get("tables", {})
@@ -130,6 +135,9 @@ def _extract_ptm_gdp(epus_entry: Any) -> Decimal | None:
     directly from the encrypted blob — the report computes GDP from the blob,
     not from any denormalized column.
     """
+    if is_medisy_blob(epus_entry):
+        v = _medisy.vitals_gdp(epus_entry)
+        return None if v is None else Decimal(str(v))
     pem = _ptm_pemeriksaan(epus_entry)
     if pem is None:
         return None
@@ -218,6 +226,8 @@ def _extract_tertatalaksana(epus_entry: Any) -> tuple[bool, bool]:
 
     Any other value (null, "Tidak", "Tidak Diberikan Obat", missing) → False.
     """
+    if is_medisy_blob(epus_entry):
+        return _medisy.tertatalaksana(epus_entry)
     pem = _ptm_pemeriksaan(epus_entry)
     if pem is None:
         return (False, False)

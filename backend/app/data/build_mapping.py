@@ -1,9 +1,10 @@
-"""Build the static EPUS↔ASIK form mapping resource.
+"""Build the static clinic-source↔ASIK form mapping resource (Medisy; the JSON keys keep their ``epus_`` names).
 
 Run manually when:
 - A new ``Padanan Paket Odoo`` Excel sheet drops.
 - The ``asik_audit_*`` schema dump is refreshed.
-- ``epus_to_asik.EPUS_BREADCRUMBS`` is edited.
+- ``medisy_to_asik.MEDISY_BREADCRUMBS`` is edited — for that case alone, ``--refresh`` re-derives the
+  converter columns in the committed JSON without the Excel sheet or the audit dump.
 
 Output: ``backend/app/data/asik_form_mapping.json`` — one JSON document with
 ``forms[]`` (list ordered by paket_name) and an ``epus_paths[]`` index.
@@ -14,12 +15,13 @@ Inputs:
   (provides FRM/PPM/PPV codes + per-question demographics).
 - ``testing-epus-asik/asik_audit_*/*.json`` (provides live SurveyJS labels +
   enum options + question kind).
-- ``backend/app/services/epus_to_asik.py`` ``EPUS_BREADCRUMBS`` (provides
-  EPUS source path per (form, field)).
+- ``backend/app/services/medisy_to_asik.py`` ``MEDISY_BREADCRUMBS`` (provides
+  the Medisy bundle path per (form, field); stored under the old ``epus_source`` key).
 
 Run from repo root::
 
-    python backend/app/data/build_mapping.py
+    python backend/app/data/build_mapping.py            # full rebuild (needs the xlsx + audit dump)
+    python backend/app/data/build_mapping.py --refresh  # only re-derive the converter columns
 """
 
 from __future__ import annotations
@@ -36,7 +38,19 @@ AUDIT_DIR = REPO_ROOT / "testing-epus-asik" / "asik_audit_20260429"
 OUT_PATH = REPO_ROOT / "backend" / "app" / "data" / "asik_form_mapping.json"
 
 sys.path.insert(0, str(REPO_ROOT / "backend"))
-from app.services.epus_to_asik import EPUS_BREADCRUMBS  # noqa: E402
+from app.services.medisy_to_asik import MEDISY_BREADCRUMBS  # noqa: E402
+
+
+def _crumbs(*names: str | None) -> dict[str, str]:
+    """``{label: bundle path}`` of the converter's mapped fields for the first of ``names`` that is a known form."""
+    for name in names:
+        if name and name in MEDISY_BREADCRUMBS:
+            return {lbl: path for lbl, path in MEDISY_BREADCRUMBS[name].items() if path}
+    return {}
+
+
+def _known(*names: str | None) -> bool:
+    return any(name in MEDISY_BREADCRUMBS for name in names if name)
 
 
 # ─── Padanan extraction ────────────────────────────────────────────────────
@@ -222,6 +236,32 @@ def _load_audit() -> dict[str, dict]:
 # ─── Combine ───────────────────────────────────────────────────────────────
 
 
+def _paths_index(forms: list[dict]) -> list[dict]:
+    index: dict[str, list[dict]] = {}
+    for f in forms:
+        for q in f["questions"]:
+            path = q.get("epus_source")
+            if not path:
+                continue
+            index.setdefault(path, []).append(
+                {"form_name": f["paket_name"], "frm_code": f["frm_code"], "label": q["label"]}
+            )
+    return [{"path": k, "destinations": v} for k, v in sorted(index.items())]
+
+
+def refresh(doc: dict) -> dict:
+    """Re-derive the converter columns of an existing document from ``MEDISY_BREADCRUMBS`` (labels and codes untouched)."""
+    for f in doc["forms"]:
+        crumbs = _crumbs(f.get("paket_name"), f.get("audit_form_title"))
+        for q in f["questions"]:
+            q["epus_source"] = crumbs.get(q["label"])
+            q["covered_by_converter"] = q["label"] in crumbs
+        f["in_converter_breadcrumbs"] = _known(f.get("paket_name"), f.get("audit_form_title"))
+        f["covered_question_count"] = sum(1 for q in f["questions"] if q["covered_by_converter"])
+    doc["epus_paths_index"] = _paths_index(doc["forms"])
+    return doc
+
+
 def build() -> dict:
     padanan = _load_padanan()
     audit = _load_audit()
@@ -243,7 +283,7 @@ def build() -> dict:
                 audit_q_by_label[q["label"]] = q
 
         # Lookup EPUS source path from converter breadcrumbs
-        epus_field_map = EPUS_BREADCRUMBS.get(paket_name) or {}
+        epus_field_map = _crumbs(paket_name, audit_match[0] if audit_match else None)
 
         # Build per-question merged record
         out_questions = []
@@ -277,7 +317,7 @@ def build() -> dict:
                 "modul": rec["modul"],
                 "layanan_name": rec["layanan_name"],
                 "layanan_code": rec["layanan_code"],
-                "in_converter_breadcrumbs": paket_name in EPUS_BREADCRUMBS,
+                "in_converter_breadcrumbs": _known(paket_name, audit_match[0] if audit_match else None),
                 "in_audit": audit_match is not None,
                 "audit_form_title": audit_match[0] if audit_match else None,
                 "question_count": len(out_questions),
@@ -294,7 +334,7 @@ def build() -> dict:
             continue
         if info.get("frm_code") is None and title in {f["paket_name"] for f in forms}:
             continue
-        epus_field_map = EPUS_BREADCRUMBS.get(title) or {}
+        epus_field_map = _crumbs(title)
         out_questions = []
         for q in info["questions"]:
             out_questions.append(
@@ -320,7 +360,7 @@ def build() -> dict:
                 "modul": None,
                 "layanan_name": None,
                 "layanan_code": info.get("lpm_code"),
-                "in_converter_breadcrumbs": title in EPUS_BREADCRUMBS,
+                "in_converter_breadcrumbs": _known(title),
                 "in_audit": True,
                 "audit_form_title": title,
                 "question_count": len(out_questions),
@@ -338,19 +378,7 @@ def build() -> dict:
 
     forms.sort(key=lambda f: (f["paket_name"] or "").lower())
 
-    epus_paths_index: dict[str, list[dict]] = {}
-    for f in forms:
-        for q in f["questions"]:
-            path = q.get("epus_source")
-            if not path:
-                continue
-            epus_paths_index.setdefault(path, []).append(
-                {
-                    "form_name": f["paket_name"],
-                    "frm_code": f["frm_code"],
-                    "label": q["label"],
-                }
-            )
+    epus_paths_index = _paths_index(forms)
 
     return {
         "version": 1,
@@ -358,13 +386,16 @@ def build() -> dict:
         "audit_dir": str(AUDIT_DIR),
         "form_count": len(forms),
         "forms": forms,
-        "epus_paths_index": [
-            {"path": k, "destinations": v} for k, v in sorted(epus_paths_index.items())
-        ],
+        "epus_paths_index": epus_paths_index,
     }
 
 
 def main() -> None:
+    if "--refresh" in sys.argv:
+        doc = refresh(json.loads(OUT_PATH.read_text(encoding="utf-8")))
+        OUT_PATH.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"refreshed converter columns in {OUT_PATH} — {doc['form_count']} forms")
+        return
     doc = build()
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT_PATH, "w") as fh:

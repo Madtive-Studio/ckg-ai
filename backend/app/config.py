@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_TTL_MINUTES: int = 1440
     CRED_ENCRYPTION_KEY: str
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    # Public origin of frontend-dashboard (the client app). Credential-invite links point here;
+    # no trailing slash needed.
+    DASHBOARD_PUBLIC_URL: str = "http://localhost:3001"
     # Number of trusted reverse proxies in front of the app. The client IP for
     # rate-limiting is read as the Nth-from-last X-Forwarded-For entry (each
     # trusted proxy appends exactly one). 0 = ignore XFF and use the socket peer

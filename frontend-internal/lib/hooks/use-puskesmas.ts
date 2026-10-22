@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-query";
 import {
   clearCredentials,
+  createCredentialInvite,
   createPuskesmas,
   decryptCredentials,
   deletePuskesmas,
@@ -188,6 +189,11 @@ export function useDeletePuskesmas() {
       );
     },
   });
+}
+
+// No cache write: the link only exists in this response, and the puskesmas detail is unchanged until the client submits.
+export function useCreateCredentialInvite() {
+  return useMutation({ mutationFn: (id: string) => createCredentialInvite(id) });
 }
 
 export function useSetCredentials() {

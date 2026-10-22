@@ -2,7 +2,7 @@
 
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, KeyRound, PlayCircle } from "lucide-react";
+import { ArrowLeft, KeyRound, Link2, PlayCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import { Pagination } from "@/components/common/pagination";
 import { ErrorState } from "@/components/common/error-state";
 import { EmptyState } from "@/components/common/empty-state";
 import { CredentialsDialog } from "@/components/puskesmas/credentials-dialog";
+import { InviteLinkDialog } from "@/components/puskesmas/invite-link-dialog";
 import { StartScrapeDialog } from "@/components/scrape/start-scrape-dialog";
 import { ScrapeStatusBadge } from "@/components/scrape/scrape-status-badge";
 import { CronConfigCard } from "@/components/cron/cron-config-card";
@@ -42,6 +43,7 @@ export default function PuskesmasDetailPage({
   const { id } = use(params);
   const [credKind, setCredKind] = useState<CredKind | null>(null);
   const [scrapeOpen, setScrapeOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [page, setPage] = useState(1);
 
   const detail = usePuskesmas(id);
@@ -110,6 +112,18 @@ export default function PuskesmasDetailPage({
                   <KeyRound className="h-4 w-4" />
                   Kredensial
                 </Button>
+                {kind === "asik" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ml-2"
+                    onClick={() => setInviteOpen(true)}
+                    disabled={!detail.data}
+                  >
+                    <Link2 className="h-4 w-4" />
+                    Tautan undangan
+                  </Button>
+                )}
               </CardContent>
             </Card>
           );
@@ -196,6 +210,12 @@ export default function PuskesmasDetailPage({
           }
         />
       )}
+      <InviteLinkDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        puskesmasId={id}
+        isCredSet={detail.data?.is_asik_cred_set ?? false}
+      />
       <StartScrapeDialog
         open={scrapeOpen}
         onOpenChange={setScrapeOpen}

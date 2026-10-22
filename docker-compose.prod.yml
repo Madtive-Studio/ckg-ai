@@ -172,8 +172,35 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  # Public entrypoint: the only service published on all interfaces. Routing and
+  # the ADMIN_SITE / DASHBOARD_SITE modes are documented in caddy/Caddyfile.
+  # If a host nginx/caddy already owns :80, stop it first or this won't start.
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      ADMIN_SITE: ${ADMIN_SITE:-:80}
+      DASHBOARD_SITE: ${DASHBOARD_SITE:-:8080}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ckg_caddy_data:/data
+      - ckg_caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_started
+      frontend-internal:
+        condition: service_started
+      frontend-dashboard:
+        condition: service_started
+    restart: unless-stopped
+
 volumes:
   ckg_pg_data:
   ckg_redis_data:
   ckg_scraper_sessions:
   ckg_celery_beat:
+  ckg_caddy_data:
+  ckg_caddy_config:

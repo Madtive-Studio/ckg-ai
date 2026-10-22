@@ -190,3 +190,23 @@ def enforce_chatbot_rate_limit(principal_id: uuid.UUID) -> None:
             "Terlalu banyak permintaan ke asisten. Coba lagi sebentar.",
             headers={"Retry-After": str(window)},
         )
+
+
+INVITE_RATE_LIMIT_MAX = 30
+INVITE_RATE_LIMIT_WINDOW_SECONDS = 60
+
+
+def enforce_invite_rate_limit(request: Request) -> None:
+    """Throttle the unauthenticated credential-invite endpoints per client IP.
+
+    The link token is the only credential there, so cap guessing/hammering. Generous enough for a
+    person opening the page, retrying a typo and reloading; not for enumeration.
+    """
+    window = INVITE_RATE_LIMIT_WINDOW_SECONDS
+    (count,) = _fixed_window_counts((f"rl:invite:ip:{_client_ip(request)}",), window)
+    if count > INVITE_RATE_LIMIT_MAX:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            "Too many requests. Try again later.",
+            headers={"Retry-After": str(window)},
+        )

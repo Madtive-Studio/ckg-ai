@@ -367,6 +367,8 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
                 pass
             return
 
+        if kind != ScrapeKind.EPUS:
+            puskesmas_crud.refresh_asik_cred_from_medisy(db, job.puskesmas_id)
         cred_col = Puskesmas.epus_cred if kind == ScrapeKind.EPUS else Puskesmas.asik_cred
         puskesmas = db.scalar(
             select(Puskesmas)

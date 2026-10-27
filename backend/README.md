@@ -52,6 +52,14 @@ curl -X POST http://localhost:8000/admin/auth/login \
 
 Use the returned `access_token` as `Authorization: Bearer <token>` for admin endpoints.
 
+## ASIK login
+
+The ASIK email + password are kept in Medisy (Manajemen → Konfigurasi → Perusahaan → Email ASIK / Password ASIK) and read through
+`GET /medisy_api/ckg/asik-credential`. ckg-ai stores the fetched login encrypted in `puskesmas.asik_cred` and
+refreshes it when the Medisy token is saved, on "Test connection", and before every ASIK scrape / sync / create-patient
+job (`crud.puskesmas.refresh_asik_cred_from_medisy`). If Medisy has no login or is unreachable, the copy already held
+(for example one entered by hand) is used unchanged.
+
 ## Soft Delete
 
 All tables carry `deleted_at`. ORM queries auto-exclude soft-deleted rows. No hard deletes.

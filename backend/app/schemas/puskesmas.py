@@ -124,6 +124,8 @@ class MedisyConnectionTestOut(BaseModel):
 
     ok: bool
     error: str | None = None
+    # What reading the ASIK login from Medisy's clinic configuration did: updated / unchanged / not_in_medisy / ...
+    asik_login: str | None = None
     clinic_name: str | None = None
     api_version: int | None = None
     timezone: str | None = None

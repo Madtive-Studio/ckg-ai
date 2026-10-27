@@ -437,6 +437,7 @@ def probe_batch(
     guard, commit nothing. Returns a tally of outcomes, the list of `would_create`
     NIKs (genuinely not-yet-in-ASIK), and the FIRST captured step2_dom.
     """
+    puskesmas_crud.refresh_asik_cred_from_medisy(db, puskesmas_id)
     puskesmas = db.scalar(
         select(Puskesmas)
         .options(load_only(
@@ -755,6 +756,7 @@ def create_batch(
     # cron cancel key lives in cron.py; import lazily to avoid an import cycle.
     from app.tasks.cron import cancel_key as _cron_cancel_key
 
+    puskesmas_crud.refresh_asik_cred_from_medisy(db, puskesmas_id)
     puskesmas = db.scalar(
         select(Puskesmas)
         .options(load_only(
@@ -1047,6 +1049,7 @@ def run_create_one(self, job_id: str, headless: bool = True) -> None:
             _publish_terminal(redis_client, chan, "__failed__")
             return
 
+        puskesmas_crud.refresh_asik_cred_from_medisy(db, job.puskesmas_id)
         puskesmas = db.scalar(
             select(Puskesmas)
             .options(load_only(

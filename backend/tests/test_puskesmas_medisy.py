@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 import app.api.routes.puskesmas as routes
+import app.crud.puskesmas as crud_module
 from app.api.deps import Principal, get_db, get_principal
 from app.core.security import decrypt_cred, encrypt_cred
 from app.integrations.medisy_client import MedisyClient
@@ -51,6 +52,7 @@ def api(monkeypatch):
         return MedisyClient(host, token, transport=httpx.MockTransport(handler), sleep=lambda _s: None, **kw)
 
     monkeypatch.setattr(routes, "MedisyClient", make_client)
+    monkeypatch.setattr(crud_module, "MedisyClient", make_client)   # the ASIK-login refresh that follows the token / test
     with TestClient(app) as client:
         yield client, fake_db, state
     app.dependency_overrides.clear()
@@ -83,7 +85,7 @@ def test_cred_in_still_needs_both_email_and_password():
 
 def test_epus_slot_accepts_a_medisy_token_and_stores_it_encrypted(api):
     client, db, _ = api
-    obj = SimpleNamespace(id=PID, epus_cred=None, asik_cred=None)
+    obj = SimpleNamespace(id=PID, epus_url=None, epus_cred=None, asik_cred=None)
     db.scalar.return_value = obj
     r = client.put(f"/puskesmas/{PID}/credentials/epus", json={"token": TOKEN})
     assert r.status_code == 204
@@ -94,7 +96,7 @@ def test_epus_slot_accepts_a_medisy_token_and_stores_it_encrypted(api):
 
 def test_epus_slot_still_accepts_email_and_password_during_the_transition(api):
     client, db, _ = api
-    obj = SimpleNamespace(id=PID, epus_cred=None, asik_cred=None)
+    obj = SimpleNamespace(id=PID, epus_url=None, epus_cred=None, asik_cred=None)
     db.scalar.return_value = obj
     assert client.put(f"/puskesmas/{PID}/credentials/epus", json={"email": "a@b.id", "password": "pw"}).status_code == 204
     assert decrypt_cred(obj.epus_cred) == {"email": "a@b.id", "password": "pw"}
@@ -102,7 +104,7 @@ def test_epus_slot_still_accepts_email_and_password_during_the_transition(api):
 
 def test_asik_slot_refuses_a_token(api):
     client, db, _ = api
-    obj = SimpleNamespace(id=PID, epus_cred=None, asik_cred=None)
+    obj = SimpleNamespace(id=PID, epus_url=None, epus_cred=None, asik_cred=None)
     db.scalar.return_value = obj
     r = client.put(f"/puskesmas/{PID}/credentials/asik", json={"token": TOKEN})
     assert r.status_code == 422 and "email and a password" in r.json()["detail"]
@@ -156,9 +158,23 @@ def test_connection_ok_reports_clinic_and_never_the_token(api):
     assert body["clinic_name"] == "Puskesmas Contoh" and body["api_version"] == 1 and body["timezone"] == "Asia/Jakarta"
     assert isinstance(body["latency_ms"], int) and body["latency_ms"] >= 0
     assert TOKEN not in r.text
-    (req,) = state["requests"]
-    assert str(req.url) == "https://clinic.medisy.id/medisy_api/ckg/ping" and req.headers["Authorization"] == f"Bearer {TOKEN}"
+    ping, asik = state["requests"]                                  # then the ASIK login is read from the same Medisy
+    assert str(ping.url) == "https://clinic.medisy.id/medisy_api/ckg/ping" and ping.headers["Authorization"] == f"Bearer {TOKEN}"
+    assert asik.url.path == "/medisy_api/ckg/asik-credential"
+    assert body["asik_login"] == "medisy_unavailable"               # the canned PING body is not an ASIK login
     assert state["limited"] == 1                                    # the rate limiter ran
+
+
+def test_connection_pulls_the_asik_login_from_medisy_without_returning_it(api):
+    client, db, state = api
+    row = _row()
+    db.scalar.return_value = row
+    login = {"email": "klinik@asik.id", "password": "S3cret-ASIK-pw"}
+    state["handler"] = lambda req: httpx.Response(200, json=PING if req.url.path.endswith("/ping") else login)
+    r = client.post(f"/puskesmas/{PID}/test-connection")
+    assert r.json()["asik_login"] == "updated"
+    assert decrypt_cred(row.asik_cred) == login
+    assert login["password"] not in r.text and TOKEN not in r.text
 
 
 @pytest.mark.parametrize("status, text", [(401, "rejected the token"), (403, "refused this server"), (500, "server error")])
@@ -231,7 +247,7 @@ def test_connection_query_loads_only_the_columns_it_needs(api):
     client, db, _ = api
     db.scalar.return_value = _row()
     client.post(f"/puskesmas/{PID}/test-connection")
-    stmt = db.scalar.call_args.args[0]
+    stmt = db.scalar.call_args_list[0].args[0]      # the first query is the route's own; the ASIK-login refresh comes after
     sql = str(stmt.compile(compile_kwargs={"literal_binds": False}))
     assert "asik_cred" not in sql and "epus_cred" in sql and "epus_url" in sql
 

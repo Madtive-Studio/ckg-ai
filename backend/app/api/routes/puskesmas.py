@@ -152,6 +152,9 @@ def set_puskesmas_cred(
     if obj is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
     crud.set_cred(db, obj, kind, data)
+    if kind == "epus":
+        # The ASIK login lives in Medisy's clinic configuration: pick it up as soon as the Medisy token is known.
+        crud.refresh_asik_cred_from_medisy(db, id)
 
 
 @router.delete("/{id}/credentials/{kind}", status_code=status.HTTP_204_NO_CONTENT)
@@ -228,6 +231,7 @@ def test_medisy_connection(
         return MedisyConnectionTestOut(ok=False, error=str(exc))
     return MedisyConnectionTestOut(
         ok=True,
+        asik_login=crud.refresh_asik_cred_from_medisy(db, id),
         clinic_name=ping.clinic_name,
         api_version=ping.api_version,
         timezone=ping.timezone,

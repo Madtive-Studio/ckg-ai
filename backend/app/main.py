@@ -10,6 +10,7 @@ from app.api.routes import (
     auth,
     bayi_report,
     chatbot,
+    credential_invites,
     cron_backfill,
     cron_config,
     cron_run,
@@ -94,6 +95,8 @@ app.include_router(admin_auth.router)
 app.include_router(prod_auth.router)
 app.include_router(auth.router)
 app.include_router(puskesmas.router)
+app.include_router(credential_invites.admin_router)
+app.include_router(credential_invites.public_router)
 app.include_router(asik_locations.router)
 app.include_router(users.router)
 app.include_router(patients.router)

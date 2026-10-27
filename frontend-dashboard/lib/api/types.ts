@@ -129,3 +129,17 @@ export const GdpReportRow = z.object({
   terkendali_tw4: z.string(),
 });
 export type GdpReportRow = z.infer<typeof GdpReportRow>;
+
+// Credential invite (public, no login): the one-time link a puskesmas uses to set its own ASIK login.
+export const InviteInfoOut = z.object({
+  status: z.enum(["pending", "used", "expired"]),
+  puskesmas_name: z.string().nullable(),
+  asik_url: z.string().nullable(),
+});
+export type InviteInfo = z.infer<typeof InviteInfoOut>;
+
+export const InviteAsikIn = z.object({
+  email: z.string().trim().min(1, "Email wajib diisi"),
+  password: z.string().min(1, "Kata sandi wajib diisi"),
+});
+export type InviteAsikInput = z.infer<typeof InviteAsikIn>;

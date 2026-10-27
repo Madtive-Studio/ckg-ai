@@ -700,6 +700,7 @@ def run_sync(self, job_id: str, headless: bool = True) -> None:
             )
             return
 
+        puskesmas_crud.refresh_asik_cred_from_medisy(db, job.puskesmas_id)
         puskesmas = db.scalar(
             select(Puskesmas)
             .options(load_only(Puskesmas.id, Puskesmas.asik_url, Puskesmas.asik_cred))
@@ -837,6 +838,7 @@ def run_cron_batch(cron_run_id: str) -> None:
         if sync_mode is CronSyncMode.OFF:
             return  # defensive: only dispatched when != OFF
 
+        puskesmas_crud.refresh_asik_cred_from_medisy(db, run.puskesmas_id)
         puskesmas = db.scalar(
             select(Puskesmas)
             .options(load_only(Puskesmas.id, Puskesmas.asik_url, Puskesmas.asik_cred))

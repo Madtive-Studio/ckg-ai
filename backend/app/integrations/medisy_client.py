@@ -7,6 +7,7 @@ logging in and walking ~33 HTML tabs per patient it makes a handful of JSON call
     rooms()                E1  poli list and which of them match the CKG rule
     list_visits(day)       E2  the CKG visits of one calendar day (all pages)
     get_bundles(ids)       E3  full visit bundles, chunked to the server's 50-id limit
+    asik_credential()      E7  the clinic's ASIK login, saved in Medisy's clinic configuration
 
 Safety properties (each is covered by tests/test_medisy_client.py):
   * HTTPS only, no redirects followed (a redirect would carry the bearer token to another host).
@@ -28,7 +29,7 @@ import re
 import time
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
@@ -106,6 +107,14 @@ class MedisyPing:
 
 
 @dataclass(frozen=True)
+class MedisyAsikCredential:
+    """The ASIK login kept in Medisy's clinic configuration. ``repr`` hides the password so it cannot reach a log."""
+
+    email: str
+    password: str = field(repr=False)
+
+
+@dataclass(frozen=True)
 class BundleBatch:
     """``items`` are in the order the ids were requested; ``missing`` are ids that are unknown,
     cancelled or deleted in Medisy (not an error)."""
@@ -179,6 +188,17 @@ class MedisyClient:
 
     def rooms(self) -> list[dict[str, Any]]:
         return list(self._request("GET", "/rooms").get("items", []))
+
+    def asik_credential(self) -> MedisyAsikCredential | None:
+        """E7: the ASIK email + password from Medisy's clinic configuration, or None when nobody saved one there."""
+        try:
+            data = self._request("GET", "/asik-credential")
+        except MedisyNotFoundError:
+            return None
+        email, password = (data.get("email"), data.get("password")) if isinstance(data, dict) else (None, None)
+        if not isinstance(email, str) or not isinstance(password, str) or not email or not password:
+            raise MedisyUnavailableError("Medisy answered, but not with an ASIK login (unexpected /asik-credential body)")
+        return MedisyAsikCredential(email=email, password=password)
 
     def list_visits(self, day: date, *, ckg_only: bool = True) -> list[dict[str, Any]]:
         """Every visit of ``day`` (all pages). With ``ckg_only`` (the default) only visits matching

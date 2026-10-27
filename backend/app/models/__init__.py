@@ -1,4 +1,5 @@
 from app.models.admin import Admin
+from app.models.credential_invite import CredentialInvite
 from app.models.cron_backfill import CronBackfill, CronBackfillStatus
 from app.models.cron_config import CronConfig
 from app.models.cron_run import CronRun, CronRunStatus, CronStep
@@ -18,6 +19,7 @@ from app.models.user import User
 
 __all__ = [
     "Admin",
+    "CredentialInvite",
     "CronBackfill",
     "CronBackfillStatus",
     "CronConfig",

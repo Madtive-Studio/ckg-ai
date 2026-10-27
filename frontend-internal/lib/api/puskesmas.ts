@@ -4,6 +4,7 @@ import {
   PuskesmasOut,
   PuskesmasDetailOut,
   CredOut,
+  CredentialInviteOut,
   MedisyConnectionTestOut,
   MedisyCredOut,
   type Puskesmas,
@@ -72,4 +73,9 @@ export async function decryptCredentials(id: string, kind: CredKind) {
 export async function testMedisyConnection(id: string) {
   const { data } = await http.post(`/puskesmas/${id}/test-connection`);
   return MedisyConnectionTestOut.parse(data);
+}
+
+export async function createCredentialInvite(id: string) {
+  const { data } = await http.post(`/puskesmas/${id}/credential-invites`);
+  return CredentialInviteOut.parse(data);
 }

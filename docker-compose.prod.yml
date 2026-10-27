@@ -1,0 +1,206 @@
+# Prod stack that PULLS the images pushed by .github/workflows/docker-build-push.yml
+# (registry.medisy.id/ckg-*:<git tag>). Nothing is built on the server.
+#
+#   CKG_TAG=v1.4.0 docker compose -f docker-compose.prod.yml pull
+#   CKG_TAG=v1.4.0 docker compose -f docker-compose.prod.yml up -d <services>
+#
+# The host must be logged in to registry.medisy.id (`docker login registry.medisy.id`).
+# That login is also what lets the loop worker's `docker run` pull ckg-loop-agent.
+#
+# NEXT_PUBLIC_API_URL is baked into the two frontends at CI build time (repo
+# variable), so it is NOT a runtime setting here.
+#
+# Same service set, ports, volumes and env as docker-compose.yml, which stays the
+# build-from-source variant. Only the image source differs.
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ckg}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:-ckg}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ckg_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ckg}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - ckg_redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    image: registry.medisy.id/ckg-backend:${CKG_TAG:?CKG_TAG required (the release git tag, e.g. v1.4.0)}
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ckg}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ckg}
+      REDIS_URL: redis://redis:6379/0
+      SCRAPER_SESSIONS_ROOT: /data/scraper-sessions
+    volumes:
+      - ckg_scraper_sessions:/data/scraper-sessions
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"
+
+  celery_worker:
+    image: registry.medisy.id/ckg-backend:${CKG_TAG:?CKG_TAG required (the release git tag, e.g. v1.4.0)}
+    # Chromium renderers use /dev/shm heavily; Docker's 64 MB default kills them
+    # with "Target closed". This is the worker that launches the scrape/sync browsers.
+    shm_size: "2gb"
+    # tini as PID 1 so orphaned Chromium processes get reaped (otherwise zombies
+    # walk the container into its pids cap and every fork fails with EAGAIN).
+    init: true
+    # Headroom under systemd's DefaultTasksMax (15% of kernel.threads-max); tini
+    # above is the real fix.
+    pids_limit: 20000
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ckg}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ckg}
+      REDIS_URL: redis://redis:6379/0
+      SCRAPER_SESSIONS_ROOT: /data/scraper-sessions
+    volumes:
+      - ckg_scraper_sessions:/data/scraper-sessions
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["celery", "-A", "app.celery_app.celery_app", "worker", "--loglevel=info", "--concurrency=4"]
+
+  # Loop-agent worker. Consumes ONLY the `loop` queue, isolated from the worker
+  # above. It `docker run`s a throwaway ckg-loop-agent container per run, so it
+  # needs the host docker socket. LOOP_HOST_REPO_PATH is the HOST path to this
+  # repo, bind-mounted into each agent container as the seed tree.
+  celery_worker_loop:
+    image: registry.medisy.id/ckg-loop-worker:${CKG_TAG:?CKG_TAG required (the release git tag, e.g. v1.4.0)}
+    init: true
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ckg}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ckg}
+      REDIS_URL: redis://redis:6379/0
+      # Pinned to the same release as the worker; resolved by the HOST daemon.
+      LOOP_AGENT_IMAGE: registry.medisy.id/ckg-loop-agent:${CKG_TAG:?CKG_TAG required (the release git tag, e.g. v1.4.0)}
+      LOOP_HOST_REPO_PATH: ${LOOP_HOST_REPO_PATH:?set to the absolute HOST path of this repo}
+      # Attach the throwaway loop container to this network so its in-container
+      # gate can resolve postgres.
+      LOOP_AGENT_NETWORK: ${LOOP_AGENT_NETWORK:-ckg-ai_default}
+      # Prod: set LOOP_AGENT_DB_URL to a READ-ONLY role's URL. Unset → the loop
+      # container reuses this worker's DATABASE_URL (not read-only).
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    # Each run launches a capped container (1.5 CPU / 1.5 GB) with Chromium —
+    # 2 fits the 4 vCPU / 7.9 GB box; go to 4 only with more RAM.
+    command: ["celery", "-A", "app.celery_app.celery_app", "worker", "-Q", "loop", "--concurrency=${LOOP_WORKER_CONCURRENCY:-2}", "--loglevel=info"]
+
+  # Beat is a singleton scheduler. Do NOT scale this service to >1 replica or
+  # cron tasks will be dispatched twice every minute.
+  celery_beat:
+    image: registry.medisy.id/ckg-backend:${CKG_TAG:?CKG_TAG required (the release git tag, e.g. v1.4.0)}
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ckg}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ckg}
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ckg_celery_beat:/data/celery-beat
+    working_dir: /data/celery-beat
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+    command: ["celery", "-A", "app.celery_app.celery_app", "beat", "--loglevel=info", "--schedule=/data/celery-beat/schedule.db"]
+
+  frontend-internal:
+    image: registry.medisy.id/ckg-frontend-internal:${CKG_TAG:?CKG_TAG required (the release git tag, e.g. v1.4.0)}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  # External-team dashboard (reduced sidebar, separate /prod/auth login).
+  # Same backend; add its origin to backend CORS_ORIGINS.
+  frontend-dashboard:
+    image: registry.medisy.id/ckg-frontend-dashboard:${CKG_TAG:?CKG_TAG required (the release git tag, e.g. v1.4.0)}
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  # Public entrypoint: the only service published on all interfaces. Routing and
+  # the ADMIN_SITE / DASHBOARD_SITE modes are documented in caddy/Caddyfile.
+  # If a host nginx/caddy already owns :80, stop it first or this won't start.
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      ADMIN_SITE: ${ADMIN_SITE:-:80}
+      DASHBOARD_SITE: ${DASHBOARD_SITE:-:8080}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ckg_caddy_data:/data
+      - ckg_caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_started
+      frontend-internal:
+        condition: service_started
+      frontend-dashboard:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  ckg_pg_data:
+  ckg_redis_data:
+  ckg_scraper_sessions:
+  ckg_celery_beat:
+  ckg_caddy_data:
+  ckg_caddy_config:

@@ -97,6 +97,13 @@ export const CredIn = z.object({
 export type CredInput = z.infer<typeof CredIn>;
 export const CredOut = CredIn;
 
+// One-time link a puskesmas opens (no login) to set its own ASIK credential. The url is only returned on creation.
+export const CredentialInviteOut = z.object({
+  url: z.string().url(),
+  expires_at: z.string(),
+});
+export type CredentialInvite = z.infer<typeof CredentialInviteOut>;
+
 // Medisy (the clinic-record source, stored under the old "epus" credential kind) takes a bearer token, not a login.
 // Same limits as the backend's MedisyCredIn.
 export const MedisyCredIn = z.object({

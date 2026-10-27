@@ -1,0 +1,29 @@
+# Reverse proxy for docker-compose.prod.yml. Site addresses come from the root .env:
+#   IP-only (default): ADMIN_SITE=:80  DASHBOARD_SITE=:8080     -> plain HTTP
+#   Domains:           ADMIN_SITE=admin.example.com  DASHBOARD_SITE=dashboard.example.com
+#                      -> Caddy fetches TLS certs itself (ports 80 + 443 must be open)
+# Both frontends call the one API URL baked in at CI time (NEXT_PUBLIC_API_URL,
+# ending in /api), so /api is served on both sites; the prefix is stripped.
+
+(ckg_api) {
+	handle_path /api/* {
+		reverse_proxy backend:8000 {
+			# SSE (scrape progress) must not be buffered.
+			flush_interval -1
+		}
+	}
+}
+
+{$ADMIN_SITE} {
+	import ckg_api
+	handle {
+		reverse_proxy frontend-internal:3000
+	}
+}
+
+{$DASHBOARD_SITE} {
+	import ckg_api
+	handle {
+		reverse_proxy frontend-dashboard:3000
+	}
+}

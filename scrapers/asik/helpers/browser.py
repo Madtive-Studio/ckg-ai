@@ -112,11 +112,14 @@ class APIInterceptor:
 # ASIK sends the patient list as an encoded payload ({"_d": "..."}) from POST /api/pkg/ssi/list-kunjungan-umum and decodes it
 # in its own page script, so the response body is useless to us. The page hands the decoded JSON to JSON.parse; this observer
 # keeps the latest parsed ``data.list`` of patient rows (it needs no key and decodes nothing itself).
+# The patient detail (POST /api/pkg/ssi/detail-screening-ssi, fired by the detail page the "Mulai" button opens) is encoded the
+# same way; the observer keeps the latest decoded detail (``data.screening_forms`` + ``data.reg_id``) under ``__ckgDetail``.
 _DECODED_LIST_HOOK = """
 (() => {
   if (window.__ckgListHooked) return;
   window.__ckgListHooked = true;
   window.__ckgList = null;
+  window.__ckgDetail = null;
   const orig = JSON.parse;
   JSON.parse = function (text, reviver) {
     const v = orig.call(this, text, reviver);
@@ -125,11 +128,61 @@ _DECODED_LIST_HOOK = """
       if (rows && rows.length && rows[0] && typeof rows[0] === 'object' && 'reg_id' in rows[0]) {
         window.__ckgList = { rows: rows, pagination: v.data.pagination || v.pagination || null, at: Date.now() };
       }
+      const d = v && v.data;
+      if (d && typeof d === 'object' && Array.isArray(d.screening_forms) && d.reg_id) {
+        window.__ckgDetail = { data: d, at: Date.now() };
+      }
     } catch (e) {}
     return v;
   };
 })();
 """
+
+# The "Mulai" button builds an encrypted detail-page URL and routes to it in the (Nuxt / Vue Router) SPA, which unmounts the
+# list and loses its date / tab / page (going back resets them). Armed on the list page, this router guard cancels ONLY a
+# navigation to the detail page and records its URL, so the list stays mounted and the URL can be opened in a separate tab.
+# (Blocking history.pushState is not enough: the router still renders the detail page in place.)
+_DETAIL_NAV_CAPTURE = """
+(() => {
+  window.__ckgNavCap = [];
+  if (window.__ckgNavArmed) return true;
+  const app = document.querySelector('#__nuxt') && document.querySelector('#__nuxt').__vue_app__;
+  const router = app && app.config.globalProperties.$router;
+  if (!router) return false;
+  router.beforeEach((to) => {
+    if (to.path.includes('/detail-pemeriksaan')) {
+      window.__ckgNavCap.push(new URL(to.fullPath, location.origin).href);
+      return false;
+    }
+  });
+  window.__ckgNavArmed = true;
+  return true;
+})()
+"""
+
+
+def arm_detail_nav_capture(page) -> None:
+    """Arm (idempotently) the Mulai-navigation capture on the list page and clear previously captured URLs."""
+    if not page.evaluate(_DETAIL_NAV_CAPTURE):
+        raise RuntimeError("ASIK page router not found — cannot capture the patient detail URL")
+
+
+def read_captured_detail_url(page) -> str | None:
+    """The detail-page URL the last Mulai click tried to navigate to, or None."""
+    try:
+        urls = page.evaluate("window.__ckgNavCap || []")
+    except Exception:
+        return None
+    return urls[-1] if urls else None
+
+
+def read_decoded_detail(page) -> dict | None:
+    """The latest patient detail (the ``data`` object of detail-screening-ssi) the page decoded, or None."""
+    try:
+        captured = page.evaluate("window.__ckgDetail")
+    except Exception:
+        return None
+    return (captured or {}).get("data")
 
 
 def install_decoded_list_hook(context) -> None:

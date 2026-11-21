@@ -27,6 +27,7 @@ from playwright.sync_api import Page
 from rich.console import Console
 
 from helpers.auth import SessionExpiredError
+from helpers.browser import arm_detail_nav_capture, read_captured_detail_url, read_decoded_detail
 
 console = Console()
 
@@ -120,7 +121,8 @@ def _batch_read_forms_via_tabs(context, form_items: list[dict],
             answer_flag = {"seen": False}
 
             def _on_response(resp, flag=answer_flag):
-                if "skrining-layanan" in resp.url and resp.status == 200:
+                # Current form pages fetch their answers from `form-get-one`; older ones from `skrining-layanan`.
+                if ("form-get-one" in resp.url or "skrining-layanan" in resp.url) and resp.status == 200:
                     flag["seen"] = True
 
             try:
@@ -157,6 +159,11 @@ def _batch_read_forms_via_tabs(context, form_items: list[dict],
                     tab.wait_for_timeout(120)
 
                 form_data = _read_all_form_fields(tab)
+                if item.get("has_answers", True) and not any(
+                        v not in (None, "", []) for k, v in form_data.items() if not k.startswith("_")):
+                    # ASIK says this form was submitted, yet nothing was read — the reader may be out of date
+                    # (see "Not yet verified" in asik/CLAUDE.md).
+                    console.print(f"          [yellow][verify] submitted form '{item['layanan']}' read with no answers[/yellow]")
                 if not item.get("has_answers", True):
                     form_data = {
                         k: (v if k.startswith("_") else None)
@@ -730,25 +737,31 @@ def _format_detail_data_from_api(data: dict) -> dict:
     """Shape the /detail-screening JSON into the existing scraper output schema."""
     pd = data.get("patient_detail") or {}
     dom = data.get("domicile") or {}
-    job = data.get("job") or pd.get("patient_job") or {}
+    job = data.get("job") or pd.get("patient_job") or pd.get("job") or {}
+    # detail-screening-ssi renamed some keys (patient_birth_date, patient_fullname, wali_fullname, wali_birth_date) and moved
+    # ticket_number to the top level; the old /detail-screening names are kept as fallbacks.
+    born = pd.get("patient_birth_date") or pd.get("patient_born_date")
+    full_name = pd.get("patient_fullname") or pd.get("patient_full_name")
+    wali_name = (pd.get("wali_fullname") or pd.get("wali_full_name") or "").strip()
+    wali_born = pd.get("wali_birth_date") or pd.get("wali_born_date")
+    ticket = pd.get("ticket_number") or data.get("ticket_number")
 
     individu: dict = {}
     if pd.get("patient_nik"):
         individu["NIK"] = pd["patient_nik"]
-    if pd.get("patient_born_date"):
-        individu["Tanggal Lahir"] = _fmt_id_date(pd["patient_born_date"])
-        age = _compute_age_id(pd["patient_born_date"])
+    if born:
+        individu["Tanggal Lahir"] = _fmt_id_date(born)
+        age = _compute_age_id(born)
         if age:
             individu["Umur"] = age
     if pd.get("patient_gender"):
         individu["Jenis Kelamin"] = _fmt_gender(pd["patient_gender"])
     # The existing dialog uses "Nama Ibu/Wali" = "-" when empty; preserve that.
-    wali_name_for_individu = (pd.get("wali_full_name") or "").strip() or "-"
-    individu["Nama Ibu/Wali"] = wali_name_for_individu
-    if pd.get("ticket_number"):
-        individu["Nomor Tiket"] = pd["ticket_number"]
-    if pd.get("patient_full_name"):
-        individu["Nama"] = pd["patient_full_name"].strip()
+    individu["Nama Ibu/Wali"] = wali_name or "-"
+    if ticket:
+        individu["Nomor Tiket"] = ticket
+    if full_name:
+        individu["Nama"] = full_name.strip()
     if pd.get("patient_mobile_number"):
         individu["No. HP/WA orang tua"] = _fmt_mobile(pd["patient_mobile_number"])
     job_name = job.get("text") or job.get("name")
@@ -758,13 +771,13 @@ def _format_detail_data_from_api(data: dict) -> dict:
     detail: dict = {"data_individu": individu}
 
     # Optional data_wali (only when a guardian is present)
-    if (pd.get("wali_full_name") or "").strip():
+    if wali_name:
         wali: dict = {}
         if pd.get("wali_nik"):
             wali["NIK"] = pd["wali_nik"]
-        wali["Nama"] = pd["wali_full_name"].strip()
-        if pd.get("wali_born_date"):
-            wali["Tanggal Lahir"] = _fmt_id_date(pd["wali_born_date"])
+        wali["Nama"] = wali_name
+        if wali_born:
+            wali["Tanggal Lahir"] = _fmt_id_date(wali_born)
         if pd.get("wali_gender"):
             wali["Jenis Kelamin"] = _fmt_gender(pd["wali_gender"])
         if pd.get("wali_mobile_number"):
@@ -849,6 +862,69 @@ def fetch_detail_screening(context, base_url: str, *, faskes_code: str,
         raise RuntimeError(f"/detail-screening {reg_id} returned {resp.status}")
     body = resp.json()
     return body.get("data") or {}
+
+
+def open_detail_via_mulai(list_page: Page, *, ticket_number: str, reg_id: str,
+                          timeout_ms: int = 20000) -> dict:
+    """Fetch one patient's detail the way a user does: click the row's "Mulai" button.
+
+    Current ASIK encrypts every request (a plain POST /api/pkg/detail-screening is rejected with 400), so the detail can only
+    come from ASIK's own page. "Mulai" builds an encrypted detail-page URL; the armed capture keeps the list page in place and
+    records that URL, which is then opened in a separate tab. That page fires /api/pkg/ssi/detail-screening-ssi and decodes it
+    itself; the context-wide JSON.parse observer hands us the decoded ``data``.
+
+    Only opens pages — nothing is submitted. Raises if the URL isn't captured, the detail never decodes, or it belongs to
+    another patient (``reg_id`` mismatch).
+    """
+    arm_detail_nav_capture(list_page)
+    row = list_page.locator("table tbody tr", has_text=ticket_number).first
+    row.get_by_role("button", name="Mulai", exact=True).click()
+
+    url = None
+    for _ in range(timeout_ms // 250):
+        url = read_captured_detail_url(list_page)
+        if url:
+            break
+        list_page.wait_for_timeout(250)
+    if not url:
+        if "/login" in list_page.url:
+            raise SessionExpiredError("redirected to login after clicking Mulai (session expired)")
+        raise RuntimeError(f"Mulai for {ticket_number} did not produce a detail-page URL")
+
+    # The detail page is occasionally slow to load or decode; the captured URL can be reopened, so try twice.
+    data = None
+    last_err = None
+    for attempt in (1, 2):
+        tab = list_page.context.new_page()
+        try:
+            tab.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+            for _ in range(timeout_ms // 250):
+                if "/login" in tab.url:
+                    raise SessionExpiredError("detail page redirected to login (session expired)")
+                data = read_decoded_detail(tab)
+                if data:
+                    break
+                tab.wait_for_timeout(250)
+            if not data:
+                last_err = f"detail-screening-ssi for {ticket_number} was not decoded within {timeout_ms} ms"
+        except SessionExpiredError:
+            raise
+        except Exception as e:
+            last_err = f"detail page for {ticket_number} failed to load: {e}"
+        finally:
+            try:
+                tab.close()
+            except Exception:
+                pass
+        if data:
+            break
+        if attempt == 1:
+            console.print(f"      [yellow]{last_err} — retrying once[/yellow]")
+    if not data:
+        raise RuntimeError(last_err)
+    if data.get("reg_id") != reg_id:
+        raise RuntimeError(f"detail for {ticket_number} has reg_id {data.get('reg_id')}, expected {reg_id}")
+    return data
 
 
 # =============================================================================
@@ -1063,8 +1139,12 @@ def scrape_patient_via_api(context, *, base_url: str, faskes_code: str,
                            include_blank_forms: bool = False,
                            skip_forms: bool = False,
                            mandiri_only: bool = False,
-                           scrape_tatalaksana: bool = True) -> dict:
-    """Full per-patient scrape via API — no Mulai click, no detail page.
+                           scrape_tatalaksana: bool = True,
+                           detail: dict | None = None) -> dict:
+    """Full per-patient scrape from the patient's detail data.
+
+    ``detail`` is the decoded detail-screening(-ssi) ``data`` when the caller already has it (see
+    ``open_detail_via_mulai``); otherwise it is fetched with the legacy plain POST /api/pkg/detail-screening.
 
     Returns the same shape as `scrape_patient_detail`, plus an optional
     ``tatalaksana`` key when the patient has follow-up treatment data:
@@ -1077,7 +1157,7 @@ def scrape_patient_via_api(context, *, base_url: str, faskes_code: str,
     """
     console.print(f"\n    [bold]Patient (API): {patient_label or reg_id}[/bold]")
 
-    data = fetch_detail_screening(
+    data = detail if detail is not None else fetch_detail_screening(
         context, base_url,
         faskes_code=faskes_code,
         screening_date=screening_date,
@@ -1109,12 +1189,14 @@ def scrape_patient_via_api(context, *, base_url: str, faskes_code: str,
             console.print("      Mandiri: skipped (pelayanan_nakes_only=true)")
         else:
             mandiri_items = []
+            # detail-screening-ssi uses snake_case keys; the legacy /detail-screening used PascalCase.
             for form in data.get("screening_forms") or []:
-                is_submitted = bool(form.get("IsSubmitForm"))
+                is_submitted = bool(form.get("is_submit_form", form.get("IsSubmitForm")))
                 if not is_submitted and not include_blank_forms:
                     continue
-                link = form.get("FormLink")
-                name = form.get("FormName") or form.get("FormCode") or ""
+                link = form.get("form_link") or form.get("FormLink")
+                name = (form.get("form_name") or form.get("FormName")
+                        or form.get("form_code") or form.get("FormCode") or "")
                 if link:
                     mandiri_items.append({"layanan": name, "url": link, "has_answers": is_submitted})
                 else:
@@ -1151,7 +1233,7 @@ def scrape_patient_via_api(context, *, base_url: str, faskes_code: str,
         nakes_items = []
         for layanan in data.get("screening_layanan") or []:
             for pem in layanan.get("list_pemeriksaan") or []:
-                is_submitted = bool(pem.get("IsSubmitForm"))
+                is_submitted = bool(pem.get("is_submit_form", pem.get("IsSubmitForm")))
                 is_skip = bool(pem.get("is_skip"))
                 has_answers = is_submitted and not is_skip
                 if not has_answers and not include_blank_forms:

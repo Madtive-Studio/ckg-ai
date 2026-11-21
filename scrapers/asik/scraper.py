@@ -72,14 +72,19 @@ from helpers import (
     close_popups,
     set_date_filter,
     click_next_page,
+    navigate_to_page_num,
 )
 from helpers.auth import SessionExpiredError, verify_session
 from patient_scraper import (
     scrape_patient_via_api,
-    get_mitra_token,
+    open_detail_via_mulai,
 )
 
 console = Console()
+
+
+class DateFilterMismatchError(RuntimeError):
+    """The list is not filtered to the requested date — the whole run must stop, not just one patient."""
 
 
 class CKGPelayananScraper:
@@ -382,20 +387,17 @@ class CKGPelayananScraper:
         console.print(f"  [green]Total rows for '{tab_name}': {len(rows)}[/green]")
 
     # ─────────────────────────────────────────────────────────────────────
-    # Deep scrape — no Mulai click, no detail-page navigation. Reads patient
-    # list from the captured /api/pkg/list-claim response, then calls
-    # /api/pkg/detail-screening directly per patient. Forms (both Mandiri and
-    # Nakes) are still read by opening their URLs in new tabs and scraping
-    # the SurveyJS DOM (see patient_scraper.scrape_patient_via_api).
+    # Deep scrape. Reads the patient list the page decoded, then per patient
+    # clicks "Mulai" and reads the detail page in a separate tab (the list
+    # page never navigates away — see patient_scraper.open_detail_via_mulai).
+    # Forms (both Mandiri and Nakes) are read by opening their URLs in new
+    # tabs and scraping the SurveyJS DOM (patient_scraper.scrape_patient_via_api).
     # ─────────────────────────────────────────────────────────────────────
     def _deep_scrape_patients(self, page: Page, tab_name: str, result_key: str,
                               detected_total_pages: int | None = None) -> list[dict]:
         enriched_rows = []
         max_pages = self.args.max_pages or detected_total_pages or self.config.get("max_pages", 500)
         page_num = 1
-
-        mitra = get_mitra_token(page.context, self.base_url)
-        console.print(f"  [dim]mitra token: {mitra[:24]}…[/dim]")
 
         while page_num <= max_pages:
             total_pages_label = detected_total_pages or "?"
@@ -407,26 +409,6 @@ class CKGPelayananScraper:
                 else:
                     console.print(f"  Page {page_num}: No list-claim records — stopping")
                 break
-
-            # Date-integrity guard. Every list-claim row carries `screening_date`.
-            # When the date filter is correctly applied to a single day, ALL rows
-            # carry that exact date. If any row's date differs, the filter did not
-            # take and we're reading the page's DEFAULT range — refuse to emit
-            # rows that would be mislabeled with the requested date. (set_date_filter
-            # already raises on UI failure; this is the data-side backstop so no
-            # future picker regression can silently produce wrong-dated data.)
-            if self.date:
-                wrong = sorted({
-                    str(r.get("screening_date"))
-                    for r in records
-                    if r.get("screening_date") != self.date
-                })
-                if wrong:
-                    raise RuntimeError(
-                        f"Date filter mismatch on '{tab_name}' page {page_num}: "
-                        f"requested {self.date} but list-claim returned rows dated "
-                        f"{wrong}. Aborting to avoid emitting wrong-dated records."
-                    )
 
             console.print(f"\n  [cyan]API scraping page {page_num}/{total_pages_label} "
                           f"({len(records)} patients)[/cyan]")
@@ -444,32 +426,49 @@ class CKGPelayananScraper:
 
                 reg_id = rec.get("reg_id")
                 faskes_code = rec.get("faskes_code")
-                screening_date = rec.get("screening_date") or self.date
-                label = f"{rec.get('patient_full_name','?').strip()} ({rec.get('ticket_number','')})"
+                ticket_number = rec.get("ticket_number") or ""
+                label = f"{(rec.get('patient_full_name') or '?').strip()} ({ticket_number})"
 
                 # Per-patient scrape with mid-run session-expiry recovery.
-                # If detail-screening or /encrypt returns 401/403, re-run login
-                # (CAPTCHA) + refresh mitra token + retry the same patient once.
+                # If the detail page or a form bounces to login, re-run login
+                # (CAPTCHA), restore the list (date / tab / page) and retry the
+                # same patient once.
                 _attempted_relogin = False
                 while True:
                     try:
+                        data = open_detail_via_mulai(page, ticket_number=ticket_number, reg_id=reg_id)
+
+                        # Date-integrity guard. The list is filtered by examination date, which only the
+                        # detail carries (list rows have just the registration date, which may be earlier).
+                        # A different examination date means the filter did not take and we're reading the
+                        # page's DEFAULT range — refuse to emit rows mislabeled with the requested date.
+                        if self.date and data.get("screening_date") != self.date:
+                            raise DateFilterMismatchError(
+                                f"Date filter mismatch on '{tab_name}' page {page_num}: requested "
+                                f"{self.date} but {ticket_number} was examined on "
+                                f"{data.get('screening_date')}. Aborting to avoid emitting wrong-dated records."
+                            )
+
                         detail = scrape_patient_via_api(
                             page.context,
                             base_url=self.base_url,
                             faskes_code=faskes_code,
-                            screening_date=screening_date,
+                            screening_date=data.get("screening_date") or self.date,
                             reg_id=reg_id,
-                            mitra=mitra,
+                            mitra="",
                             patient_label=label,
                             pelayanan_nakes_only=bool(self.config.get("pelayanan_nakes_only", False)),
                             include_blank_forms=bool(self.config.get("include_blank_forms", False)),
                             skip_forms=bool(getattr(self.args, "list_only", False)),
                             mandiri_only=self.mandiri_only,
                             scrape_tatalaksana=bool(self.config.get("scrape_tatalaksana", True)),
+                            detail=data,
                         )
                         enriched_rows.append(detail)
                         self._save_progress(result_key, enriched_rows)
                         break
+                    except DateFilterMismatchError:
+                        raise
                     except SessionExpiredError as e:
                         if _attempted_relogin:
                             console.print(f"    [red]Re-login still failed for {label}: {e}[/red]")
@@ -496,13 +495,13 @@ class CKGPelayananScraper:
                                 "source_row": f"Page {page_num} reg_id={reg_id}",
                             })
                             break
-                        # Refresh mitra token with new session; reuse loop body.
+                        # Login left the list page, so its date / tab / page are gone — rebuild them.
                         try:
-                            mitra = get_mitra_token(page.context, self.base_url)
-                        except Exception as mt_err:
-                            console.print(f"    [red]Could not refresh mitra after re-login: {mt_err}[/red]")
+                            self._restore_list(page, tab_name, page_num)
+                        except Exception as restore_err:
+                            console.print(f"    [red]Could not restore the patient list after re-login: {restore_err}[/red]")
                             enriched_rows.append({
-                                "error": f"mitra refresh failed: {mt_err}",
+                                "error": f"list restore failed: {restore_err}",
                                 "source_row": f"Page {page_num} reg_id={reg_id}",
                             })
                             break
@@ -525,6 +524,16 @@ class CKGPelayananScraper:
             page_num += 1
 
         return enriched_rows
+
+    def _restore_list(self, page: Page, tab_name: str, page_num: int) -> None:
+        """Bring the list back to the requested date, tab and page (after a re-login navigated away from it)."""
+        navigate_to_pelayanan(page, self.base_url)
+        close_popups(page, silent=True)
+        if self.date:
+            set_date_filter(page, self.date)
+        self._ensure_on_tab(page, tab_name)
+        navigate_to_page_num(page, page_num)
+        page.wait_for_timeout(2000)
 
     def _records_from_list_claim(self, page: Page, wait_ms: int = 4000) -> list[dict]:
         """Pull the patient list the SPA just loaded.

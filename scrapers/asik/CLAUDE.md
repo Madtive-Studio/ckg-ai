@@ -16,29 +16,77 @@ demographic data + self-assessment forms + nakes-service forms.
 ```
 CLI args → launch browser → login (CAPTCHA) → navigate to /ckg-pelayanan
 → close popups → set date range → for each tab (Belum/Sedang/Selesai Pemeriksaan):
-    → click tab (browser fires POST /api/pkg/list-claim)
+    → click tab (browser fires POST /api/pkg/ssi/list-kunjungan-umum, encrypted)
     → for each page:
-        → read patient list from interceptor's last list-claim response
-        → for each record:
-            → POST /api/pkg/detail-screening with reg_id
-              (one call returns demographics + domicile + every form URL
-               + is_have_tatalaksana flag + program_code)
+        → read the patient list the page decoded (JSON.parse observer, `__ckgList`)
+        → for each record (open_detail_via_mulai):
+            → arm a Vue-router guard on the list page, click the row's "Mulai"
+            → the guard CANCELS the navigation and records the encrypted
+              detail-page URL (/ckg-pelayanan/detail-pemeriksaan?_d=…)
+            → open that URL in a new tab; it fires POST
+              /api/pkg/ssi/detail-screening-ssi (encrypted) and decodes it;
+              the observer hands us `data` (`__ckgDetail`): demographics +
+              domicile + every form URL + is_have_tatalaksana + program_code
+            → date guard: data.screening_date must equal the requested date
             → batch-open Mandiri form URLs in new tabs, read SurveyJS DOM
             → batch-open Nakes form URLs in new tabs, read SurveyJS DOM
             → if is_have_tatalaksana: POST /api/pkg/tatalaksana/list-detail
               (one call returns the whole follow-up table); batch-open the
               per-row form URLs whose status != "belum_dilakukan"
             → save progress
-        → click_next_page → list-claim refires for next page
+        → click_next_page → the list request refires for the next page
 → write final JSON
 ```
 
+**ASIK encrypts its API (since ~2026-11).** Every request body is sent as
+`{"_d": "…"}` with a per-request ECDH key exchange, and the page decodes the
+responses itself. A plain POST to the old `/api/pkg/detail-screening` now
+returns **400 "Kami menduga bahwa permintaan anda tidak valid"** for every
+patient. We do NOT reimplement the encryption: ASIK's own page makes every
+request, and we only read what it decoded (the `JSON.parse` observer in
+`helpers/browser.py`).
+
 The list page is never navigated away from, so date filter + tab + page
-number stay set throughout — no re-application needed. The detail page
-is never opened either: `/api/pkg/detail-screening` returns everything
-the dialog used to render. Forms still must be opened as tabs because
-their answers come back AES-encrypted via `cha-formbuilder`, so we read
-the SurveyJS DOM instead.
+number stay set throughout. That is why the Mulai click is captured with a
+**router guard** and opened in a separate tab: letting it navigate (or going
+back) resets the date to the default week and the tab to Belum; blocking only
+`history.pushState` is not enough either — the router still renders the
+detail page in place. Clicking Mulai only opens the page (verified for the
+Selesai tab; the clinic confirmed it does not change status on the Belum tab
+either). Forms still must be opened as tabs, and the SurveyJS DOM read.
+
+**Date guard.** List rows carry only `register_date`, which can be earlier
+than the examination date the list is filtered by (a patient registered on
+the 19th and examined on the 20th is listed on the 20th). The guard therefore
+checks `screening_date` from the detail, and stops the whole run on a
+mismatch (`DateFilterMismatchError`).
+
+**Field names changed.** `detail-screening-ssi` uses snake_case
+(`form_link`, `is_submit_form`, `form_name`, `patient_birth_date`,
+`patient_fullname`, `wali_fullname`, top-level `ticket_number`); the old
+PascalCase / `*_born_date` / `*_full_name` names are kept as fallbacks.
+
+### Not yet verified (check when the data exists, then update this section)
+
+Live-tested 2026-11-21 on Puskesmas Bojong Genteng, date 2026-11-20 (Selesai
+tab: Mulai capture, paging, identity, Mandiri answers). Still open:
+
+1. **Nakes answers.** No patient on that date had a submitted Nakes form
+   (`total_submit_layanan: 0`), so reading a *filled* Nakes form is unproven.
+   The reader logs `[verify] submitted form '…' read with no answers` when a
+   form ASIK marks submitted comes back empty — if that shows up, the reader
+   or the answer gate (`form-get-one`) needs fixing.
+2. **Tatalaksana.** No patient had `is_have_tatalaksana`. `fetch_tatalaksana_detail`
+   still sends the plain POST `/api/pkg/tatalaksana/list-detail`, which is
+   likely rejected like detail-screening was; a failure is recorded per patient
+   as `tatalaksana: {"error": …}` and logged as `Tatalaksana read failed`.
+3. **`asik_patient` (per-NIK scraper)** still calls the old
+   `/api/pkg/detail-screening` via `scrape_patient_via_api` without `detail=`,
+   so it fails with the 400 above. Not fixed yet.
+4. **Belum / Sedang tabs with patients.** Both were empty on 2026-11-20, so the
+   Mulai capture is only proven on the Selesai tab.
+5. **Occasional detail timeout.** One of the first 27 patients (6V4-AAQ) failed
+   with "detail-screening-ssi … was not decoded within 20000 ms"; no retry yet.
 
 Measured on 2026-04-17 (11 patients, headless, session reuse): ~6 s/patient
 (legacy DOM-driven flow was ~53 s/patient before this was rewritten).
@@ -67,7 +115,8 @@ on `Skrining Penyakit Periodontal` flipping between `"Tidak"`/`"Ya"` and
 
 The fix (`_batch_read_forms_via_tabs`):
 1. **Subscribe** `tab.on("response", ...)` and flip a per-tab flag when
-   `skrining-layanan` returns `200`. This must happen *before* `tab.goto`
+   `form-get-one` (current form pages) or `skrining-layanan` (older ones)
+   returns `200`. This must happen *before* `tab.goto`
    — subscribing after goto risks missing a fast response.
 2. After goto, `_poll_flag` blocks up to 6s waiting for the flag.
 3. Fixed `wait_for_timeout(120)` after the flag — enough time for
@@ -201,7 +250,7 @@ sections appear conditionally), which the generic SurveyJS reader handles.
 | Module | Does what |
 |--------|-----------|
 | `scraper.py` | CLI parsing, tab iteration, list-claim pagination loop, progress saving. `_deep_scrape_patients` reads patient records from the captured list-claim response and dispatches to `scrape_patient_via_api`. |
-| `patient_scraper.py` | `scrape_patient_via_api` calls `/api/pkg/detail-screening` then batch-opens form URLs in tabs and reads them via `_read_all_form_fields`. When `is_have_tatalaksana`, `scrape_patient_tatalaksana` fetches `/api/pkg/tatalaksana/list-detail` and reads recorded per-row forms. Also `get_mitra_token` / `fetch_detail_screening` / `fetch_tatalaksana_detail` / Indonesian formatter helpers. |
+| `patient_scraper.py` | `open_detail_via_mulai` gets the decoded detail by clicking Mulai (see Data flow). `scrape_patient_via_api` takes that `detail=` (or, without it, falls back to the legacy plain `/api/pkg/detail-screening`, now rejected) then batch-opens form URLs in tabs and reads them via `_read_all_form_fields`. When `is_have_tatalaksana`, `scrape_patient_tatalaksana` fetches `/api/pkg/tatalaksana/list-detail` and reads recorded per-row forms. Also `get_mitra_token` / `fetch_detail_screening` / `fetch_tatalaksana_detail` / Indonesian formatter helpers. |
 | `captcha_solver.py` | Decoupled CAPTCHA solver — manual input now, LLM API later |
 | `helpers/auth.py` | Login flow (visible + headless), navigation, popup removal |
 | `helpers/browser.py` | Browser launch, session persistence, API response interception |

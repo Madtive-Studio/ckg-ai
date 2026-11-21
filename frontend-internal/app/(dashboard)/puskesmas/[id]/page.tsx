@@ -33,7 +33,7 @@ import { SchoolCronCard } from "@/components/school/school-cron-card";
 import { usePuskesmas } from "@/lib/hooks/use-puskesmas";
 import { useScrapeJobList } from "@/lib/hooks/use-scrape";
 import type { CredKind } from "@/lib/api/puskesmas";
-import { SOURCE_NAME } from "@/lib/source-names";
+import { SOURCE_NAME, SCRAPE_KIND_LABEL } from "@/lib/source-names";
 
 export default function PuskesmasDetailPage({
   params,
@@ -66,11 +66,11 @@ export default function PuskesmasDetailPage({
 
       <PageHeader
         title={detail.data?.name ?? "Memuat…"}
-        description="Kelola kredensial dan jalankan scrape."
+        description="Kelola kredensial dan jalankan pengambilan data."
         actions={
           <Button onClick={() => setScrapeOpen(true)} disabled={!detail.data}>
             <PlayCircle className="h-4 w-4" />
-            Mulai scrape
+            Mulai ambil data
           </Button>
         }
       />
@@ -136,7 +136,7 @@ export default function PuskesmasDetailPage({
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Job scrape terbaru</h2>
+        <h2 className="text-lg font-semibold">Proses ambil data terbaru</h2>
         {jobs.error && <ErrorState error={jobs.error} />}
         <div className="rounded-lg border border-[var(--border)]">
           <Table>
@@ -154,7 +154,7 @@ export default function PuskesmasDetailPage({
               {jobs.data?.items.map((j) => (
                 <TableRow key={j.id}>
                   <TableCell className="font-medium">{j.date_filter}</TableCell>
-                  <TableCell className="uppercase">{j.kind}</TableCell>
+                  <TableCell>{SCRAPE_KIND_LABEL[j.kind]}</TableCell>
                   <TableCell>
                     <ScrapeStatusBadge status={j.status} />
                   </TableCell>
@@ -181,7 +181,7 @@ export default function PuskesmasDetailPage({
           </Table>
           {jobs.data && jobs.data.items.length === 0 && (
             <div className="p-6">
-              <EmptyState title="Belum ada job scrape" />
+              <EmptyState title="Belum ada proses ambil data" />
             </div>
           )}
         </div>

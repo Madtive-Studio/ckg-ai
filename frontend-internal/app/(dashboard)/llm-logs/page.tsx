@@ -165,7 +165,7 @@ export default function LlmLogsPage() {
     if (ids.length === 0) return;
     try {
       const res = await retryBulk.mutateAsync(ids);
-      const parts = [`${res.triggered} job merge dipicu`];
+      const parts = [`${res.triggered} proses gabung data dipicu`];
       if (res.skipped > 0) parts.push(`${res.skipped} dilewati`);
       toast.success(parts.join(", "));
       if (res.triggered > 0) {
@@ -440,7 +440,7 @@ export default function LlmLogsPage() {
                           <div className="rounded-lg border border-red-200 bg-red-50 p-3">
                             <div className="mb-2 flex items-center justify-between gap-3">
                               <div className="text-xs font-bold uppercase tracking-wide text-red-700">
-                                Error
+                                Kesalahan
                               </div>
                               {l.source === "merge_patient_data" &&
                                 l.patient_id &&

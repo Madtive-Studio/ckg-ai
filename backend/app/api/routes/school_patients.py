@@ -29,7 +29,7 @@ router = APIRouter(prefix="/school-patients", tags=["school-patients"])
 def _authorize(principal: Principal, puskesmas_id: uuid.UUID) -> None:
     # Same-clinic 404 for foreign rows (no existence oracle), matching patients.
     if principal.typ == "user" and principal.puskesmas_id != puskesmas_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "School patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien sekolah tidak ditemukan")
 
 
 def _scope_puskesmas(
@@ -41,7 +41,7 @@ def _scope_puskesmas(
         if puskesmas_id is None:
             return principal.puskesmas_id
         if puskesmas_id != principal.puskesmas_id:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
     return puskesmas_id
 
 
@@ -166,7 +166,7 @@ def decrypt_school_patient(
         .where(SchoolPatient.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "School patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien sekolah tidak ditemukan")
     _authorize(principal, obj.puskesmas_id)
     enforce_decrypt_rate_limit(principal.id, id)
     data = decrypt_json(obj.scraped_sekolah_data) if obj.scraped_sekolah_data else None
@@ -195,5 +195,5 @@ def delete_school_patient(
 ) -> None:
     obj = crud.get(db, id)
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "School patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien sekolah tidak ditemukan")
     crud.soft_delete(db, obj)

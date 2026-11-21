@@ -10,7 +10,7 @@ export default function ObesitasReportPage() {
       title="Kertas Kerja Obesitas"
       description="Registri Obesitas (format dirjen, sheet 'Obesitas'): identitas, hasil pemeriksaan antropometri (BB, TB, IMT) pada tanggal berkunjung CKG, dan follow-up berat badan pada bulan kontrol (3–6 bulan setelah CKG)."
       showClearCache
-      exportLabel="Export Registri Obesitas"
+      exportLabel="Unduh Registri Obesitas"
       exportFilenamePrefix="Registri Obesitas"
     />
   );

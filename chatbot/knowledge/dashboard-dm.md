@@ -71,7 +71,7 @@ Tiga batang:
 
 ## Arti tulisan status di layar
 
-- **"Computed <tanggal jam> · cached/fresh"** = kapan angka grafik terakhir
+- **"Dihitung <tanggal jam> · dari cache/baru dihitung"** = kapan angka grafik terakhir
   dihitung. Hasil disimpan sementara (**cache ~30 jam**) dan dihitung ulang
   otomatis tiap pagi ~05.00 WIB, jadi perubahan data Medisy/ASIK baru
   terlihat paling lambat besok pagi.

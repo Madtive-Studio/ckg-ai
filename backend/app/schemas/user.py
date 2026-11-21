@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 def _validate_password_bytes(value: str) -> str:
     if len(value.encode("utf-8")) > 72:
-        raise ValueError("password must be at most 72 bytes when UTF-8 encoded")
+        raise ValueError("Kata sandi terlalu panjang (maksimal 72 byte)")
     return value
 
 

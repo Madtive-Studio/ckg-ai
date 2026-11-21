@@ -25,7 +25,7 @@ export default function PatientDetailPage({
   const handleSyncAsik = async () => {
     try {
       const job = await startSync.mutateAsync({ patientId: id });
-      toast.success("Sync ASIK dimulai");
+      toast.success("Pengiriman ke ASIK dimulai");
       router.push(`/sync-jobs/${job.id}`);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -75,12 +75,12 @@ export default function PatientDetailPage({
                 disabled={startSync.isPending}
                 title={
                   p.has_merged_data
-                    ? "Sync merged_data ke ASIK"
-                    : "Sync data Medisy-saja (dikonversi otomatis ke bentuk ASIK) ke ASIK"
+                    ? "Kirim data gabungan ke ASIK"
+                    : "Kirim data yang hanya ada di Medisy (dikonversi otomatis ke bentuk ASIK) ke ASIK"
                 }
               >
                 <Upload className="h-4 w-4" />
-                Sync data ASIK
+                Kirim ke ASIK
               </Button>
             )}
             {canCreate && (

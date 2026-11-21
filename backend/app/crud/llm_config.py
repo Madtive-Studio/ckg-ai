@@ -124,7 +124,7 @@ def create(db: Session, data: LlmConfigCreate) -> LlmConfig:
             db.rollback()
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
-                "Could not activate; another active config exists",
+                "Gagal mengaktifkan; sudah ada konfigurasi aktif lain",
             )
     if data.is_active_captcha:
         try:
@@ -133,7 +133,7 @@ def create(db: Session, data: LlmConfigCreate) -> LlmConfig:
             db.rollback()
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
-                "Could not activate for captcha; another captcha-active config exists",
+                "Gagal mengaktifkan untuk captcha; sudah ada konfigurasi captcha yang aktif",
             )
     if data.is_active_chatbot:
         try:
@@ -142,7 +142,7 @@ def create(db: Session, data: LlmConfigCreate) -> LlmConfig:
             db.rollback()
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
-                "Could not activate for chatbot; another chatbot-active config exists",
+                "Gagal mengaktifkan untuk chatbot; sudah ada konfigurasi chatbot yang aktif",
             )
     if data.is_active_loop_agent:
         try:
@@ -151,7 +151,7 @@ def create(db: Session, data: LlmConfigCreate) -> LlmConfig:
             db.rollback()
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
-                "Could not activate for loop agent; another loop-agent-active config exists",
+                "Gagal mengaktifkan untuk agen loop; sudah ada konfigurasi agen loop yang aktif",
             )
     if data.is_active_loop_reviewer:
         try:
@@ -160,7 +160,7 @@ def create(db: Session, data: LlmConfigCreate) -> LlmConfig:
             db.rollback()
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
-                "Could not activate for loop reviewer; another loop-reviewer-active config exists",
+                "Gagal mengaktifkan untuk peninjau loop; sudah ada konfigurasi peninjau loop yang aktif",
             )
     db.commit()
     db.refresh(obj)
@@ -186,13 +186,13 @@ def set_active(db: Session, target_id: uuid.UUID) -> LlmConfig:
         .where(LlmConfig.id == target_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
     try:
         _set_active_in_txn(db, target_id)
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "Could not activate; constraint violation")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Gagal mengaktifkan; data bertentangan dengan data lain")
     db.refresh(obj)
     return obj
 
@@ -204,13 +204,13 @@ def set_active_captcha(db: Session, target_id: uuid.UUID) -> LlmConfig:
         .where(LlmConfig.id == target_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
     try:
         _set_active_captcha_in_txn(db, target_id)
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "Could not activate for captcha; constraint violation")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Gagal mengaktifkan untuk captcha; data bertentangan dengan data lain")
     db.refresh(obj)
     return obj
 
@@ -222,13 +222,13 @@ def set_active_chatbot(db: Session, target_id: uuid.UUID) -> LlmConfig:
         .where(LlmConfig.id == target_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
     try:
         _set_active_chatbot_in_txn(db, target_id)
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "Could not activate for chatbot; constraint violation")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Gagal mengaktifkan untuk chatbot; data bertentangan dengan data lain")
     db.refresh(obj)
     return obj
 
@@ -240,13 +240,13 @@ def set_active_loop_agent(db: Session, target_id: uuid.UUID) -> LlmConfig:
         .where(LlmConfig.id == target_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
     try:
         _set_active_loop_agent_in_txn(db, target_id)
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "Could not activate for loop agent; constraint violation")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Gagal mengaktifkan untuk agen loop; data bertentangan dengan data lain")
     db.refresh(obj)
     return obj
 
@@ -258,13 +258,13 @@ def set_active_loop_reviewer(db: Session, target_id: uuid.UUID) -> LlmConfig:
         .where(LlmConfig.id == target_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
     try:
         _set_active_loop_reviewer_in_txn(db, target_id)
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "Could not activate for loop reviewer; constraint violation")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Gagal mengaktifkan untuk peninjau loop; data bertentangan dengan data lain")
     db.refresh(obj)
     return obj
 
@@ -338,27 +338,27 @@ def soft_delete(db: Session, obj: LlmConfig) -> None:
     if obj.is_active:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "Cannot delete the active llm_config; activate another config first",
+            "Konfigurasi LLM yang aktif tidak bisa dihapus; aktifkan konfigurasi lain dulu",
         )
     if obj.is_active_captcha:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "Cannot delete the captcha-active llm_config; activate another config first",
+            "Konfigurasi LLM yang aktif untuk captcha tidak bisa dihapus; aktifkan konfigurasi lain dulu",
         )
     if obj.is_active_chatbot:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "Cannot delete the chatbot-active llm_config; activate another config first",
+            "Konfigurasi LLM yang aktif untuk chatbot tidak bisa dihapus; aktifkan konfigurasi lain dulu",
         )
     if obj.is_active_loop_agent:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "Cannot delete the loop-agent-active llm_config; activate another config first",
+            "Konfigurasi LLM yang aktif untuk agen loop tidak bisa dihapus; aktifkan konfigurasi lain dulu",
         )
     if obj.is_active_loop_reviewer:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "Cannot delete the loop-reviewer-active llm_config; activate another config first",
+            "Konfigurasi LLM yang aktif untuk peninjau loop tidak bisa dihapus; aktifkan konfigurasi lain dulu",
         )
     obj.deleted_at = datetime.now(UTC)
     db.commit()
@@ -372,5 +372,5 @@ def reveal(db: Session, admin_id: uuid.UUID, config_id: uuid.UUID) -> str:
         .where(LlmConfig.id == config_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
     return decrypt_json(obj.api_key_enc)["api_key"]

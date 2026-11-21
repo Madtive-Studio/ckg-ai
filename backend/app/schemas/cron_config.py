@@ -20,7 +20,7 @@ class CronConfigCreate(BaseModel):
     @model_validator(mode="after")
     def _create_requires_sync(self) -> "CronConfigCreate":
         if self.create_new and self.sync_mode is CronSyncMode.OFF:
-            raise ValueError("create_new requires sync_mode to be enabled (not OFF)")
+            raise ValueError("Membuat pasien di ASIK membutuhkan pengiriman ke ASIK aktif")
         return self
 
 

@@ -61,7 +61,7 @@ export function StartLoopDialog({
         pin_ref: pinRef.trim() || undefined,
         open_pr: openPr === "default" ? undefined : openPr === "on",
       });
-      toast.success("Loop run dimulai");
+      toast.success("Proses agen loop dimulai");
       onOpenChange(false);
       router.push(`/loop-runs/${run.id}`);
     } catch (err) {
@@ -73,7 +73,7 @@ export function StartLoopDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Jalankan Loop Agent</DialogTitle>
+          <DialogTitle>Jalankan Agen Loop</DialogTitle>
           <DialogDescription>
             Agen memanggil API Medisy puskesmas ini, membandingkan hasil klien
             dan konverter kita dengan data langsung, dan membuka PR jika ada yang terlewat.

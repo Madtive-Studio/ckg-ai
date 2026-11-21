@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>CKG Admin</CardTitle>
-          <CardDescription>Sign in to manage the platform.</CardDescription>
+          <CardDescription>Masuk untuk mengelola platform.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Kata sandi</Label>
               <Input
                 id="password"
                 type="password"
@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
               )}
             </div>
             <Button type="submit" className="w-full" disabled={login.isPending}>
-              {login.isPending ? "Signing in..." : "Sign in"}
+              {login.isPending ? "Masuk…" : "Masuk"}
             </Button>
           </form>
         </CardContent>

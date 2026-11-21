@@ -35,7 +35,7 @@ export function MergedDataDetail({
     return (
       <Card className="shadow-sm">
         <CardContent className="py-8 text-center text-sm text-[var(--muted-foreground)]">
-          Merged data tidak tersedia atau format tidak dikenali.
+          Data gabungan tidak tersedia atau format tidak dikenali.
         </CardContent>
       </Card>
     );
@@ -110,7 +110,7 @@ export function MergedDataDetail({
       {merged.sections.length === 0 && (
         <Card className="shadow-sm">
           <CardContent className="py-8 text-center text-sm text-[var(--muted-foreground)]">
-            Tidak ada section pada data merged.
+            Tidak ada bagian pada data gabungan.
           </CardContent>
         </Card>
       )}

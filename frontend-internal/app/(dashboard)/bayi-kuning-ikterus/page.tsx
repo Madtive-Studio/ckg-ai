@@ -11,7 +11,7 @@ export default function BayiKuningIkterusPage() {
       title="Kertas Kerja Bayi Kuning - Ikterus"
       description="Registri bayi baru lahir dengan klasifikasi MTBM 'Ikterus' atau 'Ikterus berat' (format dirjen, sheet 'Bayi Kuning_Ikterus'): identitas, hasil pemeriksaan pada tanggal berkunjung, dan pemantauan ikterus kunjungan berikutnya."
       showClearCache
-      exportLabel="Export Registri Ikterus"
+      exportLabel="Unduh Registri Ikterus"
       exportFilenamePrefix="Registri Bayi Kuning Ikterus"
     />
   );

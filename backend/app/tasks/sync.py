@@ -462,7 +462,7 @@ def _execute_sync(
                                 )
                             sync_job_crud.mark_cancelled(
                                 db, job,
-                                error_message="shared ASIK session expired — requeued",
+                                error_message="sesi ASIK bersama kedaluwarsa — diantrekan ulang",
                             )
                             try:
                                 redis_client.publish(chan, "__cancelled__")
@@ -681,7 +681,7 @@ def run_sync(self, job_id: str, headless: bool = True) -> None:
             .where(Patient.id == job.patient_id)
         )
         if patient is None:
-            sync_job_crud.mark_failed(db, job, "patient not found", datetime.now(UTC))
+            sync_job_crud.mark_failed(db, job, "pasien tidak ditemukan", datetime.now(UTC))
             return
         # EPUS-only fallback is disabled by scope (ALLOW_EPUS_ONLY_SYNC=False): sync
         # requires merged_data (matched + AI-merged). The fallback code below is kept
@@ -707,17 +707,17 @@ def run_sync(self, job_id: str, headless: bool = True) -> None:
             .where(Puskesmas.id == job.puskesmas_id)
         )
         if puskesmas is None:
-            sync_job_crud.mark_failed(db, job, "puskesmas not found", datetime.now(UTC))
+            sync_job_crud.mark_failed(db, job, "puskesmas tidak ditemukan", datetime.now(UTC))
             return
 
         creds = puskesmas_crud.get_cred_decrypted(puskesmas, "asik")
         if creds is None:
-            sync_job_crud.mark_failed(db, job, "asik credentials not set", datetime.now(UTC))
+            sync_job_crud.mark_failed(db, job, "Kredensial ASIK belum diisi", datetime.now(UTC))
             return
 
         base_url_full = f"https://{puskesmas.asik_url}" if puskesmas.asik_url else None
         if not base_url_full:
-            sync_job_crud.mark_failed(db, job, "asik_url not set", datetime.now(UTC))
+            sync_job_crud.mark_failed(db, job, "URL ASIK belum diisi", datetime.now(UTC))
             return
 
         if epus_only_fallback:
@@ -731,7 +731,7 @@ def run_sync(self, job_id: str, headless: bool = True) -> None:
                 return
             if not epus:
                 sync_job_crud.mark_failed(
-                    db, job, "scraped_epus_data is empty", datetime.now(UTC)
+                    db, job, "data Medisy pasien kosong", datetime.now(UTC)
                 )
                 return
             # Pass the asik-preview output through as-is; the runner's

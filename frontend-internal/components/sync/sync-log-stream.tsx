@@ -66,10 +66,10 @@ export function SyncLogStream({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Live log</h2>
+        <h2 className="text-sm font-semibold">Log langsung</h2>
         <Badge variant={STATUS_VARIANT[status]}>{status}</Badge>
       </div>
-      <LogBox lines={lines} emptyText="Waiting for output…" autoScroll />
+      <LogBox lines={lines} emptyText="Menunggu output…" autoScroll />
     </div>
   );
 }
@@ -87,7 +87,7 @@ export function SyncLogHistory({ jobId }: { jobId: string }) {
       </div>
       <LogBox
         lines={lines}
-        emptyText={q.isLoading ? "Loading…" : "No log lines"}
+        emptyText={q.isLoading ? "Memuat…" : "Tidak ada baris log"}
         autoScroll={false}
       />
     </div>

@@ -2,8 +2,8 @@
 
 Halaman **Pasien** menampilkan daftar dan detail **data pasien per orang** —
 gabungan data Medisy dan ASIK untuk tiap kunjungan. Halaman ini **hanya
-untuk dilihat** (read-only): tidak ada tombol ubah data, scrape ulang, atau
-merge di sini.
+untuk dilihat** (read-only): tidak ada tombol ubah data, ambil ulang data, atau
+gabung data di sini.
 
 ## Sumber & gabungan data
 

@@ -47,7 +47,7 @@ def create_cron_config(
 ) -> CronConfigOut:
     pk = db.scalar(select(Puskesmas.id).where(Puskesmas.id == puskesmas_id))
     if pk is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     try:
         obj = crud.create(
             db,
@@ -64,7 +64,7 @@ def create_cron_config(
     except IntegrityError as e:
         db.rollback()
         raise HTTPException(
-            status.HTTP_409_CONFLICT, "cron config already exists for this puskesmas"
+            status.HTTP_409_CONFLICT, "Jadwal untuk puskesmas ini sudah ada"
         ) from e
     return _to_out(obj)
 
@@ -80,7 +80,7 @@ def get_cron_config(
 ) -> CronConfigOut:
     obj = crud.get_by_puskesmas(db, puskesmas_id)
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Cron config not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Jadwal tidak ditemukan")
     return _to_out(obj)
 
 
@@ -198,13 +198,13 @@ def update_cron_config(
 ) -> CronConfigOut:
     obj = crud.get_by_puskesmas(db, puskesmas_id)
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Cron config not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Jadwal tidak ditemukan")
     will_disable = body.enabled is False and obj.enabled is True
     if _has_schedule_change(obj, body) and _active_run_exists(db, puskesmas_id):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "cannot edit schedule fields while a cron run is in progress; "
-            "cancel or wait for it to finish",
+            "Jadwal tidak bisa diubah saat ada proses terjadwal yang berjalan; "
+            "batalkan atau tunggu sampai selesai",
         )
     obj = crud.update(
         db, obj,
@@ -233,7 +233,7 @@ def delete_cron_config(
 ) -> None:
     obj = crud.get_by_puskesmas(db, puskesmas_id)
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Cron config not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Jadwal tidak ditemukan")
     config_id = obj.id
     crud.soft_delete(db, obj)
     _cancel_active_runs_for_config(db, config_id)
@@ -251,10 +251,10 @@ def run_now(
 ) -> CronRunOut:
     cfg = crud.get_by_puskesmas(db, puskesmas_id)
     if cfg is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Cron config not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Jadwal tidak ditemukan")
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     # Pre-check is advisory; the lane partial UNIQUE indexes
     # (uq_cron_runs_active_epus / _asik) are the actual race-safe guard. run-now
@@ -271,7 +271,7 @@ def run_now(
     if active is not None:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a cron run is already in progress for this puskesmas",
+            "Masih ada proses terjadwal yang berjalan untuk puskesmas ini",
         )
 
     # A date-range backfill also owns this puskesmas' run lanes, but between its
@@ -292,7 +292,7 @@ def run_now(
     if active_bf is not None:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a date-range backfill is in progress for this puskesmas",
+            "Proses rentang tanggal untuk puskesmas ini masih berjalan",
         )
 
     today = datetime.now(_JKT).date()
@@ -309,7 +309,7 @@ def run_now(
         db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a cron run is already in progress for this puskesmas",
+            "Masih ada proses terjadwal yang berjalan untuk puskesmas ini",
         ) from e
     try:
         celery_app.send_task("cron.advance", args=[str(run.id), CronStep.EPUS.value])
@@ -320,6 +320,6 @@ def run_now(
             f"broker unreachable: {e}", datetime.now(UTC),
         )
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "cron broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses terjadwal sedang tidak tersedia"
         ) from e
     return cron_run_to_out(run, pk_name)

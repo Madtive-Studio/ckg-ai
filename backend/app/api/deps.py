@@ -29,13 +29,13 @@ def _decode(creds: HTTPAuthorizationCredentials) -> dict:
     try:
         payload = decode_access_token(creds.credentials)
     except jwt.ExpiredSignatureError as e:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token expired") from e
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sesi sudah habis, silakan masuk lagi") from e
     except jwt.InvalidTokenError as e:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token") from e
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sesi tidak valid, silakan masuk lagi") from e
     # Single revocation chokepoint: every auth dep funnels through _decode, so
     # checking here covers admins, users, prod admins, and SSE-via-query alike.
     if is_revoked(payload):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token revoked")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sesi sudah dicabut, silakan masuk lagi")
     return payload
 
 
@@ -62,13 +62,13 @@ def _admin_id_with_scope(
     """
     payload = _decode(creds)
     if payload.get("typ") != "admin":
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin token required")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Hanya admin yang boleh mengakses")
     admin_id = uuid.UUID(payload["sub"])
     stmt = select(Admin.id).where(Admin.id == admin_id)
     if scope is not None:
         stmt = stmt.where(Admin.scope == scope)
     if db.scalar(stmt) is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Admin not found")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Admin tidak ditemukan")
     return admin_id
 
 
@@ -114,7 +114,7 @@ def get_current_user_id(
 ) -> uuid.UUID:
     payload = _decode(creds)
     if payload.get("typ") != "user":
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "User token required")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Hanya pengguna puskesmas yang boleh mengakses")
     return uuid.UUID(payload["sub"])
 
 
@@ -136,14 +136,14 @@ def _principal_from_payload(
             # every endpoint except the allowlisted read-only dashboards.
             stmt = stmt.where(Admin.scope == "internal")
         if db.scalar(stmt) is None:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Admin not found")
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Admin tidak ditemukan")
         return Principal(typ="admin", id=sub, puskesmas_id=None)
     if typ == "user":
         puskesmas_id = db.scalar(select(User.puskesmas_id).where(User.id == sub))
         if puskesmas_id is None:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not found")
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Pengguna tidak ditemukan")
         return Principal(typ="user", id=sub, puskesmas_id=puskesmas_id)
-    raise HTTPException(status.HTTP_403_FORBIDDEN, "Invalid token type")
+    raise HTTPException(status.HTTP_403_FORBIDDEN, "Jenis sesi tidak valid, silakan masuk lagi")
 
 
 def get_principal(

@@ -116,10 +116,10 @@ export function CronConfigFormDialog({
     try {
       if (existing) {
         await update.mutateAsync(values);
-        toast.success("Jadwal cron diperbarui");
+        toast.success("Jadwal diperbarui");
       } else {
         await create.mutateAsync(values);
-        toast.success("Jadwal cron dibuat");
+        toast.success("Jadwal dibuat");
       }
       onOpenChange(false);
     } catch (err) {
@@ -134,10 +134,10 @@ export function CronConfigFormDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {existing ? "Edit jadwal cron" : "Buat jadwal cron"}
+            {existing ? "Ubah jadwal" : "Buat jadwal"}
           </DialogTitle>
           <DialogDescription>
-            Menjalankan scrape ASIK + Medisy dan Merge setiap hari pada waktu Jakarta yang dipilih.
+            Mengambil data ASIK + Medisy dan menggabungkannya setiap hari pada jam WIB yang dipilih.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -195,7 +195,7 @@ export function CronConfigFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cron-lookback">Jendela lookback (hari)</Label>
+            <Label htmlFor="cron-lookback">Jangkauan hari ke belakang</Label>
             <Input
               id="cron-lookback"
               type="number"
@@ -209,10 +209,10 @@ export function CronConfigFormDialog({
               </p>
             )}
             <p className="text-xs text-[var(--muted-foreground)]">
-              Tiap run memproses ulang N hari terakhir hingga tanggal target,
+              Tiap proses mengulang N hari terakhir hingga tanggal target,
               sehingga Medisy/ASIK yang datang terlambat — yang baru cocok dengan
-              tanggal lampau setelah kedua sisi tersedia — tetap ter-scrape +
-              ter-merge. 1 = hanya tanggal target. Default 3.
+              tanggal lampau setelah kedua sisi tersedia — tetap diambil dan
+              digabung. 1 = hanya tanggal target. Bawaan 3.
             </p>
           </div>
 
@@ -228,7 +228,7 @@ export function CronConfigFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Mode merge</Label>
+            <Label>Mode gabung data</Label>
             <Select
               value={form.watch("merge_mode")}
               onValueChange={(v) =>
@@ -241,19 +241,19 @@ export function CronConfigFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="normal">Normal (merge pasien baru)</SelectItem>
+                <SelectItem value="normal">Normal (gabung pasien baru)</SelectItem>
                 <SelectItem value="force_remerge">
-                  Merge ulang paksa (merge ulang semua)
+                  Gabung ulang paksa (gabung ulang semua)
                 </SelectItem>
                 <SelectItem value="no_merge">
-                  Tanpa merge (scrape saja — lewati merge)
+                  Tanpa gabung (ambil data saja)
                 </SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-[var(--muted-foreground)]">
-              Merge ulang paksa menjalankan ulang LLM pada pasien yang sudah
-              di-merge (biaya tambahan). Tanpa merge hanya scrape — pakai saat
-              provider LLM sedang down, lalu merge kemudian.
+              Gabung ulang paksa menjalankan ulang AI pada pasien yang sudah
+              digabung (biaya tambahan). Tanpa gabung hanya mengambil data — pakai
+              saat penyedia AI sedang bermasalah, lalu gabungkan kemudian.
             </p>
           </div>
 
@@ -261,7 +261,7 @@ export function CronConfigFormDialog({
               "isi pemeriksaan" checked ⟺ sync_mode !== "off"; the force
               sub-option maps normal↔force_resync. */}
           <div className="space-y-3">
-            <Label>ASIK (setelah merge)</Label>
+            <Label>ASIK (setelah gabung data)</Label>
 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -286,7 +286,7 @@ export function CronConfigFormDialog({
               </div>
               <p className="text-xs text-[var(--muted-foreground)]">
                 Isi pemeriksaan ASIK untuk pasien yang sudah ada di ASIK (NIK
-                cocok Medisy + ASIK). Diabaikan saat mode merge adalah Tanpa merge.
+                cocok Medisy + ASIK). Diabaikan saat mode gabung data adalah Tanpa gabung.
               </p>
               {form.watch("sync_mode") !== "off" && (
                 <div className="ml-6 flex items-center gap-2">
@@ -306,7 +306,7 @@ export function CronConfigFormDialog({
                     htmlFor="cron-sync-force"
                     className="cursor-pointer text-sm"
                   >
-                    Isi ulang pasien yang sudah tersinkron (sinkron ulang paksa)
+                    Isi ulang pasien yang sudah terkirim (kirim ulang paksa)
                   </Label>
                 </div>
               )}
@@ -330,10 +330,10 @@ export function CronConfigFormDialog({
                 </p>
               )}
               <p className="text-xs text-[var(--muted-foreground)]">
-                Daftarkan pasien Medisy-saja yang bertanda Tandai-CKG dan belum ada
+                Daftarkan pasien yang hanya ada di Medisy, bertanda Tandai-CKG dan belum ada
                 di ASIK — membuatnya dari awal, lalu mengisi pemeriksaannya.
                 Membutuhkan &ldquo;isi pemeriksaan&rdquo; aktif dan alamat
-                default terpasang pada puskesmas ini.
+                bawaan terpasang pada puskesmas ini.
               </p>
             </div>
           </div>

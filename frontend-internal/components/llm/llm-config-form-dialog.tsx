@@ -210,7 +210,7 @@ export function LlmConfigFormDialog({
             <Input id="api_key" type="password" autoComplete="off" {...form.register("api_key")} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ip">Harga input / 1M token</Label>
+            <Label htmlFor="ip">Harga input / 1 juta token</Label>
             <div className="relative">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--muted-foreground)]">$</span>
               <Input id="ip" inputMode="decimal" step="0.01" min="0" className="pl-6" {...form.register("input_price_per_1m")} />
@@ -220,7 +220,7 @@ export function LlmConfigFormDialog({
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="op">Harga output / 1M token</Label>
+            <Label htmlFor="op">Harga output / 1 juta token</Label>
             <div className="relative">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--muted-foreground)]">$</span>
               <Input id="op" inputMode="decimal" step="0.01" min="0" className="pl-6" {...form.register("output_price_per_1m")} />
@@ -230,7 +230,7 @@ export function LlmConfigFormDialog({
             )}
           </div>
           <div className="col-span-2 space-y-2">
-            <Label>Reasoning effort</Label>
+            <Label>Tingkat penalaran (reasoning)</Label>
             <Select
               value={
                 reasoningCustom
@@ -257,11 +257,11 @@ export function LlmConfigFormDialog({
                 <SelectItem value={RE_DEFAULT}>Default (provider yang menentukan)</SelectItem>
                 <SelectItem value="none">None (matikan reasoning)</SelectItem>
                 <SelectItem value="minimal">Minimal</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="low">Rendah</SelectItem>
+                <SelectItem value="medium">Sedang</SelectItem>
+                <SelectItem value="high">Tinggi</SelectItem>
                 <SelectItem value="xhigh">xHigh</SelectItem>
-                <SelectItem value="max">Max</SelectItem>
+                <SelectItem value="max">Maksimal</SelectItem>
                 <SelectItem value={RE_CUSTOM}>Kustom…</SelectItem>
               </SelectContent>
             </Select>
@@ -280,7 +280,7 @@ export function LlmConfigFormDialog({
           </div>
 
           <div className="col-span-2 space-y-2">
-            <Label htmlFor="route_order">Routing pin (OpenRouter)</Label>
+            <Label htmlFor="route_order">Pin rute (OpenRouter)</Label>
             <Input
               id="route_order"
               placeholder="z-ai"

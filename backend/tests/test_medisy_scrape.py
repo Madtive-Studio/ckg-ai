@@ -98,7 +98,7 @@ def test_extract_patients_builds_rows_and_adds_meta_without_touching_the_bundle(
 def test_visit_without_a_nik_is_skipped_with_the_usual_reason():
     rows, skipped, count = adapter.extract_patients([bundle(5, nik=None), bundle(6)], "t")
     assert count == 2 and len(rows) == 1
-    assert skipped == [{"source_id": "5", "reason": "missing NIK"}]
+    assert skipped == [{"source_id": "5", "reason": "NIK kosong"}]
 
 
 def test_visit_with_a_shared_nik_is_skipped_so_two_people_never_overwrite_each_other():
@@ -109,7 +109,7 @@ def test_visit_with_a_shared_nik_is_skipped_so_two_people_never_overwrite_each_o
     old_api = bundle(9)                                    # an API version without the flag behaves as before
     rows, skipped, count = adapter.extract_patients([shared, unique, old_api], "t")
     assert count == 3 and [r[0] for r in rows] == [unique["patient"]["identity"]["number"]] * 2
-    assert skipped == [{"source_id": "7", "reason": "shared NIK (more than one person)"}]
+    assert skipped == [{"source_id": "7", "reason": "NIK dipakai lebih dari satu orang"}]
 
 
 def test_is_medisy_blob_tells_a_bundle_from_a_legacy_epus_blob():
@@ -154,7 +154,7 @@ def test_visits_that_vanish_between_list_and_read_are_not_an_error():
     client = FakeClient({date(2026, 9, 2): [a, b]}, {1: a, 2: b}, missing={2})
     lines = []
     got = adapter.fetch_day_bundles(client, date(2026, 9, 2), on_log=lines.append)
-    assert [x["visit"]["id"] for x in got] == [1] and any("vanished" in line for line in lines)
+    assert [x["visit"]["id"] for x in got] == [1] and any("hilang" in line for line in lines)
 
 
 # ---------------------------------------------------------------------------------------------- blob-shape helpers
@@ -219,7 +219,7 @@ def test_a_single_day_is_fetched_upserted_and_reported(env):
     assert env.success == [((2, 1, 1), None)]          # scraped, inserted, updated
     assert env.commits == 1 and env.failed == []
     assert env.rc.published[-1] == "__done__"
-    assert any("saved 2 patient" in line for line in env.rc.lists["l"])
+    assert any("2 pasien disimpan" in line for line in env.rc.lists["l"])
 
 
 def test_multi_day_job_commits_per_day(env):
@@ -248,7 +248,7 @@ def test_visits_without_a_nik_end_up_in_the_job_notes(env):
     env.client = FakeClient({date(2026, 9, 2): [bundle(9, nik=None), bundle(1)]}, {9: bundle(9, nik=None), 1: bundle(1)})
     run(env)
     (counts, notes), = env.success
-    assert counts[0] == 2 and "source_id=9 reason=missing NIK" in notes
+    assert counts[0] == 2 and "ID kunjungan=9 alasan=NIK kosong" in notes
 
 
 @pytest.mark.parametrize("creds,pk,fragment", [
@@ -278,10 +278,10 @@ def test_bad_job_input_fails_before_any_request(env, job):
 def test_a_medisy_error_fails_the_job_with_a_safe_message(env):
     class Boom(FakeClient):
         def list_visits(self, day, *, ckg_only=True):
-            raise MedisyAuthError("Medisy rejected the token (401)")
+            raise MedisyAuthError("Medisy menolak token (401)")
     env.client = Boom({}, {})
     run(env, creds={"token": "SECRET-" + "t" * 40})
-    assert env.failed == ["Medisy: Medisy rejected the token (401)"]
+    assert env.failed == ["Medisy: Medisy menolak token (401)"]
     assert "SECRET" not in env.failed[0] and not any("SECRET" in line for line in env.rc.lists.get("l", []))
     assert env.rc.published[-1] == "__failed__"
 

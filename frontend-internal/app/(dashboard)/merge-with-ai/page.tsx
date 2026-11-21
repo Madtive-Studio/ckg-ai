@@ -75,13 +75,13 @@ export default function MergeWithAiPage() {
           force,
         });
         toast.success(
-          `${jobs.length} job merge dimulai (${dateFrom} → ${dateTo})`,
+          `${jobs.length} proses gabung data dimulai (${dateFrom} → ${dateTo})`,
         );
         // Don't navigate — N jobs run sequentially; user watches list.
       } else {
         if (!startDate) return;
         const jobs = await startMerge.mutateAsync({ date: startDate, force });
-        toast.success("Job merge dimulai");
+        toast.success("Proses gabung data dimulai");
         if (jobs[0]) router.push(`/merge-with-ai/${jobs[0].id}`);
       }
     } catch (err) {
@@ -131,13 +131,13 @@ export default function MergeWithAiPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Merge With AI"
-        description="Jalankan LLM aktif pada pasien yang cocok untuk menghasilkan satu rekaman gabungan per pasien."
+        title="Gabung Data (AI)"
+        description="Jalankan AI aktif pada pasien yang cocok untuk menghasilkan satu data gabungan per pasien."
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Mulai job merge</CardTitle>
+          <CardTitle>Mulai gabung data</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-4">
@@ -197,18 +197,18 @@ export default function MergeWithAiPage() {
                 onCheckedChange={setForce}
               />
               <Label htmlFor="merge-force" className="cursor-pointer">
-                Paksa merge ulang
+                Paksa gabung ulang
               </Label>
             </div>
             <Button onClick={handleStart} disabled={buttonDisabled}>
-              {startMerge.isPending ? "Memulai…" : "Merge With AI"}
+              {startMerge.isPending ? "Memulai…" : "Gabung data dengan AI"}
             </Button>
           </div>
 
           <div className="text-sm text-[var(--muted-foreground)]">
             {rangeMode ? (
               !startPuskesmasId || !dateFrom || !dateTo ? (
-                "Pilih puskesmas dan rentang tanggal. Satu job merge akan dibuat per hari dan dijalankan berurutan."
+                "Pilih puskesmas dan rentang tanggal. Satu proses gabung data dibuat per hari dan dijalankan berurutan."
               ) : dateFrom > dateTo ? (
                 <span className="text-[var(--destructive)]">
                   Tanggal dari harus sama dengan atau sebelum Tanggal sampai.
@@ -222,7 +222,7 @@ export default function MergeWithAiPage() {
                         86_400_000,
                     ) + 1}
                   </span>{" "}
-                  job merge, satu per hari dari {dateFrom} sampai {dateTo},
+                  proses gabung data, satu per hari dari {dateFrom} sampai {dateTo},
                   dijalankan berurutan. Hari tanpa pasien yang cocok selesai
                   seketika.
                 </>
@@ -236,24 +236,24 @@ export default function MergeWithAiPage() {
                 {asApiError(preview.error).message}
               </span>
             ) : matched === 0 ? (
-              "Tidak ada pasien yang cocok pada tanggal ini — pilih tanggal lain atau jalankan scrape terlebih dahulu."
+              "Tidak ada pasien yang cocok pada tanggal ini — pilih tanggal lain atau ambil data terlebih dahulu."
             ) : force ? (
               <>
                 <span className="font-medium">{matched}</span> pasien yang
-                cocok akan di-merge ulang ({already} sudah memiliki data
-                gabungan, {pending} belum di-merge).
+                cocok akan digabung ulang ({already} sudah memiliki data
+                gabungan, {pending} belum digabung).
               </>
             ) : pending === 0 ? (
               <>
                 Semua {matched} pasien yang cocok pada tanggal ini sudah
                 memiliki data gabungan. Aktifkan{" "}
-                <span className="font-medium">Paksa merge ulang</span> untuk
+                <span className="font-medium">Paksa gabung ulang</span> untuk
                 menjalankan lagi.
               </>
             ) : (
               <>
                 <span className="font-medium">{pending}</span> pasien yang
-                cocok menunggu merge ({already} sudah di-merge dari {matched}).
+                cocok menunggu digabung ({already} sudah digabung dari {matched}).
               </>
             )}
           </div>
@@ -263,7 +263,7 @@ export default function MergeWithAiPage() {
       </Card>
 
       <div className="space-y-3">
-        <h2 className="text-base font-semibold">Recent merge jobs</h2>
+        <h2 className="text-base font-semibold">Proses gabung data terbaru</h2>
         <div className="flex flex-wrap gap-4">
           <div className="w-64 space-y-1">
             <Label>Puskesmas</Label>
@@ -272,12 +272,12 @@ export default function MergeWithAiPage() {
               onChange={(v) => setPuskesmasId(v ?? "")}
               useOptions={usePuskesmasOptions}
               selectedLabel={filterPkDetail.data?.name}
-              placeholder="Select a puskesmas…"
-              allOptionLabel="All puskesmas"
+              placeholder="Pilih puskesmas…"
+              allOptionLabel="Semua puskesmas"
             />
           </div>
           <div className="w-44 space-y-1">
-            <Label>Date</Label>
+            <Label>Tanggal</Label>
             <div className="flex gap-1">
               <Input
                 type="date"
@@ -291,7 +291,7 @@ export default function MergeWithAiPage() {
                   size="sm"
                   className="px-2 text-[var(--muted-foreground)]"
                   onClick={() => setDateFilter("")}
-                  title="Clear date filter"
+                  title="Hapus filter tanggal"
                 >
                   ×
                 </Button>
@@ -307,20 +307,20 @@ export default function MergeWithAiPage() {
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="All statuses" />
+                <SelectValue placeholder="Semua status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="running">Running</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="all">Semua status</SelectItem>
+                <SelectItem value="pending">Menunggu</SelectItem>
+                <SelectItem value="running">Berjalan</SelectItem>
+                <SelectItem value="success">Berhasil</SelectItem>
+                <SelectItem value="failed">Gagal</SelectItem>
+                <SelectItem value="cancelled">Dibatalkan</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="w-44 space-y-1">
-            <Label>Scope</Label>
+            <Label>Cakupan</Label>
             <Select
               value={scope}
               onValueChange={(v) => setScope(v as MergeJobScope)}
@@ -329,8 +329,8 @@ export default function MergeWithAiPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="puskesmas">Puskesmas-wide</SelectItem>
+                <SelectItem value="all">Semua</SelectItem>
+                <SelectItem value="puskesmas">Se-puskesmas</SelectItem>
                 <SelectItem value="patient">Per-NIK</SelectItem>
               </SelectContent>
             </Select>
@@ -347,12 +347,12 @@ export default function MergeWithAiPage() {
                   <TableRow>
                     <TableHead>Puskesmas</TableHead>
                     <TableHead>NIK</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead>Tanggal</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead>Force</TableHead>
-                    <TableHead>Started</TableHead>
-                    <TableHead>Duration</TableHead>
+                    <TableHead>Progres</TableHead>
+                    <TableHead>Paksa</TableHead>
+                    <TableHead>Dimulai</TableHead>
+                    <TableHead>Durasi</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -375,7 +375,7 @@ export default function MergeWithAiPage() {
                           : "—"}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {j.force_remerge ? "yes" : "no"}
+                        {j.force_remerge ? "ya" : "tidak"}
                       </TableCell>
                       <TableCell className="text-xs text-[var(--muted-foreground)]">
                         {j.started_at
@@ -393,7 +393,7 @@ export default function MergeWithAiPage() {
                             href={`/merge-with-ai/${j.id}`}
                             prefetch={false}
                           >
-                            Open
+                            Buka
                           </Link>
                         </Button>
                       </TableCell>
@@ -403,7 +403,7 @@ export default function MergeWithAiPage() {
               </Table>
               {jobs.data.items.length === 0 && (
                 <div className="p-6">
-                  <EmptyState title="No merge jobs yet" />
+                  <EmptyState title="Belum ada proses gabung data" />
                 </div>
               )}
             </div>

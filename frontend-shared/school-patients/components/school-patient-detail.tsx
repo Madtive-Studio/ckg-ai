@@ -163,7 +163,7 @@ export function SchoolPatientDetail({ id }: { id: string }) {
                     tone="blue"
                   />
                   <StatPill
-                    label="Field Terisi"
+                    label="Isian Terisi"
                     value={totals.filled}
                     hint={`/ ${totals.total}`}
                     tone="green"

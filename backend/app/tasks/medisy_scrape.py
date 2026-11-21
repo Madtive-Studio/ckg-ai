@@ -91,7 +91,7 @@ def run_medisy_scrape(
 
     def finish_failed(message: str) -> None:
         scrape_job_crud.mark_failed(db, job, message[:2000], now())
-        _emit(rc, log_key, chan, f"failed: {message[:300]}")
+        _emit(rc, log_key, chan, f"gagal: {message[:300]}")
         try:
             rc.publish(chan, "__failed__")
         except Exception:
@@ -146,7 +146,7 @@ def run_medisy_scrape(
                 except Exception:
                     db.rollback()
                     raise
-                _emit(rc, log_key, chan, f"{day.isoformat()}: saved {len(rows)} patient(s), skipped {len(day_skipped)}")
+                _emit(rc, log_key, chan, f"{day.isoformat()}: {len(rows)} pasien disimpan, {len(day_skipped)} dilewati")
     except MedisyError as exc:
         finish_failed(f"Medisy: {exc}")
         return
@@ -161,7 +161,7 @@ def run_medisy_scrape(
 
     notes = None
     if skipped:
-        notes = f"skipped {len(skipped)}:\n" + "\n".join(f"source_id={s['source_id']} reason={s['reason']}" for s in skipped)
+        notes = f"{len(skipped)} dilewati:\n" + "\n".join(f"ID kunjungan={s['source_id']} alasan={s['reason']}" for s in skipped)
     scrape_job_crud.mark_success(db, job, scraped, inserted, updated, time.monotonic() - t0, now(), notes=notes)
     try:
         rc.publish(chan, "__done__")

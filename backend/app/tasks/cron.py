@@ -966,8 +966,8 @@ def dispatch_backfill_next(cron_backfill_id: str) -> None:
         if any(scopes_conflict(bf.source_scope, s) for s in active_scopes):
             cron_backfill_crud.mark_failed(
                 db, bf, next_date,
-                "another cron run touching the same source is already in "
-                "progress for this puskesmas",
+                "Proses terjadwal lain dengan sumber yang sama masih berjalan "
+                "untuk puskesmas ini",
                 datetime.now(UTC),
             )
             return

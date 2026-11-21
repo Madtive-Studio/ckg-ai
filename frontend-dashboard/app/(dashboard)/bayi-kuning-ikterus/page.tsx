@@ -10,7 +10,7 @@ export default function BayiKuningIkterusPage() {
       title="Registri Bayi Kuning - Ikterus"
       description="Registri bayi baru lahir dengan klasifikasi 'Ikterus' atau 'Ikterus berat': identitas, hasil pemeriksaan pada tanggal berkunjung, dan pemantauan ikterus kunjungan berikutnya."
       showClearCache={false}
-      exportLabel="Export Registri Ikterus"
+      exportLabel="Unduh Registri Ikterus"
       exportFilenamePrefix="Registri Bayi Kuning Ikterus"
     />
   );

@@ -20,6 +20,7 @@ from app.api.deps import (
 from app.api.pagination import Page, PageParams, page_params, paginate
 from app.celery_app import celery_app
 from app.config import settings
+from app.core.labels import status_label
 from app.core.rate_limit import redis_client
 from app.crud import merge_job as crud
 from app.models.merge_job import MergeJob, MergeStatus
@@ -97,14 +98,14 @@ def _to_job_out(
 
 def _authorize(principal: Principal, puskesmas_id: uuid.UUID) -> None:
     if principal.typ == "user" and principal.puskesmas_id != puskesmas_id:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
 
 
 def _authorize_job(principal: Principal, job: MergeJob) -> None:
     # Object-level: a foreign job returns the SAME 404 as a nonexistent one so
     # job ids in other clinics can't be probed (no 403-vs-404 oracle).
     if principal.typ == "user" and job.puskesmas_id != principal.puskesmas_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
 
 
 def _trigger_kind(principal: Principal) -> tuple[uuid.UUID, TriggererType]:
@@ -171,7 +172,7 @@ def start_merge(
         select(Puskesmas.name).where(Puskesmas.id == puskesmas_id)
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     (puskesmas_name,) = row
 
     if body.date_from is not None and body.date_to is not None:
@@ -198,7 +199,7 @@ def start_merge(
         if matched_count == 0:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "No matched patients on this date for this puskesmas",
+                "Tidak ada pasien yang cocok pada tanggal ini untuk puskesmas ini",
             )
         if not body.force:
             pending_count = db.scalar(
@@ -209,8 +210,8 @@ def start_merge(
             if pending_count == 0:
                 raise HTTPException(
                     status.HTTP_400_BAD_REQUEST,
-                    "All matched patients on this date are already merged. "
-                    "Toggle force to re-merge.",
+                    "Semua pasien yang cocok pada tanggal ini sudah digabung. "
+                    "Aktifkan Paksa gabung ulang untuk menggabungkan lagi.",
                 )
 
     triggered_by_id, triggered_by_type = _trigger_kind(principal)
@@ -267,7 +268,7 @@ def start_merge(
                 )
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "merge already in progress for this puskesmas/date",
+            "Gabung data untuk puskesmas/tanggal ini masih berjalan",
         ) from e
 
     # Dispatch each date's job as an INDEPENDENT task (one small broker message
@@ -324,7 +325,7 @@ def start_merge(
                     len(stranded), puskesmas_id,
                 )
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "merge broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses gabung data sedang tidak tersedia"
         )
     return [_to_job_out(j, puskesmas_name) for j in jobs]
 
@@ -350,22 +351,22 @@ def start_patient_merge(
         ).where(Patient.id == patient_id)
     ).one_or_none()
     if prow is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
     p_id, p_puskesmas_id, p_nik, p_nama, has_asik, has_epus = prow
     # Object-level: hide a foreign patient behind the same 404 as a nonexistent one.
     if principal.typ == "user" and principal.puskesmas_id != p_puskesmas_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
     if not (has_asik and has_epus):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "patient missing scraped data on one or both sides — run scrapes first",
+            "Data pasien dari salah satu atau kedua sumber belum diambil — ambil data dulu",
         )
 
     row = db.execute(
         select(Puskesmas.name).where(Puskesmas.id == p_puskesmas_id)
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     (puskesmas_name,) = row
 
     triggered_by_id, triggered_by_type = _trigger_kind(principal)
@@ -382,7 +383,7 @@ def start_patient_merge(
     except IntegrityError as e:
         db.rollback()
         raise HTTPException(
-            status.HTTP_409_CONFLICT, "merge already in progress for this patient"
+            status.HTTP_409_CONFLICT, "Gabung data untuk pasien ini masih berjalan"
         ) from e
 
     try:
@@ -390,7 +391,7 @@ def start_patient_merge(
     except Exception as e:
         crud.mark_failed(db, job, f"broker unreachable: {e}"[:2000], datetime.now(UTC))
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "merge broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses gabung data sedang tidak tersedia"
         ) from e
     return _to_job_out(job, puskesmas_name, p_nik, p_nama)
 
@@ -408,7 +409,7 @@ def list_jobs(
 ) -> Page[MergeJobOut]:
     if principal.typ == "user":
         if puskesmas_id is not None and puskesmas_id != principal.puskesmas_id:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
         puskesmas_id = principal.puskesmas_id
     stmt = (
         select(MergeJob)
@@ -466,7 +467,7 @@ def get_job(
         .where(MergeJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
     return _to_job_out(
         obj, obj.puskesmas.name,
@@ -489,7 +490,7 @@ def get_job_log(
         .where(MergeJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
     lines = redis_client().lrange(f"merge:job:{job_id}:log", -tail, -1) or []
     return MergeJobLogOut(lines=lines)
@@ -509,7 +510,7 @@ async def stream_job(
         .where(MergeJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
 
     chan = f"merge:job:{job_id}:stream"
@@ -581,10 +582,10 @@ def cancel_job(
         .where(MergeJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
     if obj.status not in (MergeStatus.PENDING, MergeStatus.RUNNING):
-        raise HTTPException(status.HTTP_409_CONFLICT, f"job is {obj.status.value}, cannot cancel")
+        raise HTTPException(status.HTTP_409_CONFLICT, f"Proses berstatus {status_label(obj.status.value)}, tidak bisa dibatalkan")
     puskesmas_name = obj.puskesmas.name
     patient_nik = obj.patient.nik if obj.patient else None
     patient_name = obj.patient.nama if obj.patient else None

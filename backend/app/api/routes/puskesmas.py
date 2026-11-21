@@ -42,7 +42,7 @@ _PUSKESMAS_OUT_COLS = (
 
 def _authorize_cred_access(principal: Principal, puskesmas_id: uuid.UUID) -> None:
     if principal.typ == "user" and principal.puskesmas_id != puskesmas_id:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
 
 
 @router.get("", response_model=Page[PuskesmasOut])
@@ -90,7 +90,7 @@ def get_puskesmas(
         .where(Puskesmas.id == id)
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     obj, has_epus, has_asik = row
     return PuskesmasDetailOut.model_validate(
         {**PuskesmasOut.model_validate(obj).model_dump(), "is_epus_cred_set": has_epus, "is_asik_cred_set": has_asik}
@@ -108,7 +108,7 @@ def update_puskesmas(
         select(Puskesmas).options(load_only(*_PUSKESMAS_OUT_COLS)).where(Puskesmas.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     updated = crud.update(db, obj, data)
     has_epus, has_asik = db.execute(
         select(Puskesmas.epus_cred.isnot(None), Puskesmas.asik_cred.isnot(None))
@@ -129,7 +129,7 @@ def delete_puskesmas(
         select(Puskesmas).options(load_only(Puskesmas.id)).where(Puskesmas.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     crud.soft_delete(db, obj)
 
 
@@ -144,13 +144,13 @@ def set_puskesmas_cred(
     _authorize_cred_access(principal, id)
     # Medisy is the clinic-record source: its slot ("epus") takes a bearer token, ASIK still email + password.
     if kind == "asik" and isinstance(data, MedisyCredIn):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "ASIK credentials need an email and a password")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Kredensial ASIK membutuhkan email dan kata sandi")
     cred_col = Puskesmas.epus_cred if kind == "epus" else Puskesmas.asik_cred
     obj = db.scalar(
         select(Puskesmas).options(load_only(Puskesmas.id, cred_col)).where(Puskesmas.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     crud.set_cred(db, obj, kind, data)
     if kind == "epus":
         # The ASIK login lives in Medisy's clinic configuration: pick it up as soon as the Medisy token is known.
@@ -170,7 +170,7 @@ def clear_puskesmas_cred(
         select(Puskesmas).options(load_only(Puskesmas.id, cred_col)).where(Puskesmas.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     crud.clear_cred(db, obj, kind)
 
 
@@ -188,10 +188,10 @@ def get_puskesmas_cred_decrypted(
         select(Puskesmas).options(load_only(Puskesmas.id, cred_col)).where(Puskesmas.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     plain = crud.get_cred_decrypted(obj, kind)
     if plain is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Credential not set")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Kredensial belum diisi")
     if "token" in plain:
         return MedisyCredOut(token=plain["token"])
     return CredOut(**plain)
@@ -213,7 +213,7 @@ def test_medisy_connection(
         .where(Puskesmas.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     if not obj.epus_url:
         return MedisyConnectionTestOut(ok=False, error="Medisy URL is not set")
     plain = crud.get_cred_decrypted(obj, "epus")

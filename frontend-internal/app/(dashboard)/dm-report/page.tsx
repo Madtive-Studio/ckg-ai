@@ -10,7 +10,7 @@ export default function DmReportPage() {
       title="Kertas Kerja Diabetes Melitus"
       description="Registri Diabetes Melitus (format dirjen, sheet 'Diabetes Melitus'): identitas, hasil pemeriksaan gula darah pada tanggal berkunjung CKG, dan follow-up gula darah per bulan."
       showClearCache
-      exportLabel="Export Registri Diabetes Melitus"
+      exportLabel="Unduh Registri Diabetes Melitus"
       exportFilenamePrefix="Registri Diabetes Melitus"
     />
   );

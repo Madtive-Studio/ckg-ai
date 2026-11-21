@@ -41,7 +41,7 @@ def create_school_cron_config(
 ) -> SchoolCronConfigOut:
     pk = db.scalar(select(Puskesmas.id).where(Puskesmas.id == puskesmas_id))
     if pk is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     try:
         obj = crud.create(
             db,
@@ -54,7 +54,7 @@ def create_school_cron_config(
         db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "school cron config already exists for this puskesmas",
+            "Jadwal CKG Sekolah untuk puskesmas ini sudah ada",
         ) from e
     return _to_out(obj)
 
@@ -70,7 +70,7 @@ def get_school_cron_config(
 ) -> SchoolCronConfigOut:
     obj = crud.get_by_puskesmas(db, puskesmas_id)
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "School cron config not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Jadwal CKG Sekolah tidak ditemukan")
     return _to_out(obj)
 
 
@@ -86,7 +86,7 @@ def update_school_cron_config(
 ) -> SchoolCronConfigOut:
     obj = crud.get_by_puskesmas(db, puskesmas_id)
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "School cron config not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Jadwal CKG Sekolah tidak ditemukan")
     obj = crud.update(
         db, obj, hour=body.hour, minute=body.minute, enabled=body.enabled
     )
@@ -104,7 +104,7 @@ def delete_school_cron_config(
 ) -> None:
     obj = crud.get_by_puskesmas(db, puskesmas_id)
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "School cron config not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Jadwal CKG Sekolah tidak ditemukan")
     crud.soft_delete(db, obj)
 
 
@@ -124,12 +124,12 @@ def run_now(
         ).where(Puskesmas.id == puskesmas_id)
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     has_cred, base_url, puskesmas_name = row
     if not has_cred:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "asik credentials not set")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kredensial ASIK belum diisi")
     if not base_url:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "asik_url not set for this puskesmas")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "URL ASIK puskesmas ini belum diisi")
     try:
         job = scrape_job_crud.create(
             db,
@@ -143,7 +143,7 @@ def run_now(
         db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a CKG Sekolah scrape is already in progress for this puskesmas",
+            "Ambil data CKG Sekolah untuk puskesmas ini masih berjalan",
         ) from e
     try:
         celery_app.send_task(
@@ -156,6 +156,6 @@ def run_now(
             db, job, f"broker unreachable: {e}"[:2000], datetime.now(UTC)
         )
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "scrape broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses ambil data sedang tidak tersedia"
         ) from e
     return _to_job_out(job, puskesmas_name)

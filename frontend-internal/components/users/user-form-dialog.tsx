@@ -77,16 +77,16 @@ export function UserFormDialog({
             password: values.password || undefined,
           },
         });
-        toast.success("User updated");
+        toast.success("Pengguna diperbarui");
       } else {
         if (!values.password || values.password.length < 8) {
           form.setError("password", {
-            message: "Password must be at least 8 characters",
+            message: "Kata sandi minimal 8 karakter",
           });
           return;
         }
         await create.mutateAsync({ ...values, password: values.password });
-        toast.success("User created");
+        toast.success("Pengguna dibuat");
       }
       onOpenChange(false);
     } catch (err) {
@@ -100,14 +100,14 @@ export function UserFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit user" : "New user"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Ubah pengguna" : "Pengguna baru"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "Update this user's profile and puskesmas assignment." : "Create a user account scoped to a puskesmas."}
+            {isEdit ? "Perbarui profil dan puskesmas pengguna ini." : "Buat akun pengguna untuk satu puskesmas."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="user-name">Full name</Label>
+            <Label htmlFor="user-name">Nama lengkap</Label>
             <Input id="user-name" {...form.register("full_name")} />
           </div>
           <div className="space-y-2">
@@ -116,7 +116,7 @@ export function UserFormDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="user-pw">
-              Password {isEdit && <span className="text-[var(--muted-foreground)]">(leave blank to keep)</span>}
+              Kata sandi {isEdit && <span className="text-[var(--muted-foreground)]">(kosongkan jika tidak diubah)</span>}
             </Label>
             <Input
               id="user-pw"
@@ -141,7 +141,7 @@ export function UserFormDialog({
                   onChange={(v) => field.onChange(v ?? "")}
                   useOptions={usePuskesmasOptions}
                   selectedLabel={pkDetail.data?.name}
-                  placeholder="Select puskesmas…"
+                  placeholder="Pilih puskesmas…"
                 />
               )}
             />
@@ -158,10 +158,10 @@ export function UserFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={submitting}
             >
-              Cancel
+              Batal
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving…" : isEdit ? "Save" : "Create"}
+              {submitting ? "Menyimpan…" : isEdit ? "Simpan" : "Buat"}
             </Button>
           </DialogFooter>
         </form>

@@ -299,7 +299,7 @@ def hipertensi_report_dashboard(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     cache_key = _dashboard_cache_key(puskesmas_id, year)
     rc = redis_client()
@@ -450,7 +450,7 @@ def export_hipertensi_dashboard(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     rc = redis_client()
     payload = _load_payload_or_warm(db, rc, puskesmas_id, year)
@@ -497,7 +497,7 @@ def export_hipertensi_diagnose(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     rc = redis_client()
     payload = _load_payload_or_warm(db, rc, puskesmas_id, year)
@@ -719,7 +719,7 @@ def hipertensi_registry_dashboard(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     cache_key = _registry_cache_key(puskesmas_id, year)
     rc = redis_client()
@@ -809,7 +809,7 @@ def hipertensi_registry_summary(
     and returns ``computing=True`` so the caller polls back."""
     _authorize(principal, puskesmas_id)
     if not db.scalar(select(Puskesmas.id).where(Puskesmas.id == puskesmas_id)):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     cache_key = _registry_cache_key(puskesmas_id, year)
     rc = redis_client()
@@ -869,7 +869,7 @@ def export_hipertensi_registry(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     rc = redis_client()
     payload = _load_registry_payload_or_warm(db, rc, puskesmas_id, year)
@@ -989,7 +989,7 @@ def hipertensi_charts(
     force a rebuild."""
     _authorize(principal, puskesmas_id)
     if not db.scalar(select(Puskesmas.id).where(Puskesmas.id == puskesmas_id)):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     cache_key = _charts_cache_key(puskesmas_id)
     rc = redis_client()
@@ -1104,7 +1104,7 @@ def hipertensi_gap_tatalaksana(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     rc = redis_client()
     payload = _load_gap_payload(rc, puskesmas_id)
@@ -1157,7 +1157,7 @@ def export_hipertensi_gap_tatalaksana(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     rc = redis_client()
     payload = _load_gap_payload(rc, puskesmas_id)

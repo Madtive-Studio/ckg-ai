@@ -60,7 +60,7 @@ export function ScrapedDataToggle({
   if (!hasAsik && !hasEpus && !hasMerged) {
     return (
       <p className="text-sm text-[var(--muted-foreground)]">
-        Tidak ada data hasil scrape.
+        Tidak ada data yang sudah diambil.
       </p>
     );
   }
@@ -105,7 +105,7 @@ export function ScrapedDataToggle({
               : "px-4 py-1.5 text-xs font-semibold rounded-md text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
           }
         >
-          Epus → Asik
+          Medisy → ASIK
         </button>
       )}
       <button

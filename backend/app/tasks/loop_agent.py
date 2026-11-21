@@ -227,11 +227,11 @@ def run_one(self, run_id: str) -> None:
             .where(Puskesmas.id == run.puskesmas_id)
         )
         if puskesmas is None:
-            crud.mark_failed(db, run, "puskesmas not found", datetime.now(UTC))
+            crud.mark_failed(db, run, "puskesmas tidak ditemukan", datetime.now(UTC))
             rc.publish(chan, "__failed__")
             return
         if not puskesmas.epus_url:
-            crud.mark_failed(db, run, "puskesmas has no epus_url", datetime.now(UTC))
+            crud.mark_failed(db, run, "URL Medisy puskesmas ini belum diisi", datetime.now(UTC))
             rc.publish(chan, "__failed__")
             return
         # EPUS credentials are deliberately NOT resolved here — the container
@@ -371,7 +371,7 @@ def run_one(self, run_id: str) -> None:
             return
         if proc.returncode != 0 and result_json is None:
             tail = "\n".join(rc.lrange(log_key, -30, -1) or [])
-            crud.mark_failed(db, run, f"container exit={proc.returncode}\n{tail}"[:4000], finished)
+            crud.mark_failed(db, run, f"container berhenti (kode {proc.returncode})\n{tail}"[:4000], finished)
             rc.publish(chan, "__failed__")
             return
 

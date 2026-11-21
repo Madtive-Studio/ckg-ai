@@ -43,7 +43,7 @@ export function SchoolCronCard({ puskesmasId }: { puskesmasId: string }) {
     if (!cfg) return;
     try {
       await update.mutateAsync({ enabled: !cfg.enabled });
-      toast.success(cfg.enabled ? "Cron sekolah dinonaktifkan" : "Cron sekolah diaktifkan");
+      toast.success(cfg.enabled ? "Jadwal sekolah dinonaktifkan" : "Jadwal sekolah diaktifkan");
     } catch (err) {
       toast.error(asApiError(err).message);
     }
@@ -52,7 +52,7 @@ export function SchoolCronCard({ puskesmasId }: { puskesmasId: string }) {
   const onRunNow = async () => {
     try {
       const job = await runNow.mutateAsync();
-      toast.success("Scrape CKG Sekolah dimulai");
+      toast.success("Pengambilan data CKG Sekolah dimulai");
       setRunNowOpen(false);
       router.push(`/scrape-jobs/${job.id}`);
     } catch (err) {
@@ -63,7 +63,7 @@ export function SchoolCronCard({ puskesmasId }: { puskesmasId: string }) {
   const onDelete = async () => {
     try {
       await del.mutateAsync();
-      toast.success("Cron sekolah dihapus");
+      toast.success("Jadwal sekolah dihapus");
       setDeleteOpen(false);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -74,7 +74,7 @@ export function SchoolCronCard({ puskesmasId }: { puskesmasId: string }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Cron CKG Sekolah</CardTitle>
+          <CardTitle className="text-base">Jadwal CKG Sekolah</CardTitle>
           <CardDescription>Memuat…</CardDescription>
         </CardHeader>
       </Card>
@@ -86,16 +86,16 @@ export function SchoolCronCard({ puskesmasId }: { puskesmasId: string }) {
       <>
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Cron CKG Sekolah</CardTitle>
+            <CardTitle className="text-base">Jadwal CKG Sekolah</CardTitle>
             <CardDescription>
-              Belum ada jadwal CKG Sekolah untuk puskesmas ini. Sekali run
-              men-scrape setiap sekolah × kelas (tanpa tanggal).
+              Belum ada jadwal CKG Sekolah untuk puskesmas ini. Setiap proses
+              mengambil data setiap sekolah × kelas (tanpa tanggal).
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
               <GraduationCap className="h-4 w-4" />
-              Atur cron sekolah
+              Atur jadwal sekolah
             </Button>
           </CardContent>
         </Card>
@@ -115,7 +115,7 @@ export function SchoolCronCard({ puskesmasId }: { puskesmasId: string }) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base">Cron CKG Sekolah</CardTitle>
+              <CardTitle className="text-base">Jadwal CKG Sekolah</CardTitle>
               <CardDescription>
                 Harian pukul {pad(cfg.hour)}:{pad(cfg.minute)} (Asia/Jakarta) ·{" "}
                 {cfg.enabled ? "Aktif" : "Nonaktif"} · men-scrape setiap sekolah × kelas
@@ -151,7 +151,7 @@ export function SchoolCronCard({ puskesmasId }: { puskesmasId: string }) {
             </Button>
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4" />
-              Edit
+              Ubah
             </Button>
             <Button variant="outline" size="sm" onClick={() => setDeleteOpen(true)}>
               <Trash2 className="h-4 w-4" />
@@ -171,8 +171,8 @@ export function SchoolCronCard({ puskesmasId }: { puskesmasId: string }) {
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Hapus cron CKG Sekolah?"
-        description="Jadwal akan berhenti berjalan. Pasien sekolah hasil scrape tetap disimpan."
+        title="Hapus jadwal CKG Sekolah?"
+        description="Jadwal akan berhenti berjalan. Data pasien sekolah yang sudah diambil tetap disimpan."
         confirmLabel="Hapus"
         destructive
         loading={del.isPending}
@@ -182,8 +182,8 @@ export function SchoolCronCard({ puskesmasId }: { puskesmasId: string }) {
       <ConfirmDialog
         open={runNowOpen}
         onOpenChange={setRunNowOpen}
-        title="Jalankan scrape CKG Sekolah sekarang?"
-        description="Men-scrape setiap sekolah × kelas untuk puskesmas ini sekarang juga (bisa lama). Memakan waktu scraper."
+        title="Ambil data CKG Sekolah sekarang?"
+        description="Mengambil data setiap sekolah × kelas untuk puskesmas ini sekarang juga (bisa lama)."
         confirmLabel="Jalankan sekarang"
         loading={runNow.isPending}
         onConfirm={onRunNow}

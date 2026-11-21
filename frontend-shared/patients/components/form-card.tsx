@@ -48,7 +48,7 @@ export function FormCard({
                   : "bg-yellow-100 text-yellow-800",
             )}
           >
-            {empty ? "Tidak ada field" : `${block.filled} / ${block.total} terisi`}
+            {empty ? "Tidak ada isian" : `${block.filled} / ${block.total} terisi`}
           </span>
         </div>
       </CardHeader>

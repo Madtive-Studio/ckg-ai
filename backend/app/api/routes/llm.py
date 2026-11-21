@@ -101,7 +101,7 @@ def get_llm_config(
         select(LlmConfig).options(load_only(*_CFG_OUT_COLS)).where(LlmConfig.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
     return LlmConfigOut.model_validate(obj)
 
 
@@ -116,7 +116,7 @@ def update_llm_config(
         select(LlmConfig).options(load_only(*_CFG_OUT_COLS)).where(LlmConfig.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
     return LlmConfigOut.model_validate(cfg_crud.update_config(db, obj, data))
 
 
@@ -136,7 +136,7 @@ def delete_llm_config(
         .where(LlmConfig.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
     cfg_crud.soft_delete(db, obj)
 
 
@@ -219,7 +219,7 @@ def test_llm_connection(
             .where(LlmConfig.id == data.config_id)
         )
         if obj is None:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmConfig not found")
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Konfigurasi LLM tidak ditemukan")
         if not api_key:
             try:
                 api_key = decrypt_json(obj.api_key_enc)["api_key"]
@@ -403,11 +403,11 @@ def retry_merge_bulk(
     admin_id: uuid.UUID = Depends(get_current_admin_id),
 ) -> LlmLogRetryMergeOut:
     if not body.log_ids:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "log_ids is empty")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Tidak ada log yang dipilih")
     if len(body.log_ids) > _RETRY_BULK_MAX:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            f"too many log_ids (max {_RETRY_BULK_MAX})",
+            f"Terlalu banyak log dipilih (maksimal {_RETRY_BULK_MAX})",
         )
 
     log_rows = db.execute(
@@ -507,5 +507,5 @@ def get_llm_log(
         select(LlmLog).options(load_only(*_LOG_OUT_COLS)).where(LlmLog.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "LlmLog not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Log LLM tidak ditemukan")
     return LlmLogOut.model_validate(obj)

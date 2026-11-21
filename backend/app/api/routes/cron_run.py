@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, contains_eager, load_only
 from app.api.deps import get_current_admin_id, get_db
 from app.api.pagination import Page, PageParams, page_params, paginate
 from app.celery_app import celery_app
+from app.core.labels import status_label
 from app.crud import cron_run as crud
 from app.models.cron_run import CronRun, CronRunStatus, CronStep
 from app.models.puskesmas import Puskesmas
@@ -79,7 +80,7 @@ def get_run(
         .where(CronRun.id == run_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Cron run not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses terjadwal tidak ditemukan")
     return _to_out(obj, obj.puskesmas.name)
 
 
@@ -133,11 +134,11 @@ def cancel_run(
         .where(CronRun.id == run_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Cron run not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses terjadwal tidak ditemukan")
     if obj.status not in (CronRunStatus.PENDING, CronRunStatus.RUNNING):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            f"cron run is {obj.status.value}, cannot cancel",
+            f"Proses terjadwal berstatus {status_label(obj.status.value)}, tidak bisa dibatalkan",
         )
     pk_name = obj.puskesmas.name
     crud.cancel_cron_run_and_children(db, obj)
@@ -158,16 +159,16 @@ def retry_run(
         .where(CronRun.id == run_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Cron run not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses terjadwal tidak ditemukan")
     if obj.status not in (CronRunStatus.FAILED, CronRunStatus.CANCELLED):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            f"cron run is {obj.status.value}, only failed/cancelled runs can be retried",
+            f"Proses terjadwal berstatus {status_label(obj.status.value)}; hanya proses yang gagal/dibatalkan yang bisa diulang",
         )
     if obj.cron_backfill_id is not None:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "this run belongs to a backfill; create a new backfill to continue",
+            "Proses ini bagian dari proses rentang tanggal; buat proses rentang tanggal baru untuk melanjutkan",
         )
     pk_name = obj.puskesmas.name
 
@@ -187,7 +188,7 @@ def retry_run(
     if active is not None:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a cron run is already in progress for this puskesmas",
+            "Masih ada proses terjadwal yang berjalan untuk puskesmas ini",
         )
 
     try:
@@ -203,7 +204,7 @@ def retry_run(
         db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a cron run is already in progress for this puskesmas",
+            "Masih ada proses terjadwal yang berjalan untuk puskesmas ini",
         ) from e
     try:
         celery_app.send_task("cron.advance", args=[str(new_run.id), CronStep.EPUS.value])
@@ -213,7 +214,7 @@ def retry_run(
             f"broker unreachable: {e}", datetime.now(UTC),
         )
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "cron broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses terjadwal sedang tidak tersedia"
         ) from e
     return _to_out(new_run, pk_name)
 

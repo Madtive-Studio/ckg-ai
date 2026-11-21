@@ -4,7 +4,7 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "CKG Admin",
-  description: "Admin dashboard for CKG",
+  description: "Dashboard admin CKG",
 };
 
 export default function RootLayout({

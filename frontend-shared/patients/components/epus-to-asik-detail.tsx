@@ -96,7 +96,7 @@ export function EpusToAsikDetail({
                 tone="amber"
               />
               <StatPill
-                label="Field Terisi"
+                label="Isian Terisi"
                 value={totals.filled}
                 hint={`/ ${totals.total}`}
                 tone="green"

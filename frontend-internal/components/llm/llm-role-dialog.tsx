@@ -40,8 +40,8 @@ export function LlmRoleDialog({
     ? [
         {
           key: "utama",
-          label: "Utama (merge)",
-          description: "LLM umum — menilai konflik saat merge pasien.",
+          label: "Utama (gabung data)",
+          description: "LLM umum — menilai konflik saat menggabungkan data pasien.",
           held: config.is_active,
           activate: async () => {
             await activate.mutateAsync(config.id);
@@ -52,7 +52,7 @@ export function LlmRoleDialog({
         {
           key: "captcha",
           label: "Captcha",
-          description: "Pemecah captcha ASIK saat scraping.",
+          description: "Pemecah captcha ASIK saat mengambil data.",
           held: config.is_active_captcha,
           activate: async () => {
             await activateCaptcha.mutateAsync(config.id);
@@ -73,23 +73,23 @@ export function LlmRoleDialog({
         },
         {
           key: "loop_agent",
-          label: "Loop Agent",
+          label: "Agen Loop",
           description: "Agen pemelihara klien dan konverter Medisy (GLM-5.3-Flash).",
           held: config.is_active_loop_agent,
           activate: async () => {
             await activateLoopAgent.mutateAsync(config.id);
-            toast.success("Diatur untuk loop agent");
+            toast.success("Diatur untuk agen loop");
           },
           pending: activateLoopAgent.isPending,
         },
         {
           key: "loop_reviewer",
-          label: "Loop Reviewer",
-          description: "Reviewer PR hasil loop agent (GLM-5.3).",
+          label: "Peninjau Loop",
+          description: "Peninjau PR hasil agen loop (GLM-5.3).",
           held: config.is_active_loop_reviewer,
           activate: async () => {
             await activateLoopReviewer.mutateAsync(config.id);
-            toast.success("Diatur untuk loop reviewer");
+            toast.success("Diatur untuk peninjau loop");
           },
           pending: activateLoopReviewer.isPending,
         },

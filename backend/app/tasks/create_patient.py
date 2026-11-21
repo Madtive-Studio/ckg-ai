@@ -145,14 +145,14 @@ def _wali_block_reason(nik: str, birth_date: date | None, exam_date: date) -> st
     Adults are never own-NIK-gated (an adult's NIK is their own; a mismatch is a
     birth_date data glitch and registration derives DOB from the NIK anyway)."""
     if birth_date is None:
-        return "no birth_date on record — cannot age-gate the create"
+        return "tanggal lahir tidak ada — usia tidak bisa diperiksa sebelum membuat pasien"
     age = exam_date.year - birth_date.year - (
         (exam_date.month, exam_date.day) < (birth_date.month, birth_date.day)
     )
     if age < 6:
-        return f"under 6 at exam date (age {age}) — ASIK requires wali data"
+        return f"di bawah 6 tahun pada tanggal pemeriksaan (usia {age}) — ASIK membutuhkan data wali"
     if age < 18 and not _is_own_nik(nik, birth_date):
-        return "minor whose NIK does not match their birth date — likely a guardian's NIK"
+        return "anak dengan NIK yang tidak cocok dengan tanggal lahirnya — kemungkinan NIK wali"
     return None
 
 
@@ -453,7 +453,7 @@ def probe_batch(
         raise RuntimeError("asik credentials not set for this puskesmas")
     base_url = f"https://{puskesmas.asik_url}" if puskesmas.asik_url else None
     if not base_url:
-        raise RuntimeError("asik_url not set for this puskesmas")
+        raise RuntimeError("URL ASIK puskesmas ini belum diisi")
 
     captcha_solver = _build_captcha_solver(db)
     session_dir = _asik_session_dir(puskesmas_id)
@@ -573,9 +573,9 @@ def _log_line(
 
 # Human-readable reasons for the register outcomes that stop the flow before a fill.
 _REGISTER_FAIL_REASON = {
-    "already_served": "patient already registered in ASIK (sudah menerima layanan)",
-    "dukcapil_invalid": "Dukcapil validation failed (NIK / name / DOB mismatch)",
-    "step2_filled": "stopped after step 2 (commit disabled)",
+    "already_served": "pasien sudah terdaftar di ASIK (sudah menerima layanan)",
+    "dukcapil_invalid": "validasi Dukcapil gagal (NIK / nama / tanggal lahir tidak cocok)",
+    "step2_filled": "berhenti setelah langkah 2 (simpan dinonaktifkan)",
 }
 
 
@@ -619,8 +619,8 @@ def create_one_patient(
     # must never be registered via "Daftarkan dengan NIK".
     block = _wali_block_reason(patient.nik, patient.birth_date, patient.filter_date)
     if block:
-        msg = f"cannot create via own NIK — {block} (wali flow not yet supported)"
-        _log_line(redis_client, log_key, chan, f"[create] {msg}")
+        msg = f"tidak bisa dibuat dengan NIK sendiri — {block} (alur wali belum didukung)"
+        _log_line(redis_client, log_key, chan, f"[buat] {msg}")
         sync_job_crud.mark_failed(db, job, msg, datetime.now(UTC))
         try:
             redis_client.publish(chan, "__failed__")
@@ -630,8 +630,8 @@ def create_one_patient(
 
     step2 = _build_step2(patient, epus, puskesmas)
     if step2 is None:
-        msg = "no domicile in the clinic record and no default ASIK alamat configured for the puskesmas — cannot register"
-        _log_line(redis_client, log_key, chan, f"[create] {msg}")
+        msg = "domisili di Medisy kosong dan puskesmas belum punya alamat bawaan ASIK — tidak bisa didaftarkan"
+        _log_line(redis_client, log_key, chan, f"[buat] {msg}")
         sync_job_crud.mark_failed(db, job, msg, datetime.now(UTC))
         try:
             redis_client.publish(chan, "__failed__")
@@ -653,8 +653,8 @@ def create_one_patient(
             commit=True,
         )
     except ValueError as exc:
-        msg = f"cannot derive DOB/gender from NIK — not registerable: {exc}"
-        _log_line(redis_client, log_key, chan, f"[create] {msg}")
+        msg = f"tanggal lahir/jenis kelamin tidak bisa dibaca dari NIK — tidak bisa didaftarkan: {exc}"
+        _log_line(redis_client, log_key, chan, f"[buat] {msg}")
         sync_job_crud.mark_failed(db, job, msg, datetime.now(UTC))
         try:
             redis_client.publish(chan, "__failed__")
@@ -666,8 +666,8 @@ def create_one_patient(
     timeout = max(1, int(settings.SYNC_SUBPROCESS_TIMEOUT_SECONDS))
     _log_line(
         redis_client, log_key, chan,
-        f"[create] registering NIK {patient.nik} into ASIK "
-        f"(exam date {patient.filter_date.isoformat()})",
+        f"[buat] mendaftarkan NIK {patient.nik} ke ASIK "
+        f"(tanggal pemeriksaan {patient.filter_date.isoformat()})",
     )
     out = _run_register(
         cfg=cfg,
@@ -681,7 +681,7 @@ def create_one_patient(
     outcome = out.get("outcome") or "error"
 
     if outcome == "cancelled":
-        _log_line(redis_client, log_key, chan, "[create] cancelled during registration")
+        _log_line(redis_client, log_key, chan, "[buat] dibatalkan saat pendaftaran")
         sync_job_crud.mark_cancelled(db, job)
         try:
             redis_client.publish(chan, "__cancelled__")
@@ -690,8 +690,8 @@ def create_one_patient(
         return "cancelled", "cancelled"
 
     if outcome != "created":
-        reason = _REGISTER_FAIL_REASON.get(outcome) or out.get("error") or f"outcome {outcome}"
-        _log_line(redis_client, log_key, chan, f"[create] not created — {outcome}: {reason}")
+        reason = _REGISTER_FAIL_REASON.get(outcome) or out.get("error") or f"hasil {outcome}"
+        _log_line(redis_client, log_key, chan, f"[buat] tidak dibuat — {outcome}: {reason}")
         sync_job_crud.mark_failed(db, job, f"{outcome}: {reason}"[:2000], datetime.now(UTC))
         try:
             redis_client.publish(chan, "__failed__")
@@ -703,8 +703,8 @@ def create_one_patient(
     # to the SAME job log and finalizes the job (success/failed + SSE terminal event).
     _log_line(
         redis_client, log_key, chan,
-        f"[create] registered (ticket={out.get('ticket')} hadir={out.get('hadir')}) "
-        f"→ filling exam via sync",
+        f"[buat] terdaftar (tiket={out.get('ticket')} hadir={out.get('hadir')}) "
+        f"→ mengisi pemeriksaan lewat pengiriman ke ASIK",
     )
     merged = clinic_to_asik(epus)
     forms_total = sum(
@@ -773,7 +773,7 @@ def create_batch(
         raise RuntimeError("asik credentials not set for this puskesmas")
     base_url = f"https://{puskesmas.asik_url}" if puskesmas.asik_url else None
     if not base_url:
-        raise RuntimeError("asik_url not set for this puskesmas")
+        raise RuntimeError("URL ASIK puskesmas ini belum diisi")
 
     # The required 4-level domicile cascade comes from each patient's own domicile (clinic record), falling back to
     # the puskesmas' default alamat; a patient with neither is skipped below, one by one (no whole-batch skip).
@@ -1033,7 +1033,7 @@ def run_create_one(self, job_id: str, headless: bool = True) -> None:
             .where(Patient.id == job.patient_id)
         )
         if patient is None:
-            sync_job_crud.mark_failed(db, job, "patient not found", datetime.now(UTC))
+            sync_job_crud.mark_failed(db, job, "pasien tidak ditemukan", datetime.now(UTC))
             _publish_terminal(redis_client, chan, "__failed__")
             return
         if not (
@@ -1043,7 +1043,7 @@ def run_create_one(self, job_id: str, headless: bool = True) -> None:
         ):
             sync_job_crud.mark_failed(
                 db, job,
-                "patient is not an epus_only + tandai_ckg candidate with ePus data",
+                "pasien bukan kandidat pembuatan di ASIK (harus hanya ada di Medisy, bertanda Tandai-CKG, dan memiliki data Medisy)",
                 datetime.now(UTC),
             )
             _publish_terminal(redis_client, chan, "__failed__")
@@ -1059,18 +1059,18 @@ def run_create_one(self, job_id: str, headless: bool = True) -> None:
             .where(Puskesmas.id == job.puskesmas_id)
         )
         if puskesmas is None:
-            sync_job_crud.mark_failed(db, job, "puskesmas not found", datetime.now(UTC))
+            sync_job_crud.mark_failed(db, job, "puskesmas tidak ditemukan", datetime.now(UTC))
             _publish_terminal(redis_client, chan, "__failed__")
             return
 
         creds = puskesmas_crud.get_cred_decrypted(puskesmas, "asik")
         if creds is None:
-            sync_job_crud.mark_failed(db, job, "asik credentials not set", datetime.now(UTC))
+            sync_job_crud.mark_failed(db, job, "Kredensial ASIK belum diisi", datetime.now(UTC))
             _publish_terminal(redis_client, chan, "__failed__")
             return
         base_url = f"https://{puskesmas.asik_url}" if puskesmas.asik_url else None
         if not base_url:
-            sync_job_crud.mark_failed(db, job, "asik_url not set", datetime.now(UTC))
+            sync_job_crud.mark_failed(db, job, "URL ASIK belum diisi", datetime.now(UTC))
             _publish_terminal(redis_client, chan, "__failed__")
             return
 
@@ -1083,7 +1083,7 @@ def run_create_one(self, job_id: str, headless: bool = True) -> None:
             _publish_terminal(redis_client, chan, "__failed__")
             return
         if not epus:
-            sync_job_crud.mark_failed(db, job, "scraped_epus_data is empty", datetime.now(UTC))
+            sync_job_crud.mark_failed(db, job, "data Medisy pasien kosong", datetime.now(UTC))
             _publish_terminal(redis_client, chan, "__failed__")
             return
 

@@ -10,7 +10,7 @@ export default function LipidReportPage() {
       title="Kertas Kerja Dislipidemia"
       description="Registri Dislipidemia (format dirjen, sheet 'Dislipidemia'): identitas, hasil pemeriksaan profil lipid pada tanggal berkunjung CKG, dan follow-up profil lipid pada bulan kontrol (per 3 bulan)."
       showClearCache
-      exportLabel="Export Registri Dislipidemia"
+      exportLabel="Unduh Registri Dislipidemia"
       exportFilenamePrefix="Registri Dislipidemia"
     />
   );

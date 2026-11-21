@@ -3,7 +3,7 @@
 Kertas kerja hipertensi per **satu puskesmas + satu tahun pelaporan**,
 mengikuti format registri dirjen **V8juni2026**. Isinya: identitas pasien,
 hasil pemeriksaan tekanan darah pada tanggal berkunjung CKG, dan follow-up
-tekanan darah per bulan. Bisa diexport ke **Excel** — di file export, rumus
+tekanan darah per bulan. Bisa diunduh sebagai **Excel** (tombol **Unduh Registri …**) — di file unduhan, rumus
 tertanam langsung di sel (klik sel Rerata/Interpretasi untuk melihatnya), dan
 ada sheet **"Formula & Logika"** berisi penjelasan yang sama dengan kartu
 **"Cara Membaca Kertas Kerja Ini"** di halaman.

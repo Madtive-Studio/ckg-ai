@@ -141,7 +141,7 @@ export function SchoolPatientList() {
     <div className="space-y-6">
       <PageHeader
         title="CKG Sekolah"
-        description="Pemeriksaan kesehatan anak sekolah (school health checkup), per sekolah × kelas."
+        description="Pemeriksaan kesehatan anak sekolah, per sekolah × kelas."
       />
 
       <div className="flex flex-wrap gap-4">

@@ -9,7 +9,7 @@ export default function BayiKuningIkterusBeratPage() {
       title="Registri Bayi Kuning - Ikterus Berat"
       description="Registri bayi baru lahir dengan klasifikasi 'Ikterus berat' — kuning timbul < 24 jam, atau > 14 hari, atau sampai telapak tangan/kaki."
       showClearCache={false}
-      exportLabel="Export Registri Ikterus Berat"
+      exportLabel="Unduh Registri Ikterus Berat"
       exportFilenamePrefix="Registri Bayi Kuning Ikterus Berat"
     />
   );

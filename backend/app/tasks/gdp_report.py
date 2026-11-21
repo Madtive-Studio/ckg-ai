@@ -244,7 +244,7 @@ def run_gdp_report(self, job_id: str) -> None:
             # for a child that ran and failed, persist a generic message here.
             db.refresh(job)
             if job.status not in (GdpReportStatus.FAILED, GdpReportStatus.CANCELLED):
-                gdp_crud.mark_failed(db, job, "ASIK scrape failed", datetime.now(UTC))
+                gdp_crud.mark_failed(db, job, "Ambil data ASIK gagal", datetime.now(UTC))
             return
         # dates_done is monotonic — only bump on first success transition.
         if job.dates_done < job.dates_total:
@@ -261,7 +261,7 @@ def run_gdp_report(self, job_id: str) -> None:
             # Nothing to cross-check; ASIK was empty for this range.
             gdp_crud.mark_success(
                 db, job, datetime.now(UTC),
-                notes="ASIK returned no NIKs — EPUS phase skipped.",
+                notes="ASIK tidak mengembalikan NIK — tahap Medisy dilewati.",
             )
             return
         if (job.epus_jobs_total or 0) < 1:
@@ -278,7 +278,7 @@ def run_gdp_report(self, job_id: str) -> None:
             db.refresh(job)
             if job.status not in (GdpReportStatus.FAILED, GdpReportStatus.CANCELLED):
                 gdp_crud.increment_progress(db, job, epus_failed_delta=1)
-                gdp_crud.mark_failed(db, job, "EPUS scrape failed", datetime.now(UTC))
+                gdp_crud.mark_failed(db, job, "Ambil data Medisy gagal", datetime.now(UTC))
             return
         if (job.epus_jobs_done or 0) < 1:
             gdp_crud.increment_progress(db, job, epus_done_delta=1)

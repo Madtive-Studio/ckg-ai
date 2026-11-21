@@ -59,7 +59,7 @@ export function StartScrapeDialog({
         // ignores date for asik_sekolah; send null.
         input: { date: isSekolah ? null : date || null },
       });
-      toast.success("Scrape started");
+      toast.success("Pengambilan data dimulai");
       onOpenChange(false);
       router.push(`/scrape-jobs/${job.id}`);
     } catch (err) {
@@ -71,14 +71,14 @@ export function StartScrapeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Start scrape</DialogTitle>
+          <DialogTitle>Mulai ambil data</DialogTitle>
           <DialogDescription>
-            Runs a scraper for the given date. Defaults to today (Jakarta time).
+            Mengambil data untuk tanggal yang dipilih. Bawaan: hari ini (WIB).
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Source</Label>
+            <Label>Sumber</Label>
             <Select value={kind} onValueChange={(v) => setKind(v as ScrapeKind)}>
               <SelectTrigger>
                 <SelectValue />
@@ -92,12 +92,12 @@ export function StartScrapeDialog({
           </div>
           {isSekolah ? (
             <p className="text-xs text-[var(--muted-foreground)]">
-              CKG Sekolah has no date — it scrapes every school × class for this
-              puskesmas. This can take a while.
+              CKG Sekolah tidak memakai tanggal — semua sekolah × kelas puskesmas ini
+              diambil. Ini bisa memakan waktu cukup lama.
             </p>
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="scrape-date">Date</Label>
+              <Label htmlFor="scrape-date">Tanggal</Label>
               <Input
                 id="scrape-date"
                 type="date"
@@ -113,10 +113,10 @@ export function StartScrapeDialog({
             onClick={() => onOpenChange(false)}
             disabled={start.isPending}
           >
-            Cancel
+            Batal
           </Button>
           <Button onClick={onSubmit} disabled={start.isPending}>
-            {start.isPending ? "Starting…" : "Start"}
+            {start.isPending ? "Memulai…" : "Mulai"}
           </Button>
         </DialogFooter>
       </DialogContent>

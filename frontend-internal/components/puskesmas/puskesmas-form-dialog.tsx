@@ -82,7 +82,7 @@ export function PuskesmasFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Puskesmas" : "Puskesmas Baru"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Ubah Puskesmas" : "Puskesmas Baru"}</DialogTitle>
           <DialogDescription>
             {isEdit ? "Perbarui nama dan URL dasar puskesmas ini." : "Daftarkan puskesmas baru dengan domain dasar Medisy dan ASIK."}
           </DialogDescription>
@@ -98,7 +98,7 @@ export function PuskesmasFormDialog({
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="epus_url">Medisy URL (domain) *</Label>
+            <Label htmlFor="epus_url">URL Medisy (domain) *</Label>
             <Input
               id="epus_url"
               placeholder="medisy.example.id"
@@ -111,7 +111,7 @@ export function PuskesmasFormDialog({
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="asik_url">ASIK URL (domain) *</Label>
+            <Label htmlFor="asik_url">URL ASIK (domain) *</Label>
             <Input
               id="asik_url"
               placeholder="asik.example.id"
@@ -124,7 +124,7 @@ export function PuskesmasFormDialog({
             )}
           </div>
           <div className="space-y-2">
-            <Label>Alamat Default (ASIK buat pasien)</Label>
+            <Label>Alamat Bawaan (untuk membuat pasien di ASIK)</Label>
             <p className="text-xs text-[var(--muted-foreground)]">
               Domisili cadangan untuk alur ASIK &ldquo;buat pasien baru&rdquo;, dipilih
               dari daftar milik ASIK sendiri. Pilih keempat tingkat, atau biarkan kosong.

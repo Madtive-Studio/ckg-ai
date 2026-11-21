@@ -59,10 +59,10 @@ export function SchoolCronFormDialog({
     try {
       if (existing) {
         await update.mutateAsync(values);
-        toast.success("Cron sekolah diperbarui");
+        toast.success("Jadwal sekolah diperbarui");
       } else {
         await create.mutateAsync(values);
-        toast.success("Cron sekolah dibuat");
+        toast.success("Jadwal sekolah dibuat");
       }
       onOpenChange(false);
     } catch (err) {
@@ -77,11 +77,11 @@ export function SchoolCronFormDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {existing ? "Edit cron CKG Sekolah" : "Buat cron CKG Sekolah"}
+            {existing ? "Ubah jadwal CKG Sekolah" : "Buat jadwal CKG Sekolah"}
           </DialogTitle>
           <DialogDescription>
-            Menjalankan scrape CKG Sekolah penuh (setiap sekolah × kelas) setiap
-            hari pada waktu Jakarta yang dipilih. Tanpa tanggal — tidak ada langkah merge.
+            Mengambil seluruh data CKG Sekolah (setiap sekolah × kelas) setiap
+            hari pada jam WIB yang dipilih. Tanpa tanggal — tidak ada langkah gabung data.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">

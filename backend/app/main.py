@@ -49,12 +49,60 @@ app = FastAPI(
     openapi_url=None if _docs_disabled else "/openapi.json",
 )
 
+_VALIDATION_MSG_ID = {
+    "missing": "wajib diisi",
+    "string_too_short": "terlalu pendek",
+    "string_too_long": "terlalu panjang",
+    "too_short": "terlalu sedikit",
+    "too_long": "terlalu banyak",
+    "int_parsing": "harus berupa bilangan bulat",
+    "int_from_float": "harus berupa bilangan bulat",
+    "float_parsing": "harus berupa angka",
+    "decimal_parsing": "harus berupa angka",
+    "bool_parsing": "harus ya atau tidak",
+    "uuid_parsing": "ID tidak valid",
+    "date_parsing": "format tanggal tidak valid",
+    "date_from_datetime_parsing": "format tanggal tidak valid",
+    "datetime_parsing": "format tanggal dan waktu tidak valid",
+    "enum": "pilihan tidak valid",
+    "literal_error": "pilihan tidak valid",
+    "json_invalid": "JSON tidak valid",
+    "string_type": "harus berupa teks",
+    "int_type": "harus berupa bilangan bulat",
+    "list_type": "harus berupa daftar",
+    "dict_type": "harus berupa objek",
+}
+_VALIDATION_CMP_ID = {
+    "greater_than": "harus lebih dari",
+    "greater_than_equal": "harus minimal",
+    "less_than": "harus kurang dari",
+    "less_than_equal": "harus maksimal",
+}
+
+
+def _validation_msg_id(err: dict) -> str:
+    """Pydantic's English message → Indonesian. Our own validators raise Indonesian text already."""
+    typ = err.get("type", "")
+    msg = str(err.get("msg", "Nilai tidak valid"))
+    ctx = err.get("ctx") or {}
+    if typ in _VALIDATION_MSG_ID:
+        return _VALIDATION_MSG_ID[typ]
+    if typ in _VALIDATION_CMP_ID:
+        bound = next((ctx[k] for k in ("gt", "ge", "lt", "le") if k in ctx), "")
+        return f"{_VALIDATION_CMP_ID[typ]} {bound}".strip()
+    if typ == "value_error":
+        msg = msg.removeprefix("Value error, ")
+        if "valid email" in msg:
+            return "email tidak valid"
+    return msg
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
     parts: list[str] = []
     for err in exc.errors():
         loc = ".".join(str(p) for p in err.get("loc", ()) if p != "body")
-        msg = err.get("msg", "Invalid value")
+        msg = _validation_msg_id(err)
         parts.append(f"{loc}: {msg}" if loc else msg)
     return JSONResponse(status_code=422, content={"detail": "; ".join(parts)})
 

@@ -5,7 +5,7 @@ mengikuti format registri dirjen (dokumen *"Register Sheet Pasien HT, DM,
 Dislipidemia dan Obesitas"*, sheet **"Dislipidemia"**). Isinya: identitas
 pasien, hasil pemeriksaan **profil lipid** (lemak darah) pada tanggal
 berkunjung CKG, dan follow-up profil lipid pada **bulan kontrol (per 3
-bulan)**. Bisa diexport ke **Excel** — di file export, rumus tertanam langsung
+bulan)**. Bisa diunduh sebagai **Excel** (tombol **Unduh Registri …**) — di file unduhan, rumus tertanam langsung
 di sel (klik sel Interpretasi untuk melihatnya), dan ada sheet **"Formula &
 Logika"** berisi penjelasan yang sama dengan kartu **"Cara Membaca Kertas Kerja
 Ini"** di halaman.
@@ -33,10 +33,10 @@ Kolom **"Follow-up"** di tabel utama berisi **angka** = jumlah baris Follow Up
 pasien itu — gabungan kunjungan yang ada hasil lipidnya **dan** bulan kontrol
 berstatus **Missed Visit**. Rinciannya muncul saat baris pasien diklik.
 
-Saat perhitungan pertama berjalan muncul tulisan **"Loading registri
+Saat perhitungan pertama berjalan muncul tulisan **"Memuat registri
 dislipidemia…"** beserta bilah kemajuan; hasilnya lalu disimpan (cache ±30 jam)
-dan dihitung ulang otomatis tiap pagi. Keterangan **"Computed &lt;waktu&gt; ·
-cached/fresh"** menunjukkan kapan angka itu dihitung.
+dan dihitung ulang otomatis tiap pagi. Keterangan **"Dihitung &lt;waktu&gt; ·
+dari cache/baru dihitung"** menunjukkan kapan angka itu dihitung.
 
 ## Inti — satu daftar, dua pertanyaan
 

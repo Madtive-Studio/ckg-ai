@@ -39,7 +39,7 @@ def create_credential_invite(
     admin_id: uuid.UUID = Depends(get_current_admin_id),
 ) -> InviteCreatedOut:
     if db.scalar(select(Puskesmas.id).where(Puskesmas.id == id)) is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     # A new link supersedes any still-pending one so a stale link left in a chat stops working.
     db.execute(
         update(CredentialInvite)
@@ -87,7 +87,7 @@ def get_credential_invite(
         .where(CredentialInvite.token_hash == _hash(token))
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Invite not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Undangan tidak ditemukan")
     if row.used_at is not None:
         return InviteInfoOut(status="used")
     if row.revoked_at is not None or row.expires_at <= datetime.now(UTC):
@@ -123,12 +123,12 @@ def submit_invite_asik_cred(
         db.rollback()
         known = db.scalar(select(CredentialInvite.id).where(CredentialInvite.token_hash == _hash(token)))
         if known is None:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Invite not found")
-        raise HTTPException(status.HTTP_410_GONE, "This invite link has already been used or has expired")
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Undangan tidak ditemukan")
+        raise HTTPException(status.HTTP_410_GONE, "Tautan undangan ini sudah dipakai atau sudah kedaluwarsa")
     obj = db.scalar(
         select(Puskesmas).options(load_only(Puskesmas.id, Puskesmas.asik_cred)).where(Puskesmas.id == puskesmas_id)
     )
     if obj is None:  # puskesmas soft-deleted since the link was issued
         db.rollback()
-        raise HTTPException(status.HTTP_410_GONE, "This invite link has already been used or has expired")
+        raise HTTPException(status.HTTP_410_GONE, "Tautan undangan ini sudah dipakai atau sudah kedaluwarsa")
     crud.set_cred(db, obj, "asik", CredIn(email=data.email, password=data.password))

@@ -71,16 +71,16 @@ def create_user(
 ) -> UserOut:
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == data.puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "puskesmas_id does not exist")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Puskesmas tidak ditemukan")
     taken = db.scalar(select(User.id).where(User.email == data.email))
     if taken is not None:
-        raise HTTPException(status.HTTP_409_CONFLICT, "email already in use")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Email sudah dipakai")
     try:
         obj = crud.create(db, data)
         return _to_user_out(obj, pk_name)
     except IntegrityError as e:
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "constraint violation") from e
+        raise HTTPException(status.HTTP_409_CONFLICT, "Data bertentangan dengan data lain") from e
 
 
 @router.get("/{id}", response_model=UserOut)
@@ -99,7 +99,7 @@ def get_user(
         .where(User.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pengguna tidak ditemukan")
     return _to_user_out(obj, obj.puskesmas.name)
 
 
@@ -120,25 +120,25 @@ def update_user(
         .where(User.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pengguna tidak ditemukan")
     if data.puskesmas_id is not None and data.puskesmas_id != obj.puskesmas_id:
         new_pk_name = db.scalar(
             select(Puskesmas.name).where(Puskesmas.id == data.puskesmas_id)
         )
         if new_pk_name is None:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "puskesmas_id does not exist")
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Puskesmas tidak ditemukan")
         pk_name = new_pk_name
     else:
         pk_name = obj.puskesmas.name
     if data.email is not None and data.email != obj.email:
         taken = db.scalar(select(User.id).where(User.email == data.email))
         if taken is not None:
-            raise HTTPException(status.HTTP_409_CONFLICT, "email already in use")
+            raise HTTPException(status.HTTP_409_CONFLICT, "Email sudah dipakai")
     try:
         updated = crud.update(db, obj, data)
     except IntegrityError as e:
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "constraint violation") from e
+        raise HTTPException(status.HTTP_409_CONFLICT, "Data bertentangan dengan data lain") from e
     # A password change must invalidate the user's existing sessions: a stolen
     # token otherwise stays valid until exp despite the credential rotation.
     if data.password is not None:
@@ -156,7 +156,7 @@ def delete_user(
         select(User).options(load_only(User.id)).where(User.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pengguna tidak ditemukan")
     crud.soft_delete(db, obj)
     # get_principal re-checks existence (soft-delete auto-filter) on data
     # endpoints, but /auth/me only decodes the token — revoke so a deleted

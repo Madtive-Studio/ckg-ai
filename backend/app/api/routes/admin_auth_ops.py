@@ -41,7 +41,7 @@ def login_admin(
     password_hash = row.password_hash if row is not None else _DUMMY_PASSWORD_HASH
     if not verify_password(data.password, password_hash) or row is None:
         record_failed_login_attempt(request, data.email)
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email atau kata sandi salah")
     return TokenResponse(access_token=create_access_token(row.id, "admin"))
 
 
@@ -68,5 +68,5 @@ def get_admin_out(admin_id: uuid.UUID, db: Session) -> AdminOut:
         .where(Admin.id == admin_id)
     )
     if admin is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Admin not found")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Admin tidak ditemukan")
     return admin

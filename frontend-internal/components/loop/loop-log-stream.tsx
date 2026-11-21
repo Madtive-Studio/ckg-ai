@@ -99,7 +99,7 @@ export function LoopLogStream({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Live log</h2>
+        <h2 className="text-sm font-semibold">Log langsung</h2>
         <Badge variant={STATUS_VARIANT[status]}>{status}</Badge>
       </div>
       <LogBox lines={lines} emptyText="Menunggu output agen…" autoScroll />

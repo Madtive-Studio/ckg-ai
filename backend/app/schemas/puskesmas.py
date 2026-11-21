@@ -32,16 +32,16 @@ def _is_ip_literal(host: str) -> bool:
 def _validate_base_url(v: str) -> str:
     if not _BASE_URL_RE.match(v):
         raise ValueError(
-            "must be a base domain only (e.g. 'domain.com', 'sub.domain.id') "
-            "without scheme, path, query, or fragment"
+            "harus berupa domain dasar saja (mis. 'domain.com', 'sub.domain.id') "
+            "tanpa http://, path, query, atau fragmen"
         )
     host = v.lower()
     # Defensive: the regex already requires an alphabetic TLD (so bare IPv4/IPv6
     # can't match), but reject IP literals explicitly in case it's ever relaxed.
     if _is_ip_literal(host):
-        raise ValueError("must be a domain name, not an IP address")
+        raise ValueError("harus berupa nama domain, bukan alamat IP")
     if host in _BLOCKED_HOSTS or host.endswith(_INTERNAL_SUFFIXES):
-        raise ValueError("internal/reserved hostnames are not allowed as a scrape target")
+        raise ValueError("host internal/khusus tidak boleh dipakai sebagai sumber data")
     # NOTE: this cannot stop DNS rebinding (a public name resolving to a private
     # IP). The defence-in-depth for that is network egress policy on the scraper
     # container — it must not be able to route to RFC1918 / 169.254.0.0/16.
@@ -87,7 +87,7 @@ class PuskesmasUpdate(BaseModel):
         for f in ("epus_url", "asik_url"):
             if f in self.model_fields_set and getattr(self, f) is None:
                 raise ValueError(
-                    f"{f} cannot be cleared; must be a valid base domain"
+                    f"{f} tidak boleh dikosongkan; harus berupa domain dasar yang valid"
                 )
         return self
 

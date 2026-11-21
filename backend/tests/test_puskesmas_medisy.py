@@ -107,7 +107,7 @@ def test_asik_slot_refuses_a_token(api):
     obj = SimpleNamespace(id=PID, epus_url=None, epus_cred=None, asik_cred=None)
     db.scalar.return_value = obj
     r = client.put(f"/puskesmas/{PID}/credentials/asik", json={"token": TOKEN})
-    assert r.status_code == 422 and "email and a password" in r.json()["detail"]
+    assert r.status_code == 422 and "email dan kata sandi" in r.json()["detail"]
     assert obj.asik_cred is None
     db.commit.assert_not_called()
 
@@ -177,7 +177,7 @@ def test_connection_pulls_the_asik_login_from_medisy_without_returning_it(api):
     assert login["password"] not in r.text and TOKEN not in r.text
 
 
-@pytest.mark.parametrize("status, text", [(401, "rejected the token"), (403, "refused this server"), (500, "server error")])
+@pytest.mark.parametrize("status, text", [(401, "menolak token"), (403, "menolak server ini"), (500, "Kesalahan server")])
 def test_connection_failures_are_a_200_with_ok_false(api, status, text):
     client, db, state = api
     db.scalar.return_value = _row()
@@ -196,7 +196,7 @@ def test_connection_unreachable_is_reported_not_raised(api):
 
     state["handler"] = boom
     r = client.post(f"/puskesmas/{PID}/test-connection")
-    assert r.status_code == 200 and r.json()["ok"] is False and "cannot reach Medisy" in r.json()["error"]
+    assert r.status_code == 200 and r.json()["ok"] is False and "tidak dapat terhubung ke Medisy" in r.json()["error"]
     assert len(state["requests"]) == 2                              # one retry, then give up (fast: this is a button click)
 
 

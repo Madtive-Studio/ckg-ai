@@ -60,7 +60,7 @@ export function StartGdpDialog() {
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       const job = await start.mutateAsync(values);
-      toast.success(`GDP report job started for ${job.puskesmas_name}`);
+      toast.success(`Proses laporan GDP dimulai untuk ${job.puskesmas_name}`);
       setOpen(false);
     } catch (err) {
       applyApiErrorToForm(err, form.setError, KNOWN_FIELDS);
@@ -69,13 +69,13 @@ export function StartGdpDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button onClick={() => setOpen(true)}>Start GDP Report</Button>
+      <Button onClick={() => setOpen(true)}>Mulai Laporan GDP</Button>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Start Kertas Kerja DM Terkendali</DialogTitle>
+          <DialogTitle>Mulai Kertas Kerja DM Terkendali</DialogTitle>
           <DialogDescription>
-            Walks ASIK + Medisy for every date in the range. Then aggregates GD
-            Puasa per month per NIK on the dashboard below.
+            Menelusuri ASIK + Medisy untuk setiap tanggal dalam rentang, lalu
+            merangkum GD Puasa per bulan per NIK pada dashboard di bawah.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -86,7 +86,7 @@ export function StartGdpDialog() {
               onChange={(v) => form.setValue("puskesmas_id", v ?? "")}
               useOptions={usePuskesmasOptions}
               selectedLabel={pkDetail.data?.name}
-              placeholder="Select a puskesmas…"
+              placeholder="Pilih puskesmas…"
             />
             {form.formState.errors.puskesmas_id && (
               <p className="text-xs text-[var(--destructive)]">
@@ -96,7 +96,7 @@ export function StartGdpDialog() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="date_from">From date</Label>
+              <Label htmlFor="date_from">Dari tanggal</Label>
               <Input id="date_from" type="date" {...form.register("date_from")} />
               {form.formState.errors.date_from && (
                 <p className="text-xs text-[var(--destructive)]">
@@ -105,7 +105,7 @@ export function StartGdpDialog() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date_to">To date</Label>
+              <Label htmlFor="date_to">Sampai tanggal</Label>
               <Input id="date_to" type="date" {...form.register("date_to")} />
               {form.formState.errors.date_to && (
                 <p className="text-xs text-[var(--destructive)]">
@@ -117,12 +117,12 @@ export function StartGdpDialog() {
           <div className="flex items-start justify-between gap-4 rounded-md border border-[var(--border)] p-3">
             <div className="space-y-1">
               <Label htmlFor="skip_asik_detail" className="text-sm">
-                Skip ASIK form-tab scrape (NIK only)
+                Lewati pengambilan tab formulir ASIK (NIK saja)
               </Label>
               <p className="text-xs text-[var(--muted-foreground)]">
-                ASIK still walks every date for NIK + Nama, but skips opening
-                Mandiri / Nakes SurveyJS forms. ~10x faster — recommended for
-                GDP report since GDP value comes from Medisy only.
+                ASIK tetap ditelusuri per tanggal untuk NIK + Nama, tetapi formulir
+                Mandiri / Nakes tidak dibuka. ~10x lebih cepat — disarankan untuk
+                laporan GDP karena nilai GDP hanya diambil dari Medisy.
               </p>
             </div>
             <Switch
@@ -142,10 +142,10 @@ export function StartGdpDialog() {
               variant="outline"
               onClick={() => setOpen(false)}
             >
-              Cancel
+              Batal
             </Button>
             <Button type="submit" disabled={start.isPending}>
-              {start.isPending ? "Starting…" : "Start"}
+              {start.isPending ? "Memulai…" : "Mulai"}
             </Button>
           </DialogFooter>
         </form>

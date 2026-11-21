@@ -127,7 +127,7 @@ def test_backfill_create_none_validation():
     assert ok.source_scope is S.NONE
 
     # none + sync off → rejected (the run would do nothing).
-    with pytest.raises(ValidationError, match="requires sync_mode on"):
+    with pytest.raises(ValidationError, match="membutuhkan pengiriman ke ASIK aktif"):
         CronBackfillCreate(**base, source_scope=S.NONE, sync_mode=CronSyncMode.OFF)
 
     # none + no_merge → rejected (short-circuits before sync).

@@ -31,6 +31,7 @@ import { usePuskesmas, usePuskesmasOptions } from "@/lib/hooks/use-puskesmas";
 import { useScrapeJobList } from "@/lib/hooks/use-scrape";
 import type { ScrapeJobScope } from "@/lib/api/scrape";
 import type { ScrapeKindFilter } from "@/lib/stores/scrape-jobs-list-store";
+import { SCRAPE_KIND_LABEL } from "@/lib/source-names";
 
 export default function ScrapeJobsPage() {
   const puskesmasId = useScrapeJobsListStore((s) => s.puskesmasId);
@@ -58,8 +59,8 @@ export default function ScrapeJobsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Scrape Jobs"
-        description="Lihat riwayat scrape job di semua puskesmas."
+        title="Ambil Data"
+        description="Riwayat proses pengambilan data di semua puskesmas."
       />
 
       <div className="flex flex-wrap items-end gap-3">
@@ -92,7 +93,7 @@ export default function ScrapeJobsPage() {
           </Select>
         </div>
         <div className="w-48 space-y-2">
-          <Label>Scope</Label>
+          <Label>Cakupan</Label>
           <Select
             value={scope}
             onValueChange={(v) => setScope(v as ScrapeJobScope)}
@@ -136,7 +137,7 @@ export default function ScrapeJobsPage() {
                       {j.patient_nik ?? "—"}
                     </TableCell>
                     <TableCell>{j.date_filter ?? "—"}</TableCell>
-                    <TableCell className="uppercase">{j.kind}</TableCell>
+                    <TableCell>{SCRAPE_KIND_LABEL[j.kind]}</TableCell>
                     <TableCell>
                       <ScrapeStatusBadge status={j.status} />
                     </TableCell>
@@ -168,7 +169,7 @@ export default function ScrapeJobsPage() {
             </Table>
             {jobs.data.items.length === 0 && (
               <div className="p-6">
-                <EmptyState title="Belum ada scrape job" />
+                <EmptyState title="Belum ada proses pengambilan data" />
               </div>
             )}
           </div>

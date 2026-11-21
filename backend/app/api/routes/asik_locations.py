@@ -43,14 +43,14 @@ def list_asik_locations(
     _: uuid.UUID = Depends(get_current_admin_id),
 ) -> list[AsikLocationOut]:
     if level not in _LEVELS:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "unknown location level")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Tingkat wilayah tidak dikenal")
     if level != "province" and not parent_code:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
-            "parent_code is required for this level",
+            "Kode wilayah induk wajib diisi untuk tingkat ini",
         )
     if parent_code is not None and not parent_code.isdigit():
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "parent_code must be numeric")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Kode wilayah induk harus berupa angka")
 
     try:
         with httpx.Client(timeout=_HTTP_TIMEOUT) as client:
@@ -62,7 +62,7 @@ def list_asik_locations(
             payload = resp.json()
     except (httpx.HTTPError, ValueError) as exc:
         raise HTTPException(
-            status.HTTP_502_BAD_GATEWAY, "ASIK location service unavailable"
+            status.HTTP_502_BAD_GATEWAY, "Layanan wilayah ASIK sedang tidak tersedia"
         ) from exc
 
     out: list[AsikLocationOut] = []

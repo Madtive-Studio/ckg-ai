@@ -29,8 +29,8 @@ def _load() -> dict[str, Any]:
         raise HTTPException(
             status_code=503,
             detail=(
-                "asik_form_mapping.json not found; run "
-                "`python backend/app/data/build_mapping.py` to generate it"
+                "File asik_form_mapping.json tidak ditemukan; jalankan "
+                "`python backend/app/data/build_mapping.py` untuk membuatnya"
             ),
         )
     with open(_DATA_PATH, encoding="utf-8") as fh:
@@ -182,7 +182,7 @@ def get_form(
         code = (f.get("frm_code") or "").strip().lower()
         if code == needle:
             return f
-    raise HTTPException(status_code=404, detail=f"form {frm_code} not found")
+    raise HTTPException(status_code=404, detail=f"Formulir {frm_code} tidak ditemukan")
 
 
 @router.get("/epus-paths")

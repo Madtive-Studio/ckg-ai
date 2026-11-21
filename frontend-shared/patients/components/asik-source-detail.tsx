@@ -202,7 +202,7 @@ export function AsikSourceDetail({
                 tone="blue"
               />
               <StatPill
-                label="Field Terisi"
+                label="Isian Terisi"
                 value={totals.filled}
                 hint={`/ ${totals.total}`}
                 tone="green"
@@ -216,7 +216,7 @@ export function AsikSourceDetail({
       {totalBlockCount === 0 && !hasTatalaksana && (
         <Card className="shadow-sm">
           <CardContent className="py-8 text-center text-sm text-[var(--muted-foreground)]">
-            No data available for ASIK.
+            Tidak ada data dari ASIK.
           </CardContent>
         </Card>
       )}

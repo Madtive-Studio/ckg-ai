@@ -39,9 +39,9 @@ const ACTIVE_STATUSES: CronBackfillStatus[] = ["pending", "running"];
 
 const SOURCE_SCOPE_LABEL: Record<CronSourceScopeT, string> = {
   both: "Medisy + ASIK",
-  epus_only: "Medisy only",
-  asik_only: "ASIK only",
-  none: "Sync only (no rescrape)",
+  epus_only: "Medisy saja",
+  asik_only: "ASIK saja",
+  none: "Kirim ke ASIK saja (tanpa ambil ulang)",
 };
 
 type Tab = "active" | "all";
@@ -98,7 +98,7 @@ export function CronBackfillListSection() {
     if (!cancelFor) return;
     try {
       await cancel.mutateAsync(cancelFor.id);
-      toast.success("Backfill cancelled");
+      toast.success("Proses rentang tanggal dibatalkan");
       setCancelFor(null);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -109,10 +109,10 @@ export function CronBackfillListSection() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Date-range backfills</h2>
+          <h2 className="text-lg font-semibold">Proses rentang tanggal</h2>
           <p className="text-sm text-[var(--muted-foreground)]">
-            Run the cron pipeline (ASIK → Medisy → Merge) forward across a
-            range of dates for one puskesmas.
+            Jalankan alur jadwal (ASIK → Medisy → Gabung data) maju sepanjang
+            rentang tanggal untuk satu puskesmas.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -121,13 +121,13 @@ export function CronBackfillListSection() {
             setPage(1);
           }}>
             <TabsList>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="active">Aktif</TabsTrigger>
+              <TabsTrigger value="all">Semua</TabsTrigger>
             </TabsList>
           </Tabs>
           <Button onClick={() => setFormOpen(true)}>
             <Plus className="h-4 w-4" />
-            Run for date range
+            Jalankan untuk rentang tanggal
           </Button>
         </div>
       </div>
@@ -139,12 +139,12 @@ export function CronBackfillListSection() {
           <TableHeader>
             <TableRow>
               <TableHead>Puskesmas</TableHead>
-              <TableHead>Range</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead>Cursor</TableHead>
+              <TableHead>Rentang</TableHead>
+              <TableHead>Sumber</TableHead>
+              <TableHead>Progres</TableHead>
+              <TableHead>Posisi</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -179,7 +179,7 @@ export function CronBackfillListSection() {
                         size="sm"
                         onClick={() => setDetailFor(b)}
                       >
-                        View runs
+                        Lihat proses
                       </Button>
                       {isActive && (
                         <Button
@@ -187,7 +187,7 @@ export function CronBackfillListSection() {
                           size="sm"
                           onClick={() => setCancelFor(b)}
                         >
-                          Cancel
+                          Batal
                         </Button>
                       )}
                     </div>
@@ -202,8 +202,8 @@ export function CronBackfillListSection() {
             <EmptyState
               title={
                 tab === "active"
-                  ? "No active backfills"
-                  : "No backfills yet"
+                  ? "Tidak ada proses rentang tanggal yang aktif"
+                  : "Belum ada proses rentang tanggal"
               }
             />
           </div>
@@ -228,13 +228,13 @@ export function CronBackfillListSection() {
       <ConfirmDialog
         open={!!cancelFor}
         onOpenChange={(v) => !v && setCancelFor(null)}
-        title="Cancel backfill?"
+        title="Batalkan proses rentang tanggal?"
         description={
           cancelFor
-            ? `Stops the backfill for ${cancelFor.puskesmas_name}. Already-completed dates' data is preserved.`
+            ? `Menghentikan proses rentang tanggal untuk ${cancelFor.puskesmas_name}. Data tanggal yang sudah selesai tetap tersimpan.`
             : ""
         }
-        confirmLabel="Cancel backfill"
+        confirmLabel="Batalkan proses"
         destructive
         loading={cancel.isPending}
         onConfirm={onCancelConfirm}

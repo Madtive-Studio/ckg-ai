@@ -883,15 +883,15 @@ def _drop_null_null_entries(merged: dict) -> dict:
     return merged
 
 
-_REASONING_BOTH_IDENTICAL = "Kedua sumber memuat data yang konsisten. Nilai akhir diambil dari ePuskesmas sebagai sumber rujukan."
-_REASONING_SAME_MEANING = "Kedua sumber memuat jawaban yang bermakna sama meskipun bentuk nilainya berbeda. Nilai akhir dinormalisasi dan ditandai is_same_answer: true."
-_REASONING_EPUS_ONLY = "Field ini hanya terisi di ePuskesmas dan dipakai apa adanya untuk formulir ASIK."
-_REASONING_ASIK_ONLY_FIELD = "Field ini hanya terisi di ASIK; ePuskesmas belum memiliki nilai untuk pertanyaan ini."
-_REASONING_ASIK_ONLY_FORM = "Form ini tidak tersedia di ePuskesmas; nilai dipertahankan dari ASIK."
-_REASONING_BOTH_EMPTY = "Kedua sumber memiliki slot data untuk field ini, tetapi nilainya sama-sama kosong. Nilai akhir ditetapkan null."
-_REASONING_AUTO_CONFLICT = "Nilai berbeda antara ASIK dan ePuskesmas; perlu ditinjau. Nilai akhir mengikuti ePuskesmas sebagai sumber rujukan."
-_REASONING_EPUS_IMPLAUSIBLE = "Nilai ePuskesmas tidak masuk akal secara fisik/klinis untuk pasien ini. Nilai akhir mengikuti ASIK karena nilai ePuskesmas tidak masuk akal."
-_REASONING_IDENTITAS_CONSISTENT = "Identitas pasien konsisten antara ASIK dan ePuskesmas."
+_REASONING_BOTH_IDENTICAL = "Kedua sumber memuat data yang konsisten. Nilai akhir diambil dari Medisy sebagai sumber rujukan."
+_REASONING_SAME_MEANING = "Kedua sumber memuat jawaban yang bermakna sama meskipun bentuk nilainya berbeda. Nilai akhir diseragamkan dan ditandai sebagai jawaban yang sama."
+_REASONING_EPUS_ONLY = "Isian ini hanya terisi di Medisy dan dipakai apa adanya untuk formulir ASIK."
+_REASONING_ASIK_ONLY_FIELD = "Isian ini hanya terisi di ASIK; Medisy belum memiliki nilai untuk pertanyaan ini."
+_REASONING_ASIK_ONLY_FORM = "Formulir ini tidak tersedia di Medisy; nilai dipertahankan dari ASIK."
+_REASONING_BOTH_EMPTY = "Kedua sumber memiliki tempat data untuk isian ini, tetapi nilainya sama-sama kosong. Nilai akhir dibiarkan kosong."
+_REASONING_AUTO_CONFLICT = "Nilai berbeda antara ASIK dan Medisy; perlu ditinjau. Nilai akhir mengikuti Medisy sebagai sumber rujukan."
+_REASONING_EPUS_IMPLAUSIBLE = "Nilai Medisy tidak masuk akal secara fisik/klinis untuk pasien ini. Nilai akhir mengikuti ASIK karena nilai Medisy tidak masuk akal."
+_REASONING_IDENTITAS_CONSISTENT = "Identitas pasien konsisten antara ASIK dan Medisy."
 _REASONING_IDENTITAS_SAME_MEANING = "Identitas pasien bermakna sama meskipun bentuk nilainya berbeda."
 _REASONING_IDENTITAS_ASIK_ONLY = "Identitas pasien hanya tersedia di ASIK."
 _REASONING_IDENTITAS_EPUS_ONLY = "Identitas pasien hanya tersedia di ePuskesmas."
@@ -1191,7 +1191,7 @@ def _chat_and_parse_with_retry(
             if attempt > 1:
                 _publish_line(
                     rc, log_key, chan,
-                    f"[retry-ok] {nik} parsed on attempt {attempt}/{_MERGE_MAX_ATTEMPTS}",
+                    f"[ulang-berhasil] {nik} terbaca pada percobaan {attempt}/{_MERGE_MAX_ATTEMPTS}",
                 )
             return merged, resp
         except (json.JSONDecodeError, ValueError) as exc:
@@ -1200,13 +1200,13 @@ def _chat_and_parse_with_retry(
             if attempt < _MERGE_MAX_ATTEMPTS:
                 _publish_line(
                     rc, log_key, chan,
-                    f"[retry] {nik} attempt {attempt}/{_MERGE_MAX_ATTEMPTS} parse failed "
+                    f"[ulang] {nik} percobaan {attempt}/{_MERGE_MAX_ATTEMPTS} gagal dibaca "
                     f"(out_tok={resp.output_tokens} finish={resp.finish_reason} err={err_msg[:80]})",
                 )
             else:
                 _publish_line(
                     rc, log_key, chan,
-                    f"[fail] {nik} all {_MERGE_MAX_ATTEMPTS} attempts parse-failed "
+                    f"[gagal] {nik} semua {_MERGE_MAX_ATTEMPTS} percobaan gagal dibaca "
                     f"(last out_tok={resp.output_tokens} finish={resp.finish_reason})",
                 )
     assert last_exc is not None
@@ -1295,7 +1295,7 @@ def _merge_one_patient(
         return None
 
     if not force and patient.merged_at is not None:
-        _publish_line(rc, log_key, chan, f"[skip] {patient.nik} already merged")
+        _publish_line(rc, log_key, chan, f"[lewati] {patient.nik} sudah digabung")
         merge_job_crud.bump_counters(db, job, processed=1, skipped=1)
         db.commit()
         return None
@@ -1321,7 +1321,7 @@ def _merge_one_patient(
             db.commit()
             _publish_line(
                 rc, log_key, chan,
-                f"[ok] {patient.nik} {patient.nama} (copied from twin)",
+                f"[berhasil] {patient.nik} {patient.nama} (disalin dari data kembarannya)",
             )
             return None
 
@@ -1355,7 +1355,7 @@ def _merge_one_patient(
             f"## ASIK (input 2, raw scrape)\n"
             f"```json\n{json.dumps(asik_for_llm, ensure_ascii=False)}\n```\n"
         )
-        _publish_line(rc, log_key, chan, f"[run] {nik} {nama}")
+        _publish_line(rc, log_key, chan, f"[proses] {nik} {nama}")
         merged, resp = _chat_and_parse_with_retry(
             provider=provider,
             base_url=base_url,
@@ -1429,7 +1429,7 @@ def _merge_one_patient(
         )
         merge_job_crud.bump_counters(db, job, processed=1, succeeded=1)
         db.commit()
-        _publish_line(rc, log_key, chan, f"[ok] {nik} {nama}")
+        _publish_line(rc, log_key, chan, f"[berhasil] {nik} {nama}")
         return None
     except Exception as exc:
         db.rollback()
@@ -1482,7 +1482,7 @@ def _merge_one_patient(
             db.commit()
         except Exception:
             db.rollback()
-        _publish_line(rc, log_key, chan, f"[fail] {nik}: {msg}")
+        _publish_line(rc, log_key, chan, f"[gagal] {nik}: {msg}")
         return msg
 
 
@@ -1612,7 +1612,7 @@ def run_merge(self, job_id: str) -> None:
         merge_job_crud.mark_running(
             db, job, self.request.id or "", datetime.now(UTC), len(target_ids)
         )
-        _publish_line(rc, log_key, chan, f"start: {len(target_ids)} matched patient(s) targeted (force={force})")
+        _publish_line(rc, log_key, chan, f"mulai: {len(target_ids)} pasien cocok akan digabung (paksa={'ya' if force else 'tidak'})")
 
         cancelled = False
         cancel_key = _cancel_key(job_id)
@@ -1627,7 +1627,7 @@ def run_merge(self, job_id: str) -> None:
             if _round_no > 1:
                 _publish_line(
                     rc, log_key, chan,
-                    f"[retry {_round_no}/{_MERGE_ROUND_MAX}] {len(remaining)} patient(s) still failing",
+                    f"[ulang {_round_no}/{_MERGE_ROUND_MAX}] {len(remaining)} pasien masih gagal",
                 )
                 try:
                     time.sleep(_MERGE_ROUND_BACKOFF_SECONDS)
@@ -1708,8 +1708,8 @@ def run_merge(self, job_id: str) -> None:
             )
             _publish_line(
                 rc, log_key, chan,
-                f"done(FAILED): succeeded={job.succeeded_count} failed={job.failed_count} "
-                f"skipped={job.skipped_count} — {kind}",
+                f"selesai (GAGAL): berhasil={job.succeeded_count} gagal={job.failed_count} "
+                f"dilewati={job.skipped_count} — {kind}",
             )
             try:
                 rc.publish(chan, "__failed__")
@@ -1720,7 +1720,7 @@ def run_merge(self, job_id: str) -> None:
         merge_job_crud.mark_success(db, job, duration, datetime.now(UTC), metrics=resource_metrics)
         _publish_line(
             rc, log_key, chan,
-            f"done: succeeded={job.succeeded_count} failed={job.failed_count} skipped={job.skipped_count}",
+            f"selesai: berhasil={job.succeeded_count} gagal={job.failed_count} dilewati={job.skipped_count}",
         )
         try:
             rc.publish(chan, "__done__")

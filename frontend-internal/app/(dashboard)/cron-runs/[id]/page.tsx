@@ -31,6 +31,7 @@ import {
 import { mergeKeys, useMergeJob } from "@/lib/hooks/use-merge";
 import { scrapeKeys, useScrapeJob } from "@/lib/hooks/use-scrape";
 import { asApiError } from "@/lib/api/client";
+import { STEP_LABEL } from "@/lib/source-names";
 
 export default function CronRunDetailPage({
   params,
@@ -79,7 +80,7 @@ export default function CronRunDetailPage({
   if (!run.data) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Cron Run" description="Loading…" />
+        <PageHeader title="Proses terjadwal" description="Memuat…" />
       </div>
     );
   }
@@ -91,7 +92,7 @@ export default function CronRunDetailPage({
   const onCancel = async () => {
     try {
       await cancel.mutateAsync(r.id);
-      toast.success("Cron run cancelled");
+      toast.success("Proses terjadwal dibatalkan");
       setCancelOpen(false);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -101,7 +102,7 @@ export default function CronRunDetailPage({
   const onRetry = async () => {
     try {
       const newRun = await retry.mutateAsync(r.id);
-      toast.success("Retry started");
+      toast.success("Percobaan ulang dimulai");
       router.push(`/cron-runs/${newRun.id}`);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -113,13 +114,13 @@ export default function CronRunDetailPage({
       <Button variant="ghost" size="sm" asChild className="h-8 -ml-2 px-2">
         <Link href="/cron-runs" prefetch={false}>
           <ArrowLeft className="h-4 w-4" />
-          Back
+          Kembali
         </Link>
       </Button>
 
       <PageHeader
-        title={`Cron run · ${r.puskesmas_name}`}
-        description={`Target ${r.target_date}`}
+        title={`Proses terjadwal · ${r.puskesmas_name}`}
+        description={`Tanggal target ${r.target_date}`}
         actions={
           <div className="flex gap-2">
             <Button
@@ -131,7 +132,7 @@ export default function CronRunDetailPage({
               <RotateCw
                 className={`h-4 w-4 ${run.isFetching ? "animate-spin" : ""}`}
               />
-              Refresh
+              Muat ulang
             </Button>
             {canCancel && (
               <Button
@@ -141,13 +142,13 @@ export default function CronRunDetailPage({
                 disabled={cancel.isPending}
               >
                 <XCircle className="h-4 w-4" />
-                Cancel
+                Batal
               </Button>
             )}
             {canRetry && (
               <Button size="sm" onClick={onRetry} disabled={retry.isPending}>
                 <RefreshCcw className="h-4 w-4" />
-                Retry
+                Coba lagi
               </Button>
             )}
           </div>
@@ -157,33 +158,33 @@ export default function CronRunDetailPage({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Overview</CardTitle>
+            <CardTitle className="text-base">Ringkasan</CardTitle>
             <CronRunStatusBadge status={r.status} />
           </div>
           <CardDescription>
             {r.failed_step
-              ? `Failed at step ${r.failed_step.toUpperCase()}`
+              ? `Gagal pada langkah ${STEP_LABEL[r.failed_step]}`
               : r.current_step
-                ? `Step ${r.current_step.toUpperCase()} · attempt ${r.current_step_attempt}`
+                ? `Langkah ${STEP_LABEL[r.current_step]} · percobaan ${r.current_step_attempt}`
                 : ""}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-2 text-xs text-[var(--muted-foreground)]">
           <div>
-            <span className="font-medium">Started: </span>
+            <span className="font-medium">Dimulai: </span>
             {r.started_at
               ? format(parseISO(r.started_at), "yyyy-MM-dd HH:mm")
               : "—"}
           </div>
           <div>
-            <span className="font-medium">Finished: </span>
+            <span className="font-medium">Selesai: </span>
             {r.finished_at
               ? format(parseISO(r.finished_at), "yyyy-MM-dd HH:mm")
               : "—"}
           </div>
           {r.error_message && (
             <div className="col-span-2 mt-2">
-              <span className="font-medium">Error: </span>
+              <span className="font-medium">Kesalahan: </span>
               <pre className="mt-1 whitespace-pre-wrap rounded bg-[var(--muted)] p-2 text-[var(--foreground)]">
                 {r.error_message}
               </pre>
@@ -193,11 +194,11 @@ export default function CronRunDetailPage({
       </Card>
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Child jobs</h2>
+        <h2 className="text-lg font-semibold">Langkah proses</h2>
         <div className="space-y-2">
-          <ChildScrapeJobRow label="Medisy Scrape" jobId={r.epus_scrape_job_id} />
-          <ChildScrapeJobRow label="ASIK Scrape" jobId={r.asik_scrape_job_id} />
-          <ChildMergeJobRow label="Merge" jobId={r.merge_job_id} />
+          <ChildScrapeJobRow label="Ambil data Medisy" jobId={r.epus_scrape_job_id} />
+          <ChildScrapeJobRow label="Ambil data ASIK" jobId={r.asik_scrape_job_id} />
+          <ChildMergeJobRow label="Gabung data" jobId={r.merge_job_id} />
           <SyncStepRow runId={r.id} />
         </div>
       </div>
@@ -205,9 +206,9 @@ export default function CronRunDetailPage({
       <ConfirmDialog
         open={cancelOpen}
         onOpenChange={setCancelOpen}
-        title="Cancel this cron run?"
-        description="The currently running scrape or merge step will be cancelled. Downstream steps will not run."
-        confirmLabel="Cancel run"
+        title="Batalkan proses terjadwal ini?"
+        description="Langkah ambil data atau gabung data yang sedang berjalan akan dibatalkan. Langkah berikutnya tidak dijalankan."
+        confirmLabel="Batalkan proses"
         destructive
         loading={cancel.isPending}
         onConfirm={onCancel}
@@ -218,7 +219,7 @@ export default function CronRunDetailPage({
 
 /** The SYNC step has no single child job — it fans out to one SyncJob per
  * patient — so it shows aggregate progress instead of a job link. Before the
- * step starts `total` is null and the row reads "Not started", matching how the
+ * step starts `total` is null and the row reads "Belum dimulai", matching how the
  * scrape/merge rows render a null job id. */
 function SyncStepRow({ runId }: { runId: string }) {
   const summary = useCronRunSyncSummary(runId);
@@ -227,13 +228,13 @@ function SyncStepRow({ runId }: { runId: string }) {
   return (
     <div className="flex items-center justify-between rounded-md border border-[var(--border)] p-3">
       <div className="min-w-0">
-        <p className="text-sm font-medium">ASIK Sync</p>
+        <p className="text-sm font-medium">Kirim ke ASIK</p>
         <p className="truncate text-xs text-[var(--muted-foreground)]">
           {s && s.total !== null
-            ? `${done}/${s.total} patients${s.failed ? ` · ${s.failed} failed` : ""}${
-                s.running ? ` · ${s.running} running` : ""
+            ? `${done}/${s.total} pasien${s.failed ? ` · ${s.failed} gagal` : ""}${
+                s.running ? ` · ${s.running} berjalan` : ""
               }`
-            : "Not started"}
+            : "Belum dimulai"}
         </p>
       </div>
       {/* No "Open" link: the sync-jobs list has no cron_run_id filter, so it
@@ -261,13 +262,13 @@ function ChildScrapeJobRow({
           {job.data ? <ScrapeStatusBadge status={job.data.status} /> : null}
         </div>
         <p className="truncate text-xs text-[var(--muted-foreground)]">
-          {jobId ?? "Not started"}
+          {jobId ?? "Belum dimulai"}
         </p>
       </div>
       {jobId ? (
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/scrape-jobs/${jobId}`} prefetch={false}>
-            Open
+            Buka
           </Link>
         </Button>
       ) : (
@@ -293,13 +294,13 @@ function ChildMergeJobRow({
           {job.data ? <MergeStatusBadge status={job.data.status} /> : null}
         </div>
         <p className="truncate text-xs text-[var(--muted-foreground)]">
-          {jobId ?? "Not started"}
+          {jobId ?? "Belum dimulai"}
         </p>
       </div>
       {jobId ? (
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/merge-with-ai/${jobId}`} prefetch={false}>
-            Open
+            Buka
           </Link>
         </Button>
       ) : (

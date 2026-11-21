@@ -118,8 +118,8 @@ export function HipertensiDiagnoseTable({
       {items.length === 0 && (
         <div className="p-6">
           <EmptyState
-            title="No patients with tekanan darah"
-            description="No patient in this puskesmas+year has any blood-pressure reading."
+            title="Tidak ada pasien dengan tekanan darah"
+            description="Tidak ada pasien di puskesmas dan tahun ini yang memiliki data tekanan darah."
           />
         </div>
       )}

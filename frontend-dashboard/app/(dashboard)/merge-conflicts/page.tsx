@@ -70,8 +70,8 @@ export default function MergeConflictsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Conflict Analysis"
-        description="Questions where the merged data shows a real disagreement between Medisy and ASIK answers."
+        title="Analisis Konflik"
+        description="Pertanyaan yang jawabannya benar-benar berbeda antara Medisy dan ASIK pada data gabungan."
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -82,12 +82,12 @@ export default function MergeConflictsPage() {
             onChange={(v) => setPuskesmasId(v)}
             useOptions={usePuskesmasOptions}
             selectedLabel={pkDetail.data?.name}
-            placeholder="Select a puskesmas…"
-            allOptionLabel="All puskesmas"
+            placeholder="Pilih puskesmas…"
+            allOptionLabel="Semua puskesmas"
           />
         </div>
         <div className="space-y-2">
-          <Label>Top</Label>
+          <Label>Teratas</Label>
           <Select
             value={String(top)}
             onValueChange={(v) => setTop(Number(v))}
@@ -116,9 +116,9 @@ export default function MergeConflictsPage() {
           </span>
           <span className="inline-flex items-center gap-2">
             <span>
-              Computed{" "}
+              Dihitung{" "}
               {format(parseISO(data.computed_at!), "yyyy-MM-dd HH:mm")}
-              {data.cache_hit ? " · cached" : " · fresh"}
+              {data.cache_hit ? " · dari cache" : " · baru dihitung"}
               {summaryRefreshing && (
                 <span className="ml-2 inline-flex items-center gap-1">
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -137,7 +137,7 @@ export default function MergeConflictsPage() {
                 <RefreshCw
                   className={`h-3 w-3 ${clearCache.isPending ? "animate-spin" : ""}`}
                 />
-                Clear cache
+                Hapus cache
               </Button>
             )}
           </span>
@@ -151,11 +151,11 @@ export default function MergeConflictsPage() {
           <Loader2 className="h-6 w-6 animate-spin" />
           <div className="text-center">
             <div className="font-medium text-[var(--foreground)]">
-              Loading conflict analysis…
+              Memuat analisis konflik…
             </div>
             <div className="text-xs">
-              First-time computation scans every matched patient&apos;s merged
-              data for the selected scope. Result is cached for 24 hours.
+              Perhitungan pertama memeriksa data gabungan setiap pasien yang cocok
+              pada cakupan yang dipilih. Hasilnya disimpan (cache) selama 24 jam.
             </div>
           </div>
         </div>
@@ -167,9 +167,9 @@ export default function MergeConflictsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-8"></TableHead>
-                <TableHead>Section</TableHead>
-                <TableHead>Merged Key</TableHead>
-                <TableHead className="text-right">Affected Patients</TableHead>
+                <TableHead>Bagian</TableHead>
+                <TableHead>Kunci Gabungan</TableHead>
+                <TableHead className="text-right">Pasien Terdampak</TableHead>
                 <TableHead className="text-right">%</TableHead>
               </TableRow>
             </TableHeader>
@@ -236,11 +236,11 @@ export default function MergeConflictsPage() {
           {data.conflicts.length === 0 && (
             <div className="p-6">
               <EmptyState
-                title="No conflicts found"
+                title="Tidak ada konflik"
                 description={
                   data.total_patients === 0
-                    ? "No matched patients with merged data in the selected scope."
-                    : "All matched patients agree on every question for this scope."
+                    ? "Tidak ada pasien cocok dengan data gabungan pada cakupan yang dipilih."
+                    : "Semua pasien yang cocok memiliki jawaban sama untuk setiap pertanyaan pada cakupan ini."
                 }
               />
             </div>

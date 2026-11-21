@@ -57,10 +57,10 @@ sebab paling umum kalau "pasien saya kok tidak ada di daftar".
 - Akibatnya: perbaikan data di Medisy/ASIK baru terlihat di laporan
   setelah pengambilan data dan perhitungan berikutnya — **paling lambat besok
   pagi**.
-- Di halaman registri ada keterangan **"Computed <waktu> · cached/fresh"** =
-  kapan angka itu dihitung. Tulisan **"Loading registri hipertensi…"**,
-  **"Loading registri diabetes melitus…"**, **"Loading registri
-  dislipidemia…"**, atau **"Loading registri obesitas…"** berarti
+- Di halaman registri ada keterangan **"Dihitung <waktu> · dari cache/baru
+  dihitung"** = kapan angka itu dihitung. Tulisan **"Memuat registri
+  hipertensi…"**, **"Memuat registri diabetes melitus…"**, **"Memuat registri
+  dislipidemia…"**, atau **"Memuat registri obesitas…"** berarti
   perhitungan sedang berjalan di latar belakang — halaman akan terisi sendiri
   dalam beberapa saat (perhitungan pertama bisa agak lama karena sistem
   membuka data terenkripsi satu per satu). Saat berjalan muncul **bilah
@@ -98,30 +98,30 @@ punya beberapa sub-halaman):
   untuk dilihat. Bisa disaring (nama/NIK, sekolah, kelas, status pemeriksaan,
   umur, tahun ajaran, puskesmas).
 - **Registri Hipertensi CKG › Registri Hipertensi CKG** — kertas kerja
-  hipertensi per puskesmas + tahun (format dirjen V8juni2026), bisa diexport ke
+  hipertensi per puskesmas + tahun (format dirjen V8juni2026), bisa diunduh sebagai
   Excel.
 - **Registri Hipertensi CKG › Gap Tatalaksana** — daftar pasien hipertensi yang
   belum pernah tercatat diberi obat antihipertensi, lengkap dengan no telp dan
   alamat untuk ditindaklanjuti. Bisa disaring per puskesmas, tahun masuk
-  registri, dan pencarian nama/NIK, serta diexport ke Excel.
+  registri, dan pencarian nama/NIK, serta diunduh sebagai Excel.
 - **Registri Diabetes Melitus CKG** — kertas kerja diabetes melitus per
   puskesmas + tahun (format dirjen, sheet "Diabetes Melitus"): hasil
   pemeriksaan gula darah saat kunjungan CKG dan follow-up gula darah per
-  bulan, bisa diexport ke Excel.
+  bulan, bisa diunduh sebagai Excel.
 - **Registri Dislipidemia CKG** — kertas kerja dislipidemia per puskesmas +
   tahun (format dirjen, sheet "Dislipidemia"): hasil pemeriksaan profil lipid
   (Kolesterol Total, LDL, HDL, Trigliserida) saat kunjungan CKG dan follow-up
   pada bulan kontrol **per 3 bulan** (bukan per bulan seperti dua registri
-  lainnya), bisa diexport ke Excel.
+  lainnya), bisa diunduh sebagai Excel.
 - **Registri Obesitas CKG** — kertas kerja obesitas per puskesmas + tahun
   (format dirjen, sheet "Obesitas"): hasil pemeriksaan antropometri (berat
   badan, tinggi badan, dan IMT yang dihitung dari keduanya) saat kunjungan CKG
   dan follow-up berat badan pada bulan kontrol **3–6 bulan setelah CKG**, bisa
-  diexport ke Excel.
+  diunduh sebagai Excel.
 - **Registri PJB-K › Bayi Kuning - Ikterus** — daftar bayi baru lahir dengan
   klasifikasi ikterus MTBM "Ikterus" atau "Ikterus berat" (hanya dari
   Medisy, bukan syarat CKG), lengkap dengan pemantauan kunjungan berikutnya;
-  bisa diexport ke Excel.
+  bisa diunduh sebagai Excel.
 - **Registri PJB-K › Bayi Kuning - Ikterus Berat** — sama, tetapi hanya bayi
   dengan klasifikasi "Ikterus berat" (kuning < 24 jam, atau > 14 hari, atau
   sampai telapak tangan/kaki). Sheet PJBK belum tersedia.

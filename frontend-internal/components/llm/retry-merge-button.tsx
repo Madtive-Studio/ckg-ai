@@ -14,7 +14,7 @@ export function RetryMergeButton({ patientId }: { patientId: string }) {
     e.stopPropagation();
     try {
       const job = await m.mutateAsync();
-      toast.success("Ulang merge dimulai");
+      toast.success("Gabung ulang dimulai");
       router.push(`/merge-with-ai/${job.id}`);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -28,7 +28,7 @@ export function RetryMergeButton({ patientId }: { patientId: string }) {
       onClick={handleClick}
     >
       <RefreshCw className="h-3.5 w-3.5" />
-      Ulang merge
+      Gabung ulang
     </Button>
   );
 }

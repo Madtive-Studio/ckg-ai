@@ -25,6 +25,15 @@ sumber di bagian "Tentang Aplikasi Ini & Asal Data".)
   - **Cocok** — kunjungan yang sama ditemukan di **kedua** sumber (inilah
     calon **pasien CKG** yang masuk ke registri).
 - **Penggabungan** — apakah hasil gabungan (merge) sudah dibuat untuk pasien itu.
+- **Status CKG** — bawaannya **Sudah CKG**, jadi daftar awalnya hanya
+  menampilkan kunjungan CKG:
+  - **Sudah CKG** — kunjungan yang ditandai CKG di Medisy, **atau** yang sudah
+    ada di ASIK (data di ASIK selalu data CKG).
+  - **Bukan CKG** — kunjungan Medisy biasa (misalnya kontrol ulang atau
+    kunjungan bayi) yang tidak ditandai CKG dan tidak ada di ASIK. Kunjungan ini
+    tetap disimpan karena dipakai registri (misalnya hasil kontrol tekanan darah
+    atau gula darah, dan registri bayi).
+  - **Semua** — tampilkan keduanya.
 - **Umur** — saring berdasarkan **umur sekarang** (umur per hari ini); isi batas
   **minimum** dan/atau **maksimum**. Umur dihitung dari tanggal lahir pasien.
   Pasien yang tanggal lahirnya tidak terbaca dari sumber **tidak muncul** selama

@@ -9,6 +9,7 @@ function today(): string {
 }
 
 type MergedFilter = "all" | "merged" | "unmerged";
+export type CkgFilter = "all" | "ckg" | "non_ckg";
 
 type State = {
   page: number;
@@ -17,6 +18,7 @@ type State = {
   filterDate: string;
   matchStatus: string;
   merged: MergedFilter;
+  ckg: CkgFilter;
   // umur/age range — kept as strings (raw input); empty = unset. Each setter
   // resets page to 1 (per the list-filter convention).
   minAge: string;
@@ -27,6 +29,7 @@ type State = {
   setFilterDate: (d: string) => void;
   setMatchStatus: (s: string) => void;
   setMerged: (m: MergedFilter) => void;
+  setCkg: (c: CkgFilter) => void;
   setMinAge: (a: string) => void;
   setMaxAge: (a: string) => void;
   reset: () => void;
@@ -39,6 +42,7 @@ const initial = {
   filterDate: today(),
   matchStatus: "",
   merged: "all" as MergedFilter,
+  ckg: "ckg" as CkgFilter,
   minAge: "",
   maxAge: "",
 };
@@ -51,6 +55,7 @@ export const usePatientsListStore = create<State>((set) => ({
   setFilterDate: (filterDate) => set({ filterDate, page: 1 }),
   setMatchStatus: (matchStatus) => set({ matchStatus, page: 1 }),
   setMerged: (merged) => set({ merged, page: 1 }),
+  setCkg: (ckg) => set({ ckg, page: 1 }),
   setMinAge: (minAge) => set({ minAge, page: 1 }),
   setMaxAge: (maxAge) => set({ maxAge, page: 1 }),
   reset: () => set({ ...initial, filterDate: today() }),

@@ -47,6 +47,7 @@ def _patient_list_stmt(
     merged: bool | None,
     min_age: int | None,
     max_age: int | None,
+    ckg: bool | None,
 ) -> Select:
     stmt = select(
         Patient.id,
@@ -81,6 +82,13 @@ def _patient_list_stmt(
         stmt = stmt.where(Patient.merged_at.isnot(None))
     elif merged is False:
         stmt = stmt.where(Patient.merged_at.is_(None))
+    # CKG = Medisy marked the visit CKG, or ASIK has it (every ASIK record is a
+    # CKG record; ASIK-only rows carry no Medisy flag, so the flag alone would hide them).
+    is_ckg = or_(Patient.epus_tandai_ckg.is_(True), Patient.scraped_asik_data.isnot(None))
+    if ckg is True:
+        stmt = stmt.where(is_ckg)
+    elif ckg is False:
+        stmt = stmt.where(~is_ckg)
     # Age (umur) = current age = today - birth_date. NULL birth_date rows are
     # excluded by these range predicates (unknown age never matches a bound).
     if min_age is not None or max_age is not None:
@@ -102,6 +110,7 @@ def list_patients(
     merged: bool | None = Query(None),
     min_age: int | None = Query(None, ge=0, le=150),
     max_age: int | None = Query(None, ge=0, le=150),
+    ckg: bool | None = Query(None),
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_dashboard_principal),
 ) -> Page[PatientOut]:
@@ -111,7 +120,7 @@ def list_patients(
         elif puskesmas_id != principal.puskesmas_id:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
     stmt = _patient_list_stmt(
-        puskesmas_id, match_status, filter_date, q, merged, min_age, max_age
+        puskesmas_id, match_status, filter_date, q, merged, min_age, max_age, ckg
     )
     items, total, pages = paginate_execute(db, stmt, params)
     return Page[PatientOut](

@@ -23,6 +23,7 @@ export type PatientListQuery = {
   merged?: boolean;
   min_age?: number;
   max_age?: number;
+  ckg?: boolean;
 };
 
 export async function listPatients(query: PatientListQuery): Promise<Page<Patient>> {

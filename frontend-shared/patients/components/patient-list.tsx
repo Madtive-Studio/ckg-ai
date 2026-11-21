@@ -31,7 +31,10 @@ import { usePuskesmas, usePuskesmasOptions } from "@/lib/hooks/use-puskesmas";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { useIsAdmin } from "@/lib/hooks/use-is-admin";
 import { usePatientsList } from "@shared/patients/use-patients";
-import { usePatientsListStore } from "@shared/patients/patients-list-store";
+import {
+  type CkgFilter,
+  usePatientsListStore,
+} from "@shared/patients/patients-list-store";
 import type { MatchStatus } from "@shared/patients/types";
 
 const MATCH_STATUS_LABEL: Record<MatchStatus, string> = {
@@ -103,6 +106,7 @@ export function PatientList() {
   const filterDate = usePatientsListStore((s) => s.filterDate);
   const matchStatus = usePatientsListStore((s) => s.matchStatus);
   const merged = usePatientsListStore((s) => s.merged);
+  const ckg = usePatientsListStore((s) => s.ckg);
   const minAge = usePatientsListStore((s) => s.minAge);
   const maxAge = usePatientsListStore((s) => s.maxAge);
 
@@ -112,6 +116,7 @@ export function PatientList() {
   const setFilterDate = usePatientsListStore((s) => s.setFilterDate);
   const setMatchStatus = usePatientsListStore((s) => s.setMatchStatus);
   const setMerged = usePatientsListStore((s) => s.setMerged);
+  const setCkg = usePatientsListStore((s) => s.setCkg);
   const setMinAge = usePatientsListStore((s) => s.setMinAge);
   const setMaxAge = usePatientsListStore((s) => s.setMaxAge);
 
@@ -132,6 +137,7 @@ export function PatientList() {
         merged === "merged" ? true : merged === "unmerged" ? false : undefined,
       min_age: parseAge(debouncedMinAge),
       max_age: parseAge(debouncedMaxAge),
+      ckg: ckg === "ckg" ? true : ckg === "non_ckg" ? false : undefined,
     }),
     [
       page,
@@ -140,6 +146,7 @@ export function PatientList() {
       filterDate,
       matchStatus,
       merged,
+      ckg,
       debouncedMinAge,
       debouncedMaxAge,
     ],
@@ -220,6 +227,20 @@ export function PatientList() {
               <SelectItem value="all">Semua</SelectItem>
               <SelectItem value="merged">Tergabung</SelectItem>
               <SelectItem value="unmerged">Belum tergabung</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-44 space-y-1">
+          <Label>Status CKG</Label>
+          <Select value={ckg} onValueChange={(v) => setCkg(v as CkgFilter)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua</SelectItem>
+              <SelectItem value="ckg">Sudah CKG</SelectItem>
+              <SelectItem value="non_ckg">Bukan CKG</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -58,7 +58,7 @@ Scheduling (cron + backfill) strings these steps together per puskesmas per date
 | `frontend-shared/` | UI/logic both frontends show — **single source**, copied into each app's gitignored `_shared/` by `sync.mjs` |
 | `chatbot/` | Knowledge packs for the explainer chatbot in the client dashboard (Indonesian markdown + a hash lock) |
 | `loop-agent/` | Self-maintaining agent that checks/fixes the EPUS scraper + converter in a throwaway container and opens a PR |
-| `.claude/skills/` | `ckg-form-research` (map a data source → ASIK form) and `ckg-deploy` (prod deploy procedure) |
+| `.claude/skills/` | `ckg-form-research` (map a data source → ASIK form) |
 | `CLAUDE.md` | The binding rules for contributors/agents (query discipline, soft-delete, frontend conventions, destructive-command rules) |
 | `MERGE_RESILIENCE_AND_LLM_CONFIG_PLAN.md` | Plan doc for merge resilience / LLM config |
 

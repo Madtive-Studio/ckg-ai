@@ -539,8 +539,7 @@ server is running, re-run `npm run sync-shared` (dashboard) / `pnpm sync-shared`
 4. **Chatbot pins follow the code.** If you move a file the chatbot packs
    describe, the pin must move with it — see §10 and §12.3.
 5. **Deploy rebuilds both frontends** when anything under `frontend-shared/`
-   changes (`.claude/skills/ckg-deploy/preflight.sh` detects this). Never ship
-   one app against a changed shared tree.
+   changes. Never ship one app against a changed shared tree.
 
 ## 12. Don't let a bug survive the push
 
@@ -603,7 +602,7 @@ If you genuinely need prod data:
    on prod, and delete it in the same session — named explicitly, per the global
    delete rules.
 
-Also on prod, per `.claude/skills/ckg-deploy/SKILL.md`:
+Also on prod:
 
 - **Never touch `postgres` or `redis`** — no `build`, `stop`, `rm`, `restart`,
   `down`, or recreate. After any deploy, confirm `postgres` uptime is
@@ -611,8 +610,8 @@ Also on prod, per `.claude/skills/ckg-deploy/SKILL.md`:
 - **Never `docker ... prune`** or any bulk/`--all` cleanup, including when disk
   is full. A full disk is a **stop-and-ask**, not a self-authorized cleanup.
 - **Never delete or modify existing `.env` values**; only add missing keys.
-- **Never silently kill in-flight work** (scrape / merge / warm / cron) — the
-  preflight inventories it; confirm kill-vs-resume with Akbar.
+- **Never silently kill in-flight work** (scrape / merge / warm / cron) — check
+  for it first; confirm kill-vs-resume with Akbar.
 
 Report a disk problem. Do not fix it by deleting things.
 

@@ -29,9 +29,8 @@ restart dev, to pick it up.
 
 ### Docker / deploy
 Each app's Dockerfile does `COPY frontend-shared/ /frontend-shared/`; the build
-script then syncs it into `/app/_shared`. The deploy preflight
-(`.claude/skills/ckg-deploy/preflight.sh`) rebuilds **both** frontends when
-anything under `frontend-shared/` changes.
+script then syncs it into `/app/_shared`. A deploy must rebuild **both**
+frontends when anything under `frontend-shared/` changes.
 
 ## The host contract (what each app must provide)
 

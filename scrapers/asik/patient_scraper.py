@@ -46,6 +46,19 @@ _ID_MONTHS = [
 
 SCREENSHOT_DIR = Path(__file__).parent / "screenshots"
 
+# Counts of events that answer the open questions in asik/CLAUDE.md "Not yet verified" (a filled Nakes form,
+# tatalaksana, patients on the Belum / Sedang tabs, detail-page failures). Written to the output's
+# metadata.verify_counts; the backend turns the first sighting into an admin notice. Counts only — no patient data.
+VERIFY_COUNTS: dict[str, int] = {}
+
+
+def bump_verify(key: str, n: int = 1) -> None:
+    VERIFY_COUNTS[key] = VERIFY_COUNTS.get(key, 0) + n
+
+
+def _has_answer(form_data: dict | None) -> bool:
+    return any(v not in (None, "", []) for k, v in (form_data or {}).items() if not k.startswith("_"))
+
 # Buttons we must NEVER click
 DANGEROUS_BUTTONS = [
     "kirim", "submit", "selesaikan", "simpan", "save",
@@ -159,8 +172,7 @@ def _batch_read_forms_via_tabs(context, form_items: list[dict],
                     tab.wait_for_timeout(120)
 
                 form_data = _read_all_form_fields(tab)
-                if item.get("has_answers", True) and not any(
-                        v not in (None, "", []) for k, v in form_data.items() if not k.startswith("_")):
+                if item.get("has_answers", True) and not _has_answer(form_data):
                     # ASIK says this form was submitted, yet nothing was read — the reader may be out of date
                     # (see "Not yet verified" in asik/CLAUDE.md).
                     console.print(f"          [yellow][verify] submitted form '{item['layanan']}' read with no answers[/yellow]")
@@ -1247,9 +1259,11 @@ def scrape_patient_via_api(context, *, base_url: str, faskes_code: str,
 
         if nakes_items:
             console.print(f"      Nakes:   {len(nakes_items)} forms → batch tabs")
-            result["pelayanan_nakes"].extend(
-                _batch_read_forms_via_tabs(context, nakes_items, tab_pool=tab_pool)
-            )
+            nakes_read = _batch_read_forms_via_tabs(context, nakes_items, tab_pool=tab_pool)
+            result["pelayanan_nakes"].extend(nakes_read)
+            for item, read in zip(nakes_items, nakes_read):
+                if item["has_answers"] and not read.get("error"):
+                    bump_verify("nakes_submitted_read" if _has_answer(read.get("form_data")) else "nakes_submitted_empty")
 
         # Tatalaksana (follow-up): only when detail-screening flags it (i.e. the
         # top-right "Mulai Tatalaksana" button is clickable). Independent of the
@@ -1268,11 +1282,13 @@ def scrape_patient_via_api(context, *, base_url: str, faskes_code: str,
                 )
                 if tata:
                     result["tatalaksana"] = tata
+                bump_verify("tatalaksana_ok")
             except SessionExpiredError:
                 raise
             except Exception as e:
                 console.print(f"      [yellow]Tatalaksana read failed: {e}[/yellow]")
                 result["tatalaksana"] = {"error": str(e)}
+                bump_verify("tatalaksana_error")
     finally:
         for tab in tab_pool:
             try:

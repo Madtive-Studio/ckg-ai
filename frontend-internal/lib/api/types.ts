@@ -962,3 +962,17 @@ export const LoopConfigUpdate = z.object({
   nightly_enabled: z.boolean().optional(),
 });
 export type LoopConfigUpdateInput = z.infer<typeof LoopConfigUpdate>;
+
+// Admin notices: a production scrape saw data that answers an open scraper question.
+export const ScraperVerificationSignalOut = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  outcome: z.enum(["answered", "problem"]),
+  ok_count: z.number(),
+  problem_count: z.number(),
+  puskesmas_id: z.string().uuid(),
+  puskesmas_name: z.string(),
+  scrape_job_id: z.string().uuid(),
+  created_at: z.string(),
+});
+export type ScraperVerificationSignal = z.infer<typeof ScraperVerificationSignalOut>;

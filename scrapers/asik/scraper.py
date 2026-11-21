@@ -76,6 +76,8 @@ from helpers import (
 )
 from helpers.auth import SessionExpiredError, verify_session
 from patient_scraper import (
+    VERIFY_COUNTS,
+    bump_verify,
     scrape_patient_via_api,
     open_detail_via_mulai,
 )
@@ -398,6 +400,8 @@ class CKGPelayananScraper:
         enriched_rows = []
         max_pages = self.args.max_pages or detected_total_pages or self.config.get("max_pages", 500)
         page_num = 1
+        # Belum / Sedang tabs with patients are not yet verified (asik/CLAUDE.md "Not yet verified").
+        tab_signal = {"Belum Pemeriksaan": "tab_belum", "Sedang Pemeriksaan": "tab_sedang"}.get(tab_name)
 
         while page_num <= max_pages:
             total_pages_label = detected_total_pages or "?"
@@ -435,8 +439,10 @@ class CKGPelayananScraper:
                 # same patient once.
                 _attempted_relogin = False
                 while True:
+                    stage = "detail"
                     try:
                         data = open_detail_via_mulai(page, ticket_number=ticket_number, reg_id=reg_id)
+                        stage = "forms"
 
                         # Date-integrity guard. The list is filtered by examination date, which only the
                         # detail carries (list rows have just the registration date, which may be earlier).
@@ -466,6 +472,8 @@ class CKGPelayananScraper:
                         )
                         enriched_rows.append(detail)
                         self._save_progress(result_key, enriched_rows)
+                        if tab_signal:
+                            bump_verify(f"{tab_signal}_ok")
                         break
                     except DateFilterMismatchError:
                         raise
@@ -508,6 +516,10 @@ class CKGPelayananScraper:
                         # Loop retries the same patient with fresh credentials.
                     except Exception as e:
                         console.print(f"    [red]Error scraping {label}: {e}[/red]")
+                        if stage == "detail":
+                            bump_verify("detail_failed")
+                        if tab_signal:
+                            bump_verify(f"{tab_signal}_error")
                         enriched_rows.append({
                             "error": str(e),
                             "source_row": f"Page {page_num} reg_id={reg_id}",
@@ -653,6 +665,7 @@ class CKGPelayananScraper:
                         "source": self.date_filter_source,
                     },
                     "total_records": total,
+                    "verify_counts": dict(VERIFY_COUNTS),
                     "timing": {
                         "total_elapsed_seconds": total_elapsed,
                         "captcha_wait_seconds": captcha_wait,
@@ -676,6 +689,7 @@ class CKGPelayananScraper:
                         "sedang_pemeriksaan": len(self.results["sedang_pemeriksaan"]),
                         "selesai_pemeriksaan": len(self.results["selesai_pemeriksaan"]),
                     },
+                    "verify_counts": dict(VERIFY_COUNTS),
                     "timing": {
                         "total_elapsed_seconds": total_elapsed,
                         "captcha_wait_seconds": captcha_wait,

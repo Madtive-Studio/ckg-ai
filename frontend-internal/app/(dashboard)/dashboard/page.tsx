@@ -8,6 +8,7 @@ import { useUsersList } from "@/lib/hooks/use-users";
 import { useLlmConfigsList } from "@/lib/hooks/use-llm";
 import { useCapacityStats } from "@/lib/hooks/use-stats";
 import { HipertensiChartsSection } from "@/components/dashboard/hipertensi-charts-section";
+import { ScraperVerificationBanner } from "@/components/dashboard/scraper-verification-banner";
 
 const ONE = { page: 1, size: 1 };
 const WINDOWS = [7, 30, 90] as const;
@@ -36,6 +37,8 @@ export default function DashboardPage() {
           Selamat datang kembali{me.data ? `, ${me.data.full_name}` : ""}.
         </p>
       </div>
+
+      <ScraperVerificationBanner />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard

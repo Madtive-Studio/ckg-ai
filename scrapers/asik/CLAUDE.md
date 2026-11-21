@@ -69,7 +69,16 @@ PascalCase / `*_born_date` / `*_full_name` names are kept as fallbacks.
 ### Not yet verified (check when the data exists, then update this section)
 
 Live-tested 2026-11-21 on Puskesmas Bojong Genteng, date 2026-11-20 (Selesai
-tab: Mulai capture, paging, identity, Mandiri answers). Still open:
+tab: Mulai capture, paging, identity, Mandiri answers). Still open — each is
+**counted by the scraper** (`bump_verify` → `metadata.verify_counts`) and the
+first production job that sees it raises a notice on the internal admin
+**Dashboard** ("Ada data baru untuk verifikasi scraper ASIK", with the job link)
+until an admin marks it seen (`backend/app/services/scraper_verification.py`,
+table `scraper_verification_signals`, one row ever per question × outcome).
+When a notice appears, check that job's log/output, then update this list. If
+you add or rename a counter, update `QUESTIONS` there and the labels in
+`frontend-internal/lib/scraper-verification-labels.ts`
+(`tests/test_scraper_verification.py` fails on a renamed counter).
 
 1. **Nakes answers.** No patient on that date had a submitted Nakes form
    (`total_submit_layanan: 0`), so reading a *filled* Nakes form is unproven.

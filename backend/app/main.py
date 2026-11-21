@@ -32,6 +32,7 @@ from app.api.routes import (
     school_cron_config,
     school_patients,
     scrape,
+    scraper_verification,
     stats,
     sync,
     users,
@@ -151,6 +152,7 @@ app.include_router(patients.router)
 app.include_router(school_patients.router)
 app.include_router(school_cron_config.router)
 app.include_router(scrape.router)
+app.include_router(scraper_verification.router)
 app.include_router(loop_runs.router)
 app.include_router(merge.router)
 app.include_router(merge_conflicts.router)

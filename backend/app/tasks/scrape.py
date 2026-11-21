@@ -34,6 +34,7 @@ from app.models.patient import Patient
 from app.models.puskesmas import Puskesmas
 from app.models.scrape_job import ScrapeJob, ScrapeKind, ScrapeStatus
 from app.models.school_patient import SchoolPatient
+from app.services.scraper_verification import record_first_sightings
 from app.tasks.medisy_scrape import run_medisy_scrape
 
 log = logging.getLogger(__name__)
@@ -849,6 +850,19 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
                 except Exception:
                     db.rollback()
                     raise
+
+            if kind == ScrapeKind.ASIK:
+                # First sighting of data that answers an open scraper question → admin dashboard notice.
+                # Best-effort: the scraped patients are already committed, so this must never fail the job.
+                try:
+                    record_first_sightings(
+                        db, puskesmas_id=job.puskesmas_id, scrape_job_id=job_uuid,
+                        counts=(output.get("metadata") or {}).get("verify_counts"),
+                    )
+                    db.commit()
+                except Exception:
+                    db.rollback()
+                    log.exception("failed to record scraper verification signals")
 
             notes: str | None = None
             if skipped:

@@ -14,6 +14,7 @@ from app.models.puskesmas import Puskesmas
 from app.models.school_cron_config import SchoolCronConfig
 from app.models.school_patient import SchoolPatient, SchoolScreeningStatus
 from app.models.scrape_job import ScrapeJob, ScrapeKind, ScrapeStatus, TriggererType
+from app.models.scraper_verification_signal import ScraperVerificationSignal
 from app.models.sync_job import SyncJob, SyncStatus
 from app.models.user import User
 
@@ -46,6 +47,7 @@ __all__ = [
     "SchoolPatient",
     "SchoolScreeningStatus",
     "ScrapeJob",
+    "ScraperVerificationSignal",
     "ScrapeKind",
     "ScrapeStatus",
     "SyncJob",

@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, RefreshCcw, RotateCw, XCircle } from "lucide-react";
+import { ArrowLeft, RefreshCcw, RotateCw, StepForward, XCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/common/page-header";
@@ -26,6 +26,7 @@ import {
   useCancelCronRun,
   useCronRun,
   useCronRunSyncSummary,
+  useResumeCronRun,
   useRetryCronRun,
 } from "@/lib/hooks/use-cron-runs";
 import { mergeKeys, useMergeJob } from "@/lib/hooks/use-merge";
@@ -44,6 +45,7 @@ export default function CronRunDetailPage({
   const run = useCronRun(id);
   const cancel = useCancelCronRun();
   const retry = useRetryCronRun();
+  const resume = useResumeCronRun();
   const [cancelOpen, setCancelOpen] = useState(false);
 
   const onRefresh = async () => {
@@ -88,12 +90,29 @@ export default function CronRunDetailPage({
   const r = run.data;
   const canCancel = r.status === "pending" || r.status === "running";
   const canRetry = r.status === "failed" || r.status === "cancelled";
+  // Resume = reuse the steps that already succeeded and start at the failed one. Only when the failure was
+  // past the first step (some earlier step left a job to reuse); the backend re-checks they all succeeded.
+  const canResume =
+    r.status === "failed" &&
+    r.failed_step != null &&
+    r.failed_step !== "epus" &&
+    Boolean(r.epus_scrape_job_id || r.asik_scrape_job_id || r.merge_job_id);
 
   const onCancel = async () => {
     try {
       await cancel.mutateAsync(r.id);
       toast.success("Proses terjadwal dibatalkan");
       setCancelOpen(false);
+    } catch (err) {
+      toast.error(asApiError(err).message);
+    }
+  };
+
+  const onResume = async () => {
+    try {
+      const newRun = await resume.mutateAsync(r.id);
+      toast.success("Proses dilanjutkan dari langkah yang gagal");
+      router.push(`/cron-runs/${newRun.id}`);
     } catch (err) {
       toast.error(asApiError(err).message);
     }
@@ -146,9 +165,26 @@ export default function CronRunDetailPage({
               </Button>
             )}
             {canRetry && (
-              <Button size="sm" onClick={onRetry} disabled={retry.isPending}>
+              <Button
+                size="sm"
+                variant={canResume ? "outline" : "default"}
+                onClick={onRetry}
+                disabled={retry.isPending || resume.isPending}
+                title="Jalankan ulang semua langkah dari awal"
+              >
                 <RefreshCcw className="h-4 w-4" />
                 Coba lagi
+              </Button>
+            )}
+            {canResume && r.failed_step && (
+              <Button
+                size="sm"
+                onClick={onResume}
+                disabled={retry.isPending || resume.isPending}
+                title="Pakai ulang langkah yang sudah berhasil, lalu mulai dari langkah yang gagal"
+              >
+                <StepForward className="h-4 w-4" />
+                Lanjutkan dari {STEP_LABEL[r.failed_step]}
               </Button>
             )}
           </div>

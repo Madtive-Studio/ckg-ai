@@ -11,6 +11,7 @@ import {
   getCronRun,
   getCronRunSyncSummary,
   listCronRuns,
+  resumeCronRun,
   retryCronRun,
   type CronRunListQuery,
 } from "@/lib/api/cron";
@@ -81,10 +82,10 @@ export function useCancelCronRun() {
   });
 }
 
-export function useRetryCronRun() {
+function useRestartCronRun(restart: (runId: string) => Promise<CronRun>) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (runId: string) => retryCronRun(runId),
+    mutationFn: restart,
     onSuccess: (run) => {
       qc.setQueryData(cronRunKeys.detail(run.id), run);
       qc.setQueriesData<Page<CronRun>>(
@@ -96,4 +97,12 @@ export function useRetryCronRun() {
       );
     },
   });
+}
+
+export function useRetryCronRun() {
+  return useRestartCronRun(retryCronRun);
+}
+
+export function useResumeCronRun() {
+  return useRestartCronRun(resumeCronRun);
 }

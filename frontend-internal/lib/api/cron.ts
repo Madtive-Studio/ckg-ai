@@ -96,3 +96,9 @@ export async function retryCronRun(runId: string): Promise<CronRun> {
   const { data } = await http.post(`/admin/cron-runs/${runId}/retry`);
   return CronRunOut.parse(data);
 }
+
+/** New run that reuses the successful earlier steps and starts at the step that failed. */
+export async function resumeCronRun(runId: string): Promise<CronRun> {
+  const { data } = await http.post(`/admin/cron-runs/${runId}/resume`);
+  return CronRunOut.parse(data);
+}

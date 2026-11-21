@@ -15,7 +15,7 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Confirm",
+  confirmLabel = "Konfirmasi",
   destructive = false,
   loading = false,
   onConfirm,
@@ -46,14 +46,14 @@ export function ConfirmDialog({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Cancel
+            Batal
           </Button>
           <Button
             variant={destructive ? "destructive" : "default"}
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? "Working…" : confirmLabel}
+            {loading ? "Memproses…" : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

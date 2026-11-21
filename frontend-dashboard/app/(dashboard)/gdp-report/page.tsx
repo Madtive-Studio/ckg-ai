@@ -143,7 +143,7 @@ export default function GdpReportPage() {
     <div className="space-y-8">
       <PageHeader
         title="Kertas Kerja DM Terkendali"
-        description="ASIK NIKs cross-checked against Medisy over a date range. Monthly GDP per patient."
+        description="NIK ASIK dicocokkan dengan Medisy pada rentang tanggal. GDP bulanan per pasien."
       />
 
       <section className="space-y-4">
@@ -158,7 +158,7 @@ export default function GdpReportPage() {
               onChange={(v) => setPuskesmasId(v ?? "")}
               useOptions={usePuskesmasOptions}
               selectedLabel={pkDetail.data?.name}
-              placeholder="Select a puskesmas…"
+              placeholder="Pilih puskesmas…"
             />
           </div>
           <div className="space-y-2">
@@ -180,9 +180,9 @@ export default function GdpReportPage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Search Nama / NIK</Label>
+            <Label>Cari Nama / NIK</Label>
             <Input
-              placeholder="Search…"
+              placeholder="Cari…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -194,8 +194,8 @@ export default function GdpReportPage() {
         </label>
         {!puskesmasId && (
           <EmptyState
-            title="Pick a puskesmas"
-            description="The dashboard groups one puskesmas at a time."
+            title="Pilih puskesmas"
+            description="Dashboard ditampilkan per satu puskesmas."
           />
         )}
         {dashboard.error && <ErrorState error={dashboard.error} />}
@@ -209,9 +209,9 @@ export default function GdpReportPage() {
             </span>
             <span className="inline-flex items-center gap-2">
               <span>
-                Computed{" "}
+                Dihitung{" "}
                 {format(parseISO(dashboard.data.computed_at!), "yyyy-MM-dd HH:mm")}
-                {dashboard.data.cache_hit ? " · cached" : " · fresh"}
+                {dashboard.data.cache_hit ? " · dari cache" : " · baru dihitung"}
                 {dashboardRefreshing && (
                   <span className="ml-2 inline-flex items-center gap-1">
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -232,7 +232,7 @@ export default function GdpReportPage() {
                   <RefreshCw
                     className={`h-3 w-3 ${clearDashboardCache.isPending ? "animate-spin" : ""}`}
                   />
-                  Clear cache
+                  Hapus cache
                 </Button>
               )}
               {tab === "report" ? (
@@ -266,7 +266,7 @@ export default function GdpReportPage() {
                   ) : (
                     <Download className="h-3 w-3" />
                   )}
-                  Export Kertas Kerja DM Terkendali
+                  Unduh Kertas Kerja DM Terkendali
                 </Button>
               ) : (
                 <Button
@@ -279,7 +279,7 @@ export default function GdpReportPage() {
                         puskesmasId,
                         year,
                         ckgOnly,
-                        filename: `Full Review Diagnosa - ${pkDetail.data?.name ?? "Puskesmas"} - ${year}.xlsx`,
+                        filename: `Tinjauan Lengkap Diagnosis -  ${pkDetail.data?.name ?? "Puskesmas"} - ${year}.xlsx`,
                       },
                       {
                         onError: (err) =>
@@ -299,7 +299,7 @@ export default function GdpReportPage() {
                   ) : (
                     <Download className="h-3 w-3" />
                   )}
-                  Export Full Review Diagnose
+                  Unduh Tinjauan Lengkap Diagnosis
                 </Button>
               )}
             </span>
@@ -310,11 +310,11 @@ export default function GdpReportPage() {
             <Loader2 className="h-6 w-6 animate-spin" />
             <div className="text-center">
               <div className="font-medium text-[var(--foreground)]">
-                Loading GDP dashboard…
+                Memuat dashboard GDP…
               </div>
               <div className="text-xs">
-                First-time computation decrypts every Medisy record for this
-                puskesmas + year. Result is cached for 30 hours.
+                Perhitungan pertama membuka semua data Medisy puskesmas ini
+                untuk tahun ini. Hasilnya disimpan (cache) selama 30 jam.
               </div>
             </div>
             {dashboard.data?.progress && (
@@ -335,7 +335,7 @@ export default function GdpReportPage() {
               <TabsTrigger value="report">
                 Kertas Kerja DM Terkendali
               </TabsTrigger>
-              <TabsTrigger value="diagnose">Full Review Diagnose</TabsTrigger>
+              <TabsTrigger value="diagnose">Tinjauan Lengkap Diagnosis</TabsTrigger>
             </TabsList>
             <TabsContent value="report">
               <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
@@ -427,8 +427,8 @@ export default function GdpReportPage() {
                 {dashboard.data.items.length === 0 && (
                   <div className="p-6">
                     <EmptyState
-                      title="No patients with GDP"
-                      description="No patient in this puskesmas+year has any GDP reading."
+                      title="Tidak ada pasien dengan GDP"
+                      description="Tidak ada pasien di puskesmas dan tahun ini yang memiliki nilai GDP."
                     />
                   </div>
                 )}

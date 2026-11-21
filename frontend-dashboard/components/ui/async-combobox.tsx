@@ -37,11 +37,11 @@ export function AsyncCombobox({
   onChange,
   useOptions,
   selectedLabel,
-  placeholder = "Select…",
+  placeholder = "Pilih…",
   allOptionLabel,
   disabled,
   className,
-  emptyMessage = "No results.",
+  emptyMessage = "Tidak ada hasil.",
 }: AsyncComboboxProps) {
   const [open, setOpen] = useState(false);
   const [searchRaw, setSearchRaw] = useState("");
@@ -158,7 +158,7 @@ export function AsyncCombobox({
             <Search className="pointer-events-none absolute left-2.5 top-2 h-4 w-4 text-[var(--muted-foreground)]" />
             <Input
               ref={inputRef}
-              placeholder="Search…"
+              placeholder="Cari…"
               className="h-8 pl-8 text-sm"
               value={searchRaw}
               onChange={(e) => setSearchRaw(e.target.value)}
@@ -198,7 +198,7 @@ export function AsyncCombobox({
           ) : isLoading && options.length === 0 ? (
             <div className="flex items-center justify-center p-4 text-sm text-[var(--muted-foreground)]">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading…
+              Memuat…
             </div>
           ) : options.length === 0 ? (
             <div className="p-4 text-center text-sm text-[var(--muted-foreground)]">
@@ -236,7 +236,7 @@ export function AsyncCombobox({
           {isFetchingNextPage && (
             <div className="flex items-center justify-center py-2 text-sm text-[var(--muted-foreground)]">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading more…
+              Memuat lagi…
             </div>
           )}
           <div ref={sentinelRef} aria-hidden className="h-px w-full" />

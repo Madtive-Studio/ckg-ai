@@ -104,7 +104,7 @@ export default function LoopRunsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Loop Agent"
+        title="Agen Loop"
         actions={
           <div className="flex gap-2">
             <Button
@@ -134,7 +134,7 @@ export default function LoopRunsPage() {
             value={cfg.data.nightly_enabled ? "Aktif · 00:00 WIB" : "Nonaktif"}
           />
           <Glance
-            label="Merge"
+            label="Gabung"
             value={cfg.data.merge_mode === "manual" ? "Manual" : "Otomatis"}
           />
           <Glance label="Maks perbaikan" value={String(cfg.data.max_fix_iterations)} />
@@ -189,10 +189,10 @@ export default function LoopRunsPage() {
             <SelectContent>
               <SelectItem value="all">Semua</SelectItem>
               <SelectItem value="running">Berjalan</SelectItem>
-              <SelectItem value="covered">Covered</SelectItem>
+              <SelectItem value="covered">Tercakup</SelectItem>
               <SelectItem value="no_data">Tidak ada data</SelectItem>
               <SelectItem value="needs_review">Perlu review</SelectItem>
-              <SelectItem value="merged">Merged</SelectItem>
+              <SelectItem value="merged">Digabung</SelectItem>
               <SelectItem value="pr_rejected">PR ditolak</SelectItem>
               <SelectItem value="changes_ready">Perubahan siap</SelectItem>
               <SelectItem value="bad_creds">Kredensial buruk</SelectItem>
@@ -243,7 +243,7 @@ export default function LoopRunsPage() {
                 <TableRow>
                   <TableHead>Puskesmas</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Live / Scraped</TableHead>
+                  <TableHead>Live / Diambil</TableHead>
                   <TableHead>Temuan</TableHead>
                   <TableHead>PR</TableHead>
                   <TableHead>Trigger</TableHead>
@@ -303,7 +303,7 @@ export default function LoopRunsPage() {
             </Table>
             {runs.data.items.length === 0 && (
               <div className="p-6">
-                <EmptyState title="Belum ada loop run" />
+                <EmptyState title="Belum ada proses agen loop" />
               </div>
             )}
           </div>

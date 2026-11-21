@@ -51,16 +51,16 @@ def _is_blocked_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
 def _validate_llm_base_url(v: str) -> str:
     parsed = urlparse(v)
     if parsed.scheme not in ("http", "https"):
-        raise ValueError("base_url must be an http(s) URL (with scheme)")
+        raise ValueError("Base URL harus berupa URL http(s) lengkap")
     host = (parsed.hostname or "").lower()
     if not host:
-        raise ValueError("base_url must include a host")
+        raise ValueError("Base URL harus memiliki host")
     ip = _host_to_ip(host)
     if ip is not None:
         if _is_blocked_ip(ip):
-            raise ValueError("base_url must not point at a private or reserved IP address")
+            raise ValueError("Base URL tidak boleh mengarah ke alamat IP privat atau khusus")
     elif host in _LLM_BLOCKED_HOSTS or host.endswith(_LLM_INTERNAL_SUFFIXES):
-        raise ValueError("base_url must not point at an internal/reserved hostname")
+        raise ValueError("Base URL tidak boleh mengarah ke host internal/khusus")
     return v
 
 
@@ -71,11 +71,11 @@ def _enforce_2dp(v: Decimal | None) -> Decimal | None:
     if v is None:
         return v
     if not v.is_finite():
-        raise ValueError("must be a finite number")
+        raise ValueError("harus berupa angka yang valid")
     if v < 0:
-        raise ValueError("must be >= 0")
+        raise ValueError("tidak boleh negatif")
     if v.as_tuple().exponent < -2:
-        raise ValueError("max 2 decimal places")
+        raise ValueError("maksimal 2 angka desimal")
     return v.quantize(Decimal("0.01"))
 
 
@@ -100,7 +100,7 @@ def _validate_reasoning_effort(v: str | None) -> str | None:
         return None
     if len(s) > _REASONING_EFFORT_MAX_LEN:
         raise ValueError(
-            f"reasoning_effort too long (max {_REASONING_EFFORT_MAX_LEN} chars)"
+            f"Tingkat penalaran terlalu panjang (maksimal {_REASONING_EFFORT_MAX_LEN} karakter)"
         )
     return s
 
@@ -177,7 +177,7 @@ class LlmConfigTestIn(BaseModel):
     @model_validator(mode="after")
     def _need_key_or_id(self) -> "LlmConfigTestIn":
         if not (self.api_key and self.api_key.strip()) and self.config_id is None:
-            raise ValueError("provide api_key or config_id")
+            raise ValueError("Isi API key atau pilih konfigurasi")
         return self
 
 

@@ -19,6 +19,7 @@ from app.api.deps import (
 from app.api.pagination import Page, PageParams, page_params, paginate
 from app.celery_app import celery_app
 from app.config import settings
+from app.core.labels import status_label, source_label
 from app.core.rate_limit import redis_client
 from app.crud import scrape_job as crud
 from app.models.patient import Patient
@@ -93,14 +94,14 @@ def _to_job_out(
 
 def _authorize(principal: Principal, puskesmas_id: uuid.UUID) -> None:
     if principal.typ == "user" and principal.puskesmas_id != puskesmas_id:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
 
 
 def _authorize_job(principal: Principal, job: ScrapeJob) -> None:
     # Object-level: a foreign job returns the SAME 404 as a nonexistent one so
     # job ids in other clinics can't be probed (no 403-vs-404 oracle).
     if principal.typ == "user" and job.puskesmas_id != principal.puskesmas_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
 
 
 def _trigger_kind(principal: Principal) -> tuple[uuid.UUID, TriggererType]:
@@ -128,14 +129,14 @@ def start_scrape(
         select(cred_col.isnot(None), url_col, Puskesmas.name).where(Puskesmas.id == puskesmas_id)
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     has_cred, base_url, puskesmas_name = row
     if not has_cred:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"{kind.value} credentials not set")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Kredensial {source_label(kind.value)} belum diisi")
     if not base_url:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            f"{kind.value}_url not set for this puskesmas",
+            f"URL {source_label(kind.value)} puskesmas ini belum diisi",
         )
 
     # CKG Sekolah is date-less (filtered by school × class, walked dynamically).
@@ -158,7 +159,7 @@ def start_scrape(
         db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            f"{kind.value} scrape already in progress for this puskesmas",
+            f"Ambil data {source_label(kind.value)} untuk puskesmas ini masih berjalan",
         ) from e
 
     try:
@@ -170,7 +171,7 @@ def start_scrape(
     except Exception as e:
         crud.mark_failed(db, job, f"broker unreachable: {e}"[:2000], datetime.now(UTC))
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "scrape broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses ambil data sedang tidak tersedia"
         ) from e
     return _to_job_out(job, puskesmas_name)
 
@@ -190,8 +191,8 @@ def start_patient_scrape(
     if kind == ScrapeKind.ASIK_SEKOLAH:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "per-patient CKG Sekolah scrape is not supported; run the "
-            "puskesmas-wide asik_sekolah scrape instead",
+            "Ambil data CKG Sekolah per pasien tidak didukung; jalankan "
+            "ambil data CKG Sekolah untuk seluruh puskesmas",
         )
     patient = db.scalar(
         select(Patient).options(
@@ -202,10 +203,10 @@ def start_patient_scrape(
         ).where(Patient.id == patient_id)
     )
     if patient is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
     # Object-level: hide a foreign patient behind the same 404 as a nonexistent one.
     if principal.typ == "user" and principal.puskesmas_id != patient.puskesmas_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
 
     cred_col = Puskesmas.epus_cred if kind == ScrapeKind.EPUS else Puskesmas.asik_cred
     url_col = Puskesmas.epus_url if kind == ScrapeKind.EPUS else Puskesmas.asik_url
@@ -215,14 +216,14 @@ def start_patient_scrape(
         )
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     has_cred, base_url, puskesmas_name = row
     if not has_cred:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"{kind.value} credentials not set")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Kredensial {source_label(kind.value)} belum diisi")
     if not base_url:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            f"{kind.value}_url not set for this puskesmas",
+            f"URL {source_label(kind.value)} puskesmas ini belum diisi",
         )
 
     iso_date = patient.filter_date.isoformat()
@@ -244,11 +245,11 @@ def start_patient_scrape(
             # ASIK shares one browser session per puskesmas, so only one
             # ASIK scrape (puskesmas-wide OR per-NIK) can run at a time.
             msg = (
-                "another ASIK scrape is already running for this puskesmas "
-                "(ASIK shares one session per puskesmas)"
+                "Ambil data ASIK lain untuk puskesmas ini masih berjalan "
+                "(ASIK memakai satu sesi per puskesmas)"
             )
         else:
-            msg = "ePus scrape already in progress for this patient"
+            msg = "Ambil data Medisy untuk pasien ini masih berjalan"
         raise HTTPException(status.HTTP_409_CONFLICT, msg) from e
 
     try:
@@ -260,7 +261,7 @@ def start_patient_scrape(
     except Exception as e:
         crud.mark_failed(db, job, f"broker unreachable: {e}"[:2000], datetime.now(UTC))
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "scrape broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses ambil data sedang tidak tersedia"
         ) from e
     return _to_job_out(job, puskesmas_name, patient.nik, patient.nama)
 
@@ -279,7 +280,7 @@ def list_jobs(
 ) -> Page[ScrapeJobOut]:
     if principal.typ == "user":
         if puskesmas_id is not None and puskesmas_id != principal.puskesmas_id:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
         puskesmas_id = principal.puskesmas_id
     stmt = (
         select(ScrapeJob)
@@ -339,7 +340,7 @@ def get_job(
         .where(ScrapeJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
     return _to_job_out(
         obj, obj.puskesmas.name,
@@ -362,7 +363,7 @@ def get_job_log(
         .where(ScrapeJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
     lines = redis_client().lrange(f"scrape:job:{job_id}:log", -tail, -1) or []
     return ScrapeJobLogOut(lines=lines)
@@ -382,7 +383,7 @@ async def stream_job(
         .where(ScrapeJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
 
     chan = f"scrape:job:{job_id}:stream"
@@ -457,10 +458,10 @@ def cancel_job(
         .where(ScrapeJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
     if obj.status not in (ScrapeStatus.PENDING, ScrapeStatus.RUNNING):
-        raise HTTPException(status.HTTP_409_CONFLICT, f"job is {obj.status.value}, cannot cancel")
+        raise HTTPException(status.HTTP_409_CONFLICT, f"Proses berstatus {status_label(obj.status.value)}, tidak bisa dibatalkan")
     puskesmas_name = obj.puskesmas.name
     patient_nik = obj.patient.nik if obj.patient else None
     patient_name = obj.patient.nama if obj.patient else None

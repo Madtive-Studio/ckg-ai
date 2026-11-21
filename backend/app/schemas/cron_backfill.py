@@ -25,25 +25,25 @@ class CronBackfillCreate(BaseModel):
     @model_validator(mode="after")
     def _check(self) -> "CronBackfillCreate":
         if self.date_from > self.date_to:
-            raise ValueError("date_from must be <= date_to")
+            raise ValueError("Dari tanggal harus sama dengan atau sebelum Sampai tanggal")
         if self.create_new and self.sync_mode is CronSyncMode.OFF:
-            raise ValueError("create_new requires sync_mode to be enabled (not OFF)")
+            raise ValueError("Membuat pasien di ASIK membutuhkan pengiriman ke ASIK aktif")
         if self.source_scope is CronSourceScope.NONE:
             # NONE = sync-only over existing data (no scrape → MERGE → ASIK sync).
             if self.mandiri_only:
                 raise ValueError(
-                    "source_scope 'none' cannot be combined with mandiri_only — "
-                    "mandiri_only forces an ASIK scrape"
+                    "Sumber “Tidak ada” tidak bisa digabung dengan Pemeriksaan Mandiri — "
+                    "Pemeriksaan Mandiri selalu mengambil data ASIK"
                 )
             if self.sync_mode is CronSyncMode.OFF:
                 raise ValueError(
-                    "source_scope 'none' requires sync_mode on (normal or "
-                    "force_resync) — otherwise the run does nothing"
+                    "Sumber “Tidak ada” membutuhkan pengiriman ke ASIK aktif — "
+                    "tanpa itu proses tidak melakukan apa pun"
                 )
             if self.merge_mode is CronMergeMode.NO_MERGE:
                 raise ValueError(
-                    "source_scope 'none' cannot use merge_mode 'no_merge' — "
-                    "no_merge skips the merge step and never reaches sync"
+                    "Sumber “Tidak ada” tidak bisa memakai Tanpa gabung — "
+                    "tanpa gabung data, pengiriman ke ASIK tidak pernah dijalankan"
                 )
         return self
 

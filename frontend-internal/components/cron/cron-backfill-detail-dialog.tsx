@@ -26,6 +26,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { useCronBackfillChildRuns } from "@/lib/hooks/use-cron-backfill";
 import type { CronBackfill } from "@/lib/api/types";
+import { STEP_LABEL } from "@/lib/source-names";
 
 export function CronBackfillDetailDialog({
   open,
@@ -55,12 +56,12 @@ export function CronBackfillDetailDialog({
         <DialogHeader>
           <DialogTitle>
             {backfill
-              ? `Backfill: ${backfill.puskesmas_name}`
-              : "Backfill"}
+              ? `Rentang tanggal: ${backfill.puskesmas_name}`
+              : "Rentang tanggal"}
           </DialogTitle>
           <DialogDescription>
             {backfill
-              ? `${backfill.date_from} → ${backfill.date_to} · ${backfill.completed_dates}/${backfill.total_dates} completed`
+              ? `${backfill.date_from} → ${backfill.date_to} · ${backfill.completed_dates}/${backfill.total_dates} selesai`
               : ""}
           </DialogDescription>
         </DialogHeader>
@@ -70,40 +71,40 @@ export function CronBackfillDetailDialog({
             <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted-foreground)]">
               <CronBackfillStatusBadge status={backfill.status} />
               {backfill.cursor_date && (
-                <span>Cursor: {backfill.cursor_date}</span>
+                <span>Posisi: {backfill.cursor_date}</span>
               )}
               {backfill.failed_date && (
                 <span className="text-[var(--destructive)]">
-                  Failed on {backfill.failed_date}
+                  Gagal pada {backfill.failed_date}
                 </span>
               )}
               {backfill.mandiri_only && (
-                <span>Pemeriksaan Mandiri only (ASIK)</span>
+                <span>Pemeriksaan Mandiri saja (ASIK)</span>
               )}
               {!backfill.mandiri_only &&
                 backfill.source_scope === "epus_only" && (
-                  <span>Medisy only</span>
+                  <span>Medisy saja</span>
                 )}
               {!backfill.mandiri_only &&
                 backfill.source_scope === "asik_only" && (
-                  <span>ASIK only</span>
+                  <span>ASIK saja</span>
                 )}
               {backfill.source_scope === "none" && (
-                <span>Sync only (no rescrape)</span>
+                <span>Kirim ke ASIK saja (tanpa ambil ulang)</span>
               )}
               {backfill.merge_mode === "force_remerge" && (
-                <span>Force re-merge</span>
+                <span>Gabung ulang paksa</span>
               )}
               {backfill.merge_mode === "no_merge" && (
-                <span>No merge (scrape only)</span>
+                <span>Tanpa gabung (ambil data saja)</span>
               )}
               {backfill.sync_mode !== "off" && (
                 <span>
-                  Create missing
-                  {backfill.sync_mode === "force_resync" ? " (force)" : ""}
+                  Isi pemeriksaan ASIK
+                  {backfill.sync_mode === "force_resync" ? " (paksa)" : ""}
                 </span>
               )}
-              {backfill.create_new && <span>Create new</span>}
+              {backfill.create_new && <span>Buat pasien baru</span>}
             </div>
             {backfill.error_message && (
               <div className="rounded border border-[var(--border)] bg-[var(--muted)] p-2 text-xs">
@@ -121,10 +122,10 @@ export function CronBackfillDetailDialog({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
+                    <TableHead>Tanggal</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Step</TableHead>
-                    <TableHead>Started</TableHead>
+                    <TableHead>Langkah</TableHead>
+                    <TableHead>Dimulai</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -137,9 +138,9 @@ export function CronBackfillDetailDialog({
                       </TableCell>
                       <TableCell className="text-xs uppercase text-[var(--muted-foreground)]">
                         {r.status === "failed" && r.failed_step
-                          ? `${r.failed_step} (failed)`
+                          ? `${STEP_LABEL[r.failed_step]} (gagal)`
                           : r.current_step
-                            ? `${r.current_step} (try ${r.current_step_attempt})`
+                            ? `${STEP_LABEL[r.current_step]} (percobaan ${r.current_step_attempt})`
                             : "—"}
                       </TableCell>
                       <TableCell className="text-xs text-[var(--muted-foreground)]">
@@ -153,7 +154,7 @@ export function CronBackfillDetailDialog({
                             href={`/cron-runs/${r.id}`}
                             prefetch={false}
                           >
-                            Open
+                            Buka
                           </Link>
                         </Button>
                       </TableCell>
@@ -163,7 +164,7 @@ export function CronBackfillDetailDialog({
               </Table>
               {runs.data.items.length === 0 && (
                 <div className="p-6">
-                  <EmptyState title="No runs yet" />
+                  <EmptyState title="Belum ada proses" />
                 </div>
               )}
             </div>

@@ -78,11 +78,11 @@ export default function DashboardPage() {
 
       <div className="space-y-2">
         <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]/80">
-          Job Scrape
+          Proses Ambil Data
         </h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
-            title="Rata-rata CPU per scrape"
+            title="Rata-rata CPU per pengambilan data"
             value={scrape?.cpu_avg_pct != null ? `${fmt(scrape.cpu_avg_pct, 1)}%` : undefined}
             subtext={
               scrape?.cpu_peak_pct != null
@@ -92,7 +92,7 @@ export default function DashboardPage() {
             loading={stats.isLoading}
           />
           <StatCard
-            title="Rata-rata RAM per scrape"
+            title="Rata-rata RAM per pengambilan data"
             value={scrape?.mem_avg_mb != null ? `${fmt(scrape.mem_avg_mb, 0)} MB` : undefined}
             subtext={
               scrape?.mem_peak_mb != null
@@ -120,11 +120,11 @@ export default function DashboardPage() {
 
       <div className="space-y-2">
         <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]/80">
-          Job Merge
+          Proses Gabung Data
         </h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
-            title="Rata-rata CPU & RAM per merge"
+            title="Rata-rata CPU & RAM per penggabungan"
             value={
               merge?.cpu_avg_pct != null && merge?.mem_avg_mb != null
                 ? `${fmt(merge.cpu_avg_pct, 1)}% · ${fmt(merge.mem_avg_mb, 0)} MB`
@@ -138,7 +138,7 @@ export default function DashboardPage() {
             loading={stats.isLoading}
           />
           <StatCard
-            title="Biaya LLM per kecocokan"
+            title="Biaya AI per kecocokan"
             value={
               merge?.avg_llm_cost_per_patient_usd != null
                 ? `$${merge.avg_llm_cost_per_patient_usd.toFixed(6)}`

@@ -103,7 +103,7 @@ export function HipertensiRegistryView({
               onChange={(v) => setPuskesmasId(v ?? "")}
               useOptions={usePuskesmasOptions}
               selectedLabel={pkDetail.data?.name}
-              placeholder="Select a puskesmas…"
+              placeholder="Pilih puskesmas…"
             />
           </div>
           <div className="space-y-2">
@@ -122,9 +122,9 @@ export function HipertensiRegistryView({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Search Nama / NIK</Label>
+            <Label>Cari Nama / NIK</Label>
             <Input
-              placeholder="Search…"
+              placeholder="Cari…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -133,8 +133,8 @@ export function HipertensiRegistryView({
 
         {!puskesmasId && (
           <EmptyState
-            title="Pick a puskesmas"
-            description="The registry groups one puskesmas at a time."
+            title="Pilih puskesmas"
+            description="Registri ditampilkan per satu puskesmas."
           />
         )}
         {registry.error && <ErrorState error={registry.error} />}
@@ -154,9 +154,9 @@ export function HipertensiRegistryView({
               </span>
               <span className="inline-flex items-center gap-2">
                 <span>
-                  Computed{" "}
+                  Dihitung{" "}
                   {format(parseISO(registry.data.computed_at!), "yyyy-MM-dd HH:mm")}
-                  {registry.data.cache_hit ? " · cached" : " · fresh"}
+                  {registry.data.cache_hit ? " · dari cache" : " · baru dihitung"}
                   {refreshing && (
                     <span className="ml-2 inline-flex items-center gap-1">
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -175,7 +175,7 @@ export function HipertensiRegistryView({
                     <RefreshCw
                       className={`h-3 w-3 ${clearCache.isPending ? "animate-spin" : ""}`}
                     />
-                    Clear cache
+                    Hapus cache
                   </Button>
                 )}
                 <Button
@@ -212,11 +212,11 @@ export function HipertensiRegistryView({
             <Loader2 className="h-6 w-6 animate-spin" />
             <div className="text-center">
               <div className="font-medium text-[var(--foreground)]">
-                Loading registri hipertensi…
+                Memuat registri hipertensi…
               </div>
               <div className="text-xs">
-                First-time computation decrypts Medisy + ASIK records for this
-                puskesmas + year. Result is cached for 30 hours.
+                Perhitungan pertama membuka data Medisy + ASIK puskesmas ini
+                untuk tahun ini. Hasilnya disimpan (cache) selama 30 jam.
               </div>
             </div>
             {registry.data?.progress && (

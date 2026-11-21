@@ -109,7 +109,7 @@ export function CronBackfillFormDialog({
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await create.mutateAsync(values);
-      toast.success("Backfill started");
+      toast.success("Proses rentang tanggal dimulai");
       onOpenChange(false);
     } catch (err) {
       applyApiErrorToForm(err, form.setError, KNOWN_FIELDS);
@@ -122,11 +122,11 @@ export function CronBackfillFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Run for date range</DialogTitle>
+          <DialogTitle>Jalankan untuk rentang tanggal</DialogTitle>
           <DialogDescription>
-            Scrapes the selected source(s) and runs Merge for each date in the
-            range, forward, one day at a time. Cancellation preserves data for
-            already-completed dates.
+            Mengambil data dari sumber yang dipilih lalu menggabungkannya untuk
+            setiap tanggal dalam rentang, maju satu hari per langkah. Jika
+            dibatalkan, data tanggal yang sudah selesai tetap tersimpan.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -142,7 +142,7 @@ export function CronBackfillFormDialog({
               }
               useOptions={usePuskesmasOptions}
               selectedLabel={pkDetail.data?.name}
-              placeholder="Select a puskesmas…"
+              placeholder="Pilih puskesmas…"
             />
             {form.formState.errors.puskesmas_id && (
               <p className="text-xs text-[var(--destructive)]">
@@ -153,7 +153,7 @@ export function CronBackfillFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="bf-from">Date from</Label>
+              <Label htmlFor="bf-from">Dari tanggal</Label>
               <Input
                 id="bf-from"
                 type="date"
@@ -166,7 +166,7 @@ export function CronBackfillFormDialog({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="bf-to">Date to</Label>
+              <Label htmlFor="bf-to">Sampai tanggal</Label>
               <Input id="bf-to" type="date" {...form.register("date_to")} />
               {form.formState.errors.date_to && (
                 <p className="text-xs text-[var(--destructive)]">
@@ -180,9 +180,9 @@ export function CronBackfillFormDialog({
             <div className="space-y-1">
               <Label htmlFor="bf-mandiri">Pemeriksaan Mandiri saja</Label>
               <p className="text-xs text-[var(--muted-foreground)]">
-                Only scrapes the Pemeriksaan Mandiri (self-exam) forms for
-                patients already in our DB who still lack it — Nakes/Tatalaksana
-                are left untouched. Forces source to ASIK.
+                Hanya mengambil formulir Pemeriksaan Mandiri untuk pasien yang
+                sudah ada di sistem tetapi belum memilikinya — Nakes/Tatalaksana
+                tidak disentuh. Sumber dikunci ke ASIK.
               </p>
             </div>
             <Switch
@@ -206,7 +206,7 @@ export function CronBackfillFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Source</Label>
+            <Label>Sumber</Label>
             <Select
               value={form.watch("source_scope")}
               onValueChange={(v) => {
@@ -231,23 +231,23 @@ export function CronBackfillFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="both">Both (Medisy + ASIK)</SelectItem>
-                <SelectItem value="epus_only">Medisy only</SelectItem>
-                <SelectItem value="asik_only">ASIK only</SelectItem>
-                <SelectItem value="none">None (no rescrape — sync only)</SelectItem>
+                <SelectItem value="both">Keduanya (Medisy + ASIK)</SelectItem>
+                <SelectItem value="epus_only">Medisy saja</SelectItem>
+                <SelectItem value="asik_only">ASIK saja</SelectItem>
+                <SelectItem value="none">Tidak ada (tanpa ambil ulang — kirim ke ASIK saja)</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-[var(--muted-foreground)]">
               {mandiriOnly
-                ? "Locked to ASIK for a Pemeriksaan Mandiri backfill."
+                ? "Dikunci ke ASIK untuk Pemeriksaan Mandiri."
                 : isNone
-                  ? "No rescrape: merges any matched-but-unmerged patients from existing data, then pushes to ASIK. Requires ASIK sync on; runs alone (no other backfill for this puskesmas)."
-                  : "Pick one source to scrape it alone (e.g. re-scrape Medisy, then merge). A Medisy-only and an ASIK-only run can run at the same time for one puskesmas. To run both single-source over the same dates, set one side to “No merge” (or use non-overlapping ranges) so the two merges don’t collide."}
+                  ? "Tanpa ambil ulang: menggabungkan pasien yang sudah cocok tetapi belum digabung dari data yang ada, lalu mengirimnya ke ASIK. Wajib dengan pengiriman ke ASIK aktif; berjalan sendiri (tidak boleh ada proses rentang tanggal lain untuk puskesmas ini)."
+                  : "Pilih satu sumber untuk mengambil data dari sumber itu saja (mis. ambil ulang Medisy, lalu gabung). Proses Medisy saja dan ASIK saja boleh berjalan bersamaan untuk satu puskesmas. Jika keduanya dijalankan pada tanggal yang sama, set salah satunya ke “Tanpa gabung” (atau gunakan rentang yang tidak tumpang tindih) agar penggabungannya tidak bertabrakan."}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>Merge mode</Label>
+            <Label>Mode gabung data</Label>
             <Select
               value={form.watch("merge_mode")}
               onValueChange={(v) =>
@@ -260,22 +260,22 @@ export function CronBackfillFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="normal">Normal (merge new patients)</SelectItem>
+                <SelectItem value="normal">Normal (gabung pasien baru)</SelectItem>
                 <SelectItem value="force_remerge">
-                  Force re-merge (re-merge all)
+                  Gabung ulang paksa (gabung ulang semua)
                 </SelectItem>
                 {!isNone && (
                   <SelectItem value="no_merge">
-                    No merge (scrape only — skip merge)
+                    Tanpa gabung (ambil data saja)
                   </SelectItem>
                 )}
               </SelectContent>
             </Select>
             <p className="text-xs text-[var(--muted-foreground)]">
-              Force re-merge re-runs the LLM on already-merged patients (extra
-              cost). No merge scrapes only — use it while the LLM provider is
-              down, then merge later.
-              {isNone ? " No merge is unavailable for a sync-only (no-rescrape) run." : ""}
+              Gabung ulang paksa menjalankan ulang AI pada pasien yang sudah
+              digabung (biaya tambahan). Tanpa gabung hanya mengambil data — pakai
+              saat penyedia AI sedang bermasalah, lalu gabungkan kemudian.
+              {isNone ? " Tanpa gabung tidak tersedia untuk proses kirim ke ASIK saja." : ""}
             </p>
           </div>
 
@@ -287,13 +287,13 @@ export function CronBackfillFormDialog({
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <Label htmlFor="bf-create-missing">
-                  Also fill the ASIK exam for patients already in ASIK
+                  Isi juga pemeriksaan ASIK untuk pasien yang sudah ada di ASIK
                 </Label>
                 <p className="text-xs text-[var(--muted-foreground)]">
-                  After each date&apos;s merge, fill the ASIK exam for patients
-                  already in ASIK (NIK matched Medisy + ASIK). Ignored when merge
-                  mode is No merge.
-                  {isNone ? " Required (and can’t be off) for a sync-only run." : ""}
+                  Setelah data tiap tanggal digabung, isi pemeriksaan ASIK untuk
+                  pasien yang sudah ada di ASIK (NIK cocok di Medisy + ASIK).
+                  Diabaikan bila mode gabung data adalah Tanpa gabung.
+                  {isNone ? " Wajib (tidak bisa dimatikan) untuk proses kirim ke ASIK saja." : ""}
                 </p>
               </div>
               <Switch
@@ -330,7 +330,7 @@ export function CronBackfillFormDialog({
                   htmlFor="bf-sync-force"
                   className="cursor-pointer text-sm"
                 >
-                  Re-fill patients already synced (force re-sync)
+                  Isi ulang pasien yang sudah terkirim (kirim ulang paksa)
                 </Label>
               </div>
             )}
@@ -339,13 +339,13 @@ export function CronBackfillFormDialog({
           <div className="flex items-start justify-between gap-4 rounded-md border border-[var(--border)] p-3">
             <div className="space-y-1">
               <Label htmlFor="bf-create-new">
-                Also create new patients in ASIK
+                Buat juga pasien baru di ASIK
               </Label>
               <p className="text-xs text-[var(--muted-foreground)]">
-                After syncing each date, register Medisy-only patients marked
-                Tandai-CKG that are not yet in ASIK — creating them from scratch,
-                then filling their exam. Requires &ldquo;fill exam&rdquo; on
-                and a default alamat set on the puskesmas.
+                Setelah pengiriman tiap tanggal, daftarkan pasien yang hanya ada di
+                Medisy dan bertanda Tandai-CKG tetapi belum ada di ASIK — dibuat
+                dari awal, lalu pemeriksaannya diisi. Membutuhkan &ldquo;isi
+                pemeriksaan&rdquo; aktif dan alamat bawaan pada puskesmas.
               </p>
               {form.formState.errors.create_new && (
                 <p className="text-xs text-[var(--destructive)]">
@@ -370,10 +370,10 @@ export function CronBackfillFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={pending}
             >
-              Cancel
+              Batal
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Starting…" : "Start"}
+              {pending ? "Memulai…" : "Mulai"}
             </Button>
           </DialogFooter>
         </form>

@@ -92,7 +92,7 @@ export function GapTatalaksanaView({
               onChange={(v) => setPuskesmasId(v ?? "")}
               useOptions={usePuskesmasOptions}
               selectedLabel={pkDetail.data?.name}
-              placeholder="Select a puskesmas…"
+              placeholder="Pilih puskesmas…"
             />
           </div>
           <div className="space-y-2">
@@ -115,9 +115,9 @@ export function GapTatalaksanaView({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Search Nama / NIK</Label>
+            <Label>Cari Nama / NIK</Label>
             <Input
-              placeholder="Search…"
+              placeholder="Cari…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -126,7 +126,7 @@ export function GapTatalaksanaView({
 
         {!puskesmasId && (
           <EmptyState
-            title="Pick a puskesmas"
+            title="Pilih puskesmas"
             description="Daftar gap tatalaksana dihitung per puskesmas."
           />
         )}
@@ -142,8 +142,8 @@ export function GapTatalaksanaView({
             </span>
             <span className="inline-flex items-center gap-2">
               <span>
-                Computed {format(parseISO(gap.data.computed_at!), "yyyy-MM-dd HH:mm")}
-                {gap.data.cache_hit ? " · cached" : " · fresh"}
+                Dihitung {format(parseISO(gap.data.computed_at!), "yyyy-MM-dd HH:mm")}
+                {gap.data.cache_hit ? " · dari cache" : " · baru dihitung"}
                 {refreshing && (
                   <span className="ml-2 inline-flex items-center gap-1">
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -175,7 +175,7 @@ export function GapTatalaksanaView({
                 ) : (
                   <Download className="h-3 w-3" />
                 )}
-                Export Gap Tatalaksana
+                Unduh Gap Tatalaksana
               </Button>
             </span>
           </div>
@@ -186,11 +186,11 @@ export function GapTatalaksanaView({
             <Loader2 className="h-6 w-6 animate-spin" />
             <div className="text-center">
               <div className="font-medium text-[var(--foreground)]">
-                Loading gap tatalaksana…
+                Memuat gap tatalaksana…
               </div>
               <div className="text-xs">
-                First-time computation decrypts Medisy + ASIK records for this
-                puskesmas. Result is cached for 30 hours.
+                Perhitungan pertama membuka data Medisy + ASIK puskesmas ini.
+                Hasilnya disimpan (cache) selama 30 jam.
               </div>
             </div>
             {gap.data?.progress && (

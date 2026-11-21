@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session, load_only
 
 from app.celery_app import celery_app
 from app.config import settings
+from app.core.labels import source_label
 from app.core.resource_sampler import ResourceSampler
 from app.core.security import decrypt_json
 from app.crud import llm_config as llm_config_crud
@@ -247,7 +248,7 @@ def _extract_patients(
             if not nik:
                 skipped.append({
                     "source_id": str(indiv.get("ID") or ""),
-                    "reason": "missing NIK",
+                    "reason": "NIK kosong",
                 })
                 continue
             rows.append((nik, nama, entry, date_iso))
@@ -283,7 +284,7 @@ def _extract_school_students(
                     if not nik:
                         skipped.append({
                             "source_id": str(s.get("reg_id") or ""),
-                            "reason": "missing NIK",
+                            "reason": "NIK kosong",
                         })
                         continue
                     students.append(s)
@@ -376,12 +377,12 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
             .where(Puskesmas.id == job.puskesmas_id)
         )
         if puskesmas is None:
-            scrape_job_crud.mark_failed(db, job, "puskesmas not found", datetime.now(UTC))
+            scrape_job_crud.mark_failed(db, job, "puskesmas tidak ditemukan", datetime.now(UTC))
             return
 
         creds = puskesmas_crud.get_cred_decrypted(puskesmas, kind.value)
         if creds is None:
-            scrape_job_crud.mark_failed(db, job, f"{kind.value} credentials not set", datetime.now(UTC))
+            scrape_job_crud.mark_failed(db, job, f"Kredensial {source_label(kind.value)} belum diisi", datetime.now(UTC))
             return
 
         patient_nik: str | None = None
@@ -392,7 +393,7 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
                 .where(Patient.id == job.patient_id)
             )
             if patient_row is None:
-                scrape_job_crud.mark_failed(db, job, "patient not found", datetime.now(UTC))
+                scrape_job_crud.mark_failed(db, job, "pasien tidak ditemukan", datetime.now(UTC))
                 return
             patient_nik = patient_row.nik
         elif job.target_nik:
@@ -852,10 +853,10 @@ def run_scrape(self, job_id: str, kind_value: str, headless: bool = True) -> Non
             notes: str | None = None
             if skipped:
                 lines = [
-                    f"source_id={s['source_id']} reason={s['reason']}"
+                    f"ID kunjungan={s['source_id']} alasan={s['reason']}"
                     for s in skipped
                 ]
-                notes = f"skipped {len(skipped)}:\n" + "\n".join(lines)
+                notes = f"{len(skipped)} dilewati:\n" + "\n".join(lines)
 
             scrape_job_crud.mark_success(
                 db, job, scraped_count, inserted, updated, duration, datetime.now(UTC),

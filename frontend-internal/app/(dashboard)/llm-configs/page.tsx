@@ -73,7 +73,7 @@ async function copyToClipboard(text: string) {
 
 function errorMessage(err: unknown, fallback: string) {
   const apiError = asApiError(err);
-  if (apiError.status !== 0 || apiError.message !== "Unknown error") {
+  if (apiError.status !== 0 || apiError.message !== "Terjadi kesalahan yang tidak diketahui") {
     return apiError.message;
   }
   return err instanceof Error && err.message ? err.message : fallback;
@@ -129,7 +129,7 @@ export default function LlmConfigsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Konfigurasi LLM"
-        description="Provider, model, harga. Satu konfigurasi aktif untuk penggunaan LLM umum; konfigurasi kedua opsional bisa diatur untuk pemecah captcha."
+        description="Penyedia, model, harga. Satu konfigurasi aktif untuk penggunaan AI umum; konfigurasi kedua opsional bisa diatur untuk pemecah captcha."
         actions={
           <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />
@@ -188,8 +188,8 @@ export default function LlmConfigsPage() {
                     ) && <Badge variant="outline">nonaktif</Badge>}
                     {c.is_active_captcha && <Badge variant="success">captcha</Badge>}
                     {c.is_active_chatbot && <Badge variant="success">chatbot</Badge>}
-                    {c.is_active_loop_agent && <Badge variant="success">loop agent</Badge>}
-                    {c.is_active_loop_reviewer && <Badge variant="success">loop reviewer</Badge>}
+                    {c.is_active_loop_agent && <Badge variant="success">agen loop</Badge>}
+                    {c.is_active_loop_reviewer && <Badge variant="success">peninjau loop</Badge>}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -238,7 +238,7 @@ export default function LlmConfigsPage() {
           <div className="p-6">
             <EmptyState
               title="Belum ada konfigurasi LLM"
-              description="Tambahkan konfigurasi OpenAI-compatible pertamamu untuk mengaktifkan scraping."
+              description="Tambahkan konfigurasi pertama (kompatibel OpenAI) untuk mengaktifkan pengambilan data."
             />
           </div>
         )}

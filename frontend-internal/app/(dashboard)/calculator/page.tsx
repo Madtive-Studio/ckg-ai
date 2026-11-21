@@ -142,13 +142,13 @@ export default function CalculatorPage() {
               label="Pasien harian per puskesmas"
               value={inputs.dailyPatientsPerPuskesmas}
               onChange={set("dailyPatientsPerPuskesmas")}
-              hint="Rata-rata pasien baru yang di-scrape tiap puskesmas per hari. Menentukan beban scrape."
+              hint="Rata-rata pasien baru yang diambil datanya tiap puskesmas per hari. Menentukan beban pengambilan data."
             />
             <NumberInput
               label="Kecocokan harian per puskesmas"
               value={inputs.dailyMatchesPerPuskesmas}
               onChange={set("dailyMatchesPerPuskesmas")}
-              hint="Rekam pasien yang di-merge LLM per hari per puskesmas. Subset dari pasien — hanya yang butuh pencocokan AI."
+              hint="Data pasien yang digabung AI per hari per puskesmas. Sebagian dari pasien — hanya yang butuh pencocokan AI."
             />
             <NumberInput
               label="Target jendela run (jam)"
@@ -159,10 +159,10 @@ export default function CalculatorPage() {
               hint="Jam per hari yang tersedia untuk menyelesaikan pekerjaan hari itu. Jendela lebih pendek → butuh lebih banyak core."
             />
             <NumberInput
-              label="Job paralel"
+              label="Proses paralel"
               value={inputs.concurrency}
               onChange={set("concurrency")}
-              hint="Job yang berjalan paralel. Samakan dengan worker --concurrency. RAM tumbuh linear dengan angka ini."
+              hint="Proses yang berjalan paralel. Samakan dengan worker --concurrency. RAM tumbuh linear dengan angka ini."
             />
 
             {stats.data && (
@@ -180,7 +180,7 @@ export default function CalculatorPage() {
           {noData ? (
             <EmptyState
               title="Belum ada data"
-              description="Jalankan job scrape dan merge dulu. Hasil membaik dengan lebih banyak sampel."
+              description="Jalankan proses ambil data dan gabung data dulu. Hasil makin akurat dengan lebih banyak sampel."
             />
           ) : (
             <>
@@ -188,10 +188,10 @@ export default function CalculatorPage() {
               (result?.mergeDataMissing && inputs.dailyMatchesPerPuskesmas > 0) ? (
                 <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
                   {result.scrapeDataMissing && inputs.dailyPatientsPerPuskesmas > 0 && (
-                    <p>Tidak ada telemetri scrape pada jendela ini — perhitungan scrape dilaporkan 0. Jalankan job scrape untuk mengisi.</p>
+                    <p>Tidak ada telemetri pengambilan data pada jendela ini — perhitungannya dilaporkan 0. Jalankan proses ambil data untuk mengisi.</p>
                   )}
                   {result.mergeDataMissing && inputs.dailyMatchesPerPuskesmas > 0 && (
-                    <p>Tidak ada telemetri merge pada jendela ini — perhitungan merge dilaporkan 0. Jalankan job merge untuk mengisi.</p>
+                    <p>Tidak ada telemetri gabung data pada jendela ini — perhitungannya dilaporkan 0. Jalankan proses gabung data untuk mengisi.</p>
                   )}
                 </div>
               ) : null}
@@ -229,12 +229,12 @@ export default function CalculatorPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <StatCard
-                  title="Biaya LLM harian"
+                  title="Biaya AI harian"
                   value={result ? `$${result.dailyLlmCostUsd.toFixed(2)}` : undefined}
                   loading={!result}
                 />
                 <StatCard
-                  title="Biaya LLM bulanan"
+                  title="Biaya AI bulanan"
                   value={result ? `$${result.monthlyLlmCostUsd.toFixed(2)}` : undefined}
                   loading={!result}
                 />
@@ -277,7 +277,7 @@ export default function CalculatorPage() {
 
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Rincian biaya LLM bulanan</CardTitle>
+                      <CardTitle className="text-sm">Rincian biaya AI bulanan</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <CostBreakdown

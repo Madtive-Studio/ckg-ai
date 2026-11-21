@@ -105,7 +105,7 @@ export function LoopSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Pengaturan Loop Agent</DialogTitle>
+          <DialogTitle>Pengaturan Agen Loop</DialogTitle>
           <DialogDescription>
             Mengatur cara kerja agent pemelihara klien dan konverter Medisy. Model & API key dipilih
             per peran di menu Konfigurasi LLM.

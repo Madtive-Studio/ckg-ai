@@ -129,7 +129,7 @@ export function EpusSourceDetail({
                 tone="blue"
               />
               <StatPill
-                label="Field Terisi"
+                label="Isian Terisi"
                 value={totals.filled}
                 hint={`/ ${totals.total}`}
                 tone="green"
@@ -143,7 +143,7 @@ export function EpusSourceDetail({
       {blocks.length === 0 && built.tables.length === 0 && (
         <Card className="shadow-sm">
           <CardContent className="py-8 text-center text-sm text-[var(--muted-foreground)]">
-            No data available for Medisy.
+            Tidak ada data dari Medisy.
           </CardContent>
         </Card>
       )}

@@ -3,7 +3,7 @@
 Halaman **CKG Sekolah** menampilkan daftar dan detail **siswa hasil pemeriksaan
 kesehatan anak sekolah** (CKG di sekolah), dikelompokkan **per sekolah dan per
 kelas**. Halaman ini **hanya untuk dilihat** (read-only): tidak ada tombol ubah
-data, scrape ulang, atau merge di sini.
+data, ambil ulang data, atau gabung data di sini.
 
 Di menu samping, **Patients** punya dua sub-halaman: **CKG Umum** (pasien CKG biasa,
 gabungan Medisy + ASIK) dan **CKG Sekolah** (halaman ini).

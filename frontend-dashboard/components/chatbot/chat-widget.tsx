@@ -24,7 +24,7 @@ const STARTERS: Record<ChatPage, string[]> = {
   ],
   patients: [
     "Apa yang ditampilkan halaman Pasien ini?",
-    "Apa arti status ASIK Only / Medisy Only / Matched?",
+    "Apa arti status Hanya ASIK / Hanya Medisy / Cocok?",
     "Bagaimana cara kerja filter umur?",
   ],
   "school-patients": [

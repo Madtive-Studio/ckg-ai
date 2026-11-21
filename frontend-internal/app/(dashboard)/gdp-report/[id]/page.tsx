@@ -34,6 +34,7 @@ import {
 } from "@/lib/hooks/use-gdp";
 import { useScrapeJobList } from "@/lib/hooks/use-scrape";
 import { asApiError } from "@/lib/api/client";
+import { GDP_PHASE_LABEL, SCRAPE_KIND_LABEL } from "@/lib/source-names";
 
 export default function GdpReportDetailPage({
   params,
@@ -60,7 +61,7 @@ export default function GdpReportDetailPage({
   const handleCancel = async () => {
     try {
       await cancel.mutateAsync(id);
-      toast.success("Job cancelled — children cascade-cancelled");
+      toast.success("Proses dibatalkan — proses turunannya ikut dibatalkan");
       setConfirmOpen(false);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -71,7 +72,7 @@ export default function GdpReportDetailPage({
     try {
       await retry.mutateAsync(id);
       toast.success(
-        "Retry queued — orchestrator will reuse SUCCESS children + wait on RUNNING ones",
+        "Percobaan ulang diantrekan — proses turunan yang berhasil dipakai ulang, yang masih berjalan ditunggu",
       );
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -89,16 +90,16 @@ export default function GdpReportDetailPage({
       <Button variant="ghost" size="sm" asChild className="h-8 -ml-2 px-2">
         <Link href="/gdp-report" prefetch={false}>
           <ArrowLeft className="h-4 w-4" />
-          Back
+          Kembali
         </Link>
       </Button>
 
       <PageHeader
-        title="GDP Report Run"
+        title="Proses Laporan GDP"
         description={
           job.data
             ? `${job.data.puskesmas_name} • ${job.data.date_from} → ${job.data.date_to}`
-            : "Loading…"
+            : "Memuat…"
         }
         actions={
           live ? (
@@ -108,12 +109,12 @@ export default function GdpReportDetailPage({
               disabled={cancel.isPending}
             >
               <Ban className="h-4 w-4" />
-              Cancel
+              Batal
             </Button>
           ) : retryable ? (
             <Button onClick={handleRetry} disabled={retry.isPending}>
               <RotateCw className="h-4 w-4" />
-              {retry.isPending ? "Queuing…" : "Retry"}
+              {retry.isPending ? "Mengantre…" : "Coba lagi"}
             </Button>
           ) : undefined
         }
@@ -122,9 +123,9 @@ export default function GdpReportDetailPage({
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Cancel GDP report job?"
-        description="This stops the orchestrator and cascade-cancels its child ASIK / Medisy scrape jobs. Already-upserted patient data is kept."
-        confirmLabel="Cancel job"
+        title="Batalkan proses laporan GDP?"
+        description="Ini menghentikan proses utama dan membatalkan proses ambil data ASIK / Medisy di bawahnya. Data pasien yang sudah tersimpan tetap ada."
+        confirmLabel="Batalkan proses"
         destructive
         loading={cancel.isPending}
         onConfirm={handleCancel}
@@ -144,17 +145,17 @@ export default function GdpReportDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Phase
+              Tahap
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold capitalize">
-            {job.data?.phase ?? "—"}
+            {job.data ? GDP_PHASE_LABEL[job.data.phase] : "—"}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Dates done
+              Tanggal selesai
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
@@ -164,7 +165,7 @@ export default function GdpReportDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Medisy jobs
+              Proses Medisy
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
@@ -176,7 +177,7 @@ export default function GdpReportDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Medisy failed
+              Medisy gagal
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
@@ -186,7 +187,7 @@ export default function GdpReportDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Triggered by
+              Dipicu oleh
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
@@ -197,14 +198,14 @@ export default function GdpReportDetailPage({
 
       {job.data?.error_message && (
         <div className="rounded-md border border-[var(--destructive)]/40 bg-[var(--destructive)]/10 p-3 text-sm text-[var(--destructive)]">
-          <p className="font-medium">Error</p>
+          <p className="font-medium">Kesalahan</p>
           <p className="font-mono text-xs">{job.data.error_message}</p>
         </div>
       )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-[var(--muted-foreground)]">
-          Child scrape jobs
+          Proses ambil data turunan
         </h2>
         {children.error && <ErrorState error={children.error} />}
         {children.data && (
@@ -213,20 +214,20 @@ export default function GdpReportDetailPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Kind</TableHead>
+                    <TableHead>Jenis</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Scraped / Ins / Upd</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Started</TableHead>
-                    <TableHead>Finished</TableHead>
+                    <TableHead>Diambil / Baru / Diperbarui</TableHead>
+                    <TableHead>Durasi</TableHead>
+                    <TableHead>Dimulai</TableHead>
+                    <TableHead>Selesai</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {children.data.items.map((c) => (
                     <TableRow key={c.id}>
-                      <TableCell className="font-mono text-xs uppercase">
-                        {c.kind}
+                      <TableCell className="text-xs">
+                        {SCRAPE_KIND_LABEL[c.kind]}
                       </TableCell>
                       <TableCell>
                         <ScrapeStatusBadge status={c.status} />
@@ -256,7 +257,7 @@ export default function GdpReportDetailPage({
                             href={`/scrape-jobs/${c.id}`}
                             prefetch={false}
                           >
-                            Open
+                            Buka
                           </Link>
                         </Button>
                       </TableCell>
@@ -267,8 +268,8 @@ export default function GdpReportDetailPage({
               {children.data.items.length === 0 && (
                 <div className="p-6">
                   <EmptyState
-                    title="No child jobs yet"
-                    description="Orchestrator hasn't spawned a scrape yet."
+                    title="Belum ada proses turunan"
+                    description="Proses utama belum memulai pengambilan data."
                   />
                 </div>
               )}
@@ -285,16 +286,16 @@ export default function GdpReportDetailPage({
 
       {job.data && (
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-          <Meta label="Started" value={fmt(job.data.started_at)} />
-          <Meta label="Finished" value={fmt(job.data.finished_at)} />
-          <Meta label="Created" value={fmt(job.data.created_at)} />
-          <Meta label="Celery task" value={job.data.celery_task_id ?? "—"} />
+          <Meta label="Dimulai" value={fmt(job.data.started_at)} />
+          <Meta label="Selesai" value={fmt(job.data.finished_at)} />
+          <Meta label="Dibuat" value={fmt(job.data.created_at)} />
+          <Meta label="ID tugas" value={job.data.celery_task_id ?? "—"} />
           <Meta
-            label="ASIK mode"
+            label="Mode ASIK"
             value={
               job.data.skip_asik_detail
-                ? "list-only (NIK + Nama)"
-                : "full (forms scraped)"
+                ? "daftar saja (NIK + Nama)"
+                : "lengkap (formulir ikut diambil)"
             }
           />
         </div>

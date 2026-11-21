@@ -33,7 +33,7 @@ export default function LoopRunDetailPage({
   const handleCancel = async () => {
     try {
       await cancel.mutateAsync(id);
-      toast.success("Run dibatalkan");
+      toast.success("Proses dibatalkan");
     } catch (err) {
       toast.error(asApiError(err).message);
     }
@@ -62,7 +62,7 @@ export default function LoopRunDetailPage({
       </Button>
 
       <PageHeader
-        title="Loop run"
+        title="Proses agen loop"
         description={
           run.data
             ? `${run.data.puskesmas_name}${run.data.test_date ? ` • ${run.data.test_date}` : ""}${run.data.pin_ref ? ` • pin ${run.data.pin_ref}` : ""}`
@@ -109,7 +109,7 @@ export default function LoopRunDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-[var(--muted-foreground)]">Live count</CardTitle>
+            <CardTitle className="text-xs text-[var(--muted-foreground)]">Jumlah live</CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
             {run.data?.live_count ?? "—"}
@@ -117,7 +117,7 @@ export default function LoopRunDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-[var(--muted-foreground)]">Scraped count</CardTitle>
+            <CardTitle className="text-xs text-[var(--muted-foreground)]">Jumlah diambil</CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
             {run.data?.scraped_count ?? "—"}
@@ -159,7 +159,7 @@ export default function LoopRunDetailPage({
 
       {run.data?.error_message && (
         <div className="rounded-md border border-[var(--destructive)]/40 bg-[var(--destructive)]/10 p-3 text-sm text-[var(--destructive)]">
-          <p className="font-medium">Error</p>
+          <p className="font-medium">Kesalahan</p>
           <p className="font-mono text-xs">{run.data.error_message}</p>
         </div>
       )}
@@ -178,7 +178,7 @@ export default function LoopRunDetailPage({
           <Meta label="Selesai" value={fmt(run.data.finished_at)} />
           <Meta label="Heartbeat" value={fmt(run.data.heartbeat_at)} />
           <Meta label="Container" value={run.data.container_name ?? "—"} />
-          <Meta label="Celery task" value={run.data.celery_task_id ?? "—"} />
+          <Meta label="ID tugas" value={run.data.celery_task_id ?? "—"} />
           <Meta label="Pin ref" value={run.data.pin_ref ?? "—"} />
         </div>
       )}

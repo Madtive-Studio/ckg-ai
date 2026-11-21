@@ -31,7 +31,7 @@ export default function SyncJobDetailPage({
   const handleCancel = async () => {
     try {
       await cancel.mutateAsync(id);
-      toast.success("Sync cancelled");
+      toast.success("Pengiriman dibatalkan");
     } catch (err) {
       toast.error(asApiError(err).message);
     }
@@ -53,16 +53,16 @@ export default function SyncJobDetailPage({
           prefetch={false}
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to patient
+          Kembali ke pasien
         </Link>
       </Button>
 
       <PageHeader
-        title="Sync ASIK"
+        title="Kirim ke ASIK"
         description={
           job.data
             ? `${job.data.patient_name} • NIK ${job.data.patient_nik} • ${job.data.puskesmas_name}`
-            : "Loading…"
+            : "Memuat…"
         }
         actions={
           cancellable ? (
@@ -72,7 +72,7 @@ export default function SyncJobDetailPage({
               disabled={cancel.isPending}
             >
               <Ban className="h-4 w-4" />
-              Cancel
+              Batal
             </Button>
           ) : undefined
         }
@@ -92,7 +92,7 @@ export default function SyncJobDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Forms total
+              Total formulir
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
@@ -102,7 +102,7 @@ export default function SyncJobDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Submitted
+              Terkirim
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums text-emerald-700">
@@ -112,7 +112,7 @@ export default function SyncJobDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Failed
+              Gagal
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums text-rose-700">
@@ -122,7 +122,7 @@ export default function SyncJobDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Skipped
+              Dilewati
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
@@ -132,7 +132,7 @@ export default function SyncJobDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Duration
+              Durasi
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
@@ -145,7 +145,7 @@ export default function SyncJobDetailPage({
 
       {job.data?.error_message && (
         <div className="rounded-md border border-[var(--destructive)]/40 bg-[var(--destructive)]/10 p-3 text-sm text-[var(--destructive)]">
-          <p className="font-medium">Error</p>
+          <p className="font-medium">Kesalahan</p>
           <p className="font-mono text-xs whitespace-pre-wrap">
             {job.data.error_message}
           </p>
@@ -156,7 +156,7 @@ export default function SyncJobDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-[var(--muted-foreground)]">
-              Form-by-form result
+              Hasil per formulir
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -175,10 +175,10 @@ export default function SyncJobDetailPage({
 
       {job.data && (
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-          <Meta label="Started" value={fmt(job.data.started_at)} />
-          <Meta label="Finished" value={fmt(job.data.finished_at)} />
-          <Meta label="Triggered by" value={job.data.triggered_by_type} />
-          <Meta label="Celery task" value={job.data.celery_task_id ?? "—"} />
+          <Meta label="Dimulai" value={fmt(job.data.started_at)} />
+          <Meta label="Selesai" value={fmt(job.data.finished_at)} />
+          <Meta label="Dipicu oleh" value={job.data.triggered_by_type} />
+          <Meta label="ID tugas" value={job.data.celery_task_id ?? "—"} />
         </div>
       )}
     </div>

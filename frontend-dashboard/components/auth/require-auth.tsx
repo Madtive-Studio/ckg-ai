@@ -23,7 +23,7 @@ export function RequireAuth({
   if (!hydrated) {
     return (
       <div className="flex h-screen items-center justify-center text-sm text-[var(--muted-foreground)]">
-        Loading…
+        Memuat…
       </div>
     );
   }

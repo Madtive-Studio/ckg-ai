@@ -62,7 +62,7 @@ def enforce_login_rate_limit(request: Request, email: str) -> None:
     if counts and max(counts) >= settings.LOGIN_RATE_LIMIT_MAX:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
-            "Too many login attempts. Try again later.",
+            "Terlalu banyak percobaan masuk. Coba lagi nanti.",
             headers={"Retry-After": str(settings.LOGIN_RATE_LIMIT_WINDOW_SECONDS)},
         )
 
@@ -76,7 +76,7 @@ def record_failed_login_attempt(request: Request, email: str) -> None:
     if max(counts) > settings.LOGIN_RATE_LIMIT_MAX:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
-            "Too many login attempts. Try again later.",
+            "Terlalu banyak percobaan masuk. Coba lagi nanti.",
             headers={"Retry-After": str(window)},
         )
 
@@ -102,7 +102,7 @@ def enforce_decrypt_rate_limit(
     if pid_count > DECRYPT_RATE_LIMIT_MAX or res_count > DECRYPT_RATE_LIMIT_MAX:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
-            "Too many decrypt requests. Try again later.",
+            "Terlalu banyak permintaan membuka data. Coba lagi nanti.",
             headers={"Retry-After": str(window)},
         )
 
@@ -123,7 +123,7 @@ def enforce_conflicts_rate_limit(principal_id: uuid.UUID) -> None:
     if count > CONFLICTS_RATE_LIMIT_MAX:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
-            "Too many conflict-analysis requests. Try again later.",
+            "Terlalu banyak permintaan analisis konflik. Coba lagi nanti.",
             headers={"Retry-After": str(window)},
         )
 
@@ -144,7 +144,7 @@ def enforce_llm_test_rate_limit(principal_id: uuid.UUID) -> None:
     if count > LLM_TEST_RATE_LIMIT_MAX:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
-            "Too many test-connection requests. Try again later.",
+            "Terlalu banyak permintaan tes koneksi. Coba lagi nanti.",
             headers={"Retry-After": str(window)},
         )
 
@@ -165,7 +165,7 @@ def enforce_medisy_test_rate_limit(principal_id: uuid.UUID) -> None:
     if count > MEDISY_TEST_RATE_LIMIT_MAX:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
-            "Too many test-connection requests. Try again later.",
+            "Terlalu banyak permintaan tes koneksi. Coba lagi nanti.",
             headers={"Retry-After": str(window)},
         )
 
@@ -207,6 +207,6 @@ def enforce_invite_rate_limit(request: Request) -> None:
     if count > INVITE_RATE_LIMIT_MAX:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS,
-            "Too many requests. Try again later.",
+            "Terlalu banyak permintaan. Coba lagi nanti.",
             headers={"Retry-After": str(window)},
         )

@@ -54,7 +54,7 @@ def fetch_day_bundles(
     if niks is not None:
         visits = [v for v in visits if (v.get("nik") or "").strip() in niks]
     ids = sorted({int(v["visit_id"]) for v in visits})
-    on_log(f"{day.isoformat()}: {len(ids)} visit(s) in Medisy")
+    on_log(f"{day.isoformat()}: {len(ids)} kunjungan di Medisy")
 
     bundles: list[dict[str, Any]] = []
     for i in range(0, len(ids), MAX_BATCH):
@@ -64,8 +64,8 @@ def fetch_day_bundles(
         bundles.extend(result.items)
         if result.missing:
             # cancelled/deleted between the list call and now — not an error, just not ours any more
-            on_log(f"{day.isoformat()}: {len(result.missing)} visit(s) vanished before they could be read")
-    on_log(f"{day.isoformat()}: fetched {len(bundles)} bundle(s)")
+            on_log(f"{day.isoformat()}: {len(result.missing)} kunjungan hilang (dibatalkan/dihapus) sebelum sempat dibaca")
+    on_log(f"{day.isoformat()}: {len(bundles)} data kunjungan berhasil diambil")
     return bundles
 
 
@@ -88,12 +88,12 @@ def extract_patients(
         identity = patient.get("identity") or {}
         nik = (identity.get("number") or "").strip()
         if not nik:
-            skipped.append({"source_id": str(visit.get("id") or ""), "reason": "missing NIK"})
+            skipped.append({"source_id": str(visit.get("id") or ""), "reason": "NIK kosong"})
             continue
         if identity.get("shared") is True:
             # Medisy flags a number held by more than one different person (placeholder "00", a reused NIK). Records are keyed
             # by NIK, so saving it would overwrite one patient with another and join unrelated people to ASIK.
-            skipped.append({"source_id": str(visit.get("id") or ""), "reason": "shared NIK (more than one person)"})
+            skipped.append({"source_id": str(visit.get("id") or ""), "reason": "NIK dipakai lebih dari satu orang"})
             continue
         nama = (patient.get("name") or "").strip()
         rows.append((nik, nama, with_meta(bundle, fetched_at), visit.get("date")))

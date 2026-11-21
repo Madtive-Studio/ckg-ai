@@ -17,11 +17,11 @@ class GdpReportJobCreate(BaseModel):
     @model_validator(mode="after")
     def _check(self) -> "GdpReportJobCreate":
         if self.date_from > self.date_to:
-            raise ValueError("date_from must be <= date_to")
+            raise ValueError("Dari tanggal harus sama dengan atau sebelum Sampai tanggal")
         # Cap range to one year. The orchestrator schedules one EPUS scrape per
         # NIK per date — at 4 months × 100 NIKs that is already ~12k jobs.
         if (self.date_to - self.date_from).days > 366:
-            raise ValueError("date range must be <= 366 days")
+            raise ValueError("Rentang tanggal maksimal 366 hari")
         return self
 
 

@@ -36,13 +36,13 @@ def test_merge_range_exactly_at_cap_ok():
 
 def test_merge_range_over_cap_rejected():
     base = date(1900, 1, 1)
-    with pytest.raises(ValidationError, match="date range too large"):
+    with pytest.raises(ValidationError, match="Rentang tanggal terlalu panjang"):
         MergeStart(date_from=base, date_to=date(2100, 1, 1))
 
 
 def test_merge_range_one_over_cap_rejected():
     base = date(2025, 1, 1)
-    with pytest.raises(ValidationError, match="date range too large"):
+    with pytest.raises(ValidationError, match="Rentang tanggal terlalu panjang"):
         MergeStart(date_from=base, date_to=base + timedelta(days=MAX_MERGE_RANGE_DAYS))
 
 
@@ -52,7 +52,7 @@ def test_merge_single_date_unaffected():
 
 
 def test_merge_reversed_range_rejected():
-    with pytest.raises(ValidationError, match="must be <="):
+    with pytest.raises(ValidationError, match="harus sama dengan atau sebelum"):
         MergeStart(date_from=date(2025, 6, 2), date_to=date(2025, 6, 1))
 
 
@@ -662,12 +662,12 @@ def test_object_level_authz_returns_404_not_403():
     user = deps.Principal("user", _uuid.uuid4(), _uuid.uuid4())  # different clinic
     job = SimpleNamespace(puskesmas_id=other)
     cases = [
-        (lambda: _patients._authorize(user, other), "Patient not found"),
-        (lambda: _sync._authorize(user, other), "Patient not found"),
-        (lambda: _sync._authorize_job(user, job), "Job not found"),
-        (lambda: _scrape._authorize_job(user, job), "Job not found"),
-        (lambda: _merge._authorize_job(user, job), "Job not found"),
-        (lambda: _gdp._authorize_job(user, other), "Job not found"),
+        (lambda: _patients._authorize(user, other), "Pasien tidak ditemukan"),
+        (lambda: _sync._authorize(user, other), "Pasien tidak ditemukan"),
+        (lambda: _sync._authorize_job(user, job), "Proses tidak ditemukan"),
+        (lambda: _scrape._authorize_job(user, job), "Proses tidak ditemukan"),
+        (lambda: _merge._authorize_job(user, job), "Proses tidak ditemukan"),
+        (lambda: _gdp._authorize_job(user, other), "Proses tidak ditemukan"),
     ]
     for fn, detail in cases:
         with pytest.raises(HTTPException) as ei:

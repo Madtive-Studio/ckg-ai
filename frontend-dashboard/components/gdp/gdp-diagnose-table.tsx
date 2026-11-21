@@ -114,8 +114,8 @@ export function GdpDiagnoseTable({ items }: { items: GdpReportRow[] }) {
       {items.length === 0 && (
         <div className="p-6">
           <EmptyState
-            title="No patients with GDP"
-            description="No patient in this puskesmas+year has any GDP reading."
+            title="Tidak ada pasien dengan GDP"
+            description="Tidak ada pasien di puskesmas dan tahun ini yang memiliki nilai GDP."
           />
         </div>
       )}

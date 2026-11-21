@@ -67,7 +67,7 @@ function activeChildHref(children: NavItem[], pathname: string): string | null {
 const NAV: NavEntry[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   {
-    group: "Patients",
+    group: "Pasien",
     icon: HeartPulse,
     children: [
       { href: "/patients", label: "CKG Umum", icon: HeartPulse },
@@ -75,7 +75,7 @@ const NAV: NavEntry[] = [
     ],
   },
   { href: "/puskesmas", label: "Puskesmas", icon: Stethoscope },
-  // { href: "/users", label: "Users", icon: Users },
+  // { href: "/users", label: "Pengguna", icon: Users },
   {
     group: "LLM",
     icon: Cpu,
@@ -94,17 +94,17 @@ const NAV: NavEntry[] = [
     ],
   },
   {
-    group: "Jobs",
+    group: "Proses",
     icon: PlayCircle,
     children: [
-      { href: "/scrape-jobs", label: "Scrape Jobs", icon: PlayCircle },
-      { href: "/sync-jobs", label: "Sync Jobs", icon: RefreshCw },
-      { href: "/merge-with-ai", label: "Merge With AI", icon: Sparkles },
-      { href: "/loop-runs", label: "Loop Agent", icon: Bot },
+      { href: "/scrape-jobs", label: "Ambil Data", icon: PlayCircle },
+      { href: "/sync-jobs", label: "Kirim ke ASIK", icon: RefreshCw },
+      { href: "/merge-with-ai", label: "Gabung Data (AI)", icon: Sparkles },
+      { href: "/loop-runs", label: "Agen Loop", icon: Bot },
     ],
   },
-  { href: "/merge-conflicts", label: "Conflict Analysis", icon: GitCompareArrows },
-  { href: "/cron-runs", label: "Cron Runs", icon: Clock },
+  { href: "/merge-conflicts", label: "Analisis Konflik", icon: GitCompareArrows },
+  { href: "/cron-runs", label: "Jadwal & Rentang Tanggal", icon: Clock },
   { href: "/gdp-report", label: "Kertas Kerja DM Terkendali", icon: Droplet },
   // The four dirjen registries, in the same order the client dashboard lists
   // them. Both apps render the SAME shared view (frontend-shared/<resource>/
@@ -176,7 +176,7 @@ export function AppSidebar() {
           variant="ghost"
           size="icon"
           onClick={toggle}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "Lebarkan menu" : "Ciutkan menu"}
           className="h-8 w-8"
         >
           {collapsed ? (
@@ -308,7 +308,7 @@ export function AppSidebar() {
               variant="ghost"
               size="icon"
               onClick={logout}
-              aria-label="Sign out"
+              aria-label="Keluar"
               className="h-8 w-8"
             >
               <LogOut className="h-4 w-4" />
@@ -319,7 +319,7 @@ export function AppSidebar() {
             variant="ghost"
             size="icon"
             onClick={logout}
-            aria-label="Sign out"
+            aria-label="Keluar"
             className="mx-auto flex h-8 w-8"
           >
             <LogOut className="h-4 w-4" />

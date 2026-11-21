@@ -57,7 +57,7 @@ export default function UsersPage() {
     if (!deleting) return;
     try {
       await del.mutateAsync(deleting.id);
-      toast.success("User deleted");
+      toast.success("Pengguna dihapus");
       setDeleting(null);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -67,12 +67,12 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Users"
-        description="User accounts attached to a puskesmas."
+        title="Pengguna"
+        description="Akun pengguna yang terhubung ke puskesmas."
         actions={
           <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />
-            New User
+            Pengguna Baru
           </Button>
         }
       />
@@ -81,7 +81,7 @@ export default function UsersPage() {
         <div className="relative max-w-sm flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-[var(--muted-foreground)]" />
           <Input
-            placeholder="Search by name…"
+            placeholder="Cari berdasarkan nama…"
             value={nameRaw}
             onChange={(e) => setName(e.target.value)}
             className="pl-8"
@@ -93,7 +93,7 @@ export default function UsersPage() {
             onChange={setPuskesmasId}
             useOptions={usePuskesmasOptions}
             selectedLabel={filterPkDetail.data?.name}
-            allOptionLabel="All puskesmas"
+            allOptionLabel="Semua puskesmas"
           />
         </div>
       </div>
@@ -104,10 +104,10 @@ export default function UsersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Full name</TableHead>
+              <TableHead>Nama lengkap</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Puskesmas</TableHead>
-              <TableHead className="w-[120px]">Actions</TableHead>
+              <TableHead className="w-[120px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -145,10 +145,10 @@ export default function UsersPage() {
         {list.data && list.data.items.length === 0 && (
           <div className="p-6">
             <EmptyState
-              title={hasFilters ? "No matches" : "No users yet"}
+              title={hasFilters ? "Tidak ada yang cocok" : "Belum ada pengguna"}
               description={
                 hasFilters
-                  ? "No matches. Try a different search or filter."
+                  ? "Tidak ada yang cocok. Coba kata kunci atau filter lain."
                   : undefined
               }
             />
@@ -179,11 +179,11 @@ export default function UsersPage() {
       <ConfirmDialog
         open={!!deleting}
         onOpenChange={(v) => !v && setDeleting(null)}
-        title="Delete user?"
+        title="Hapus pengguna?"
         description={
-          deleting ? `${deleting.email} will be deleted.` : undefined
+          deleting ? `${deleting.email} akan dihapus.` : undefined
         }
-        confirmLabel="Delete"
+        confirmLabel="Hapus"
         destructive
         loading={del.isPending}
         onConfirm={handleDelete}

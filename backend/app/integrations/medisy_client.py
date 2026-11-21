@@ -177,7 +177,7 @@ class MedisyClient:
     def ping(self) -> MedisyPing:
         data = self._request("GET", "/ping")
         if not isinstance(data, dict) or "api_version" not in data:
-            raise MedisyUnavailableError("Medisy answered, but not like a CKG API (unexpected /ping body)")
+            raise MedisyUnavailableError("Medisy menjawab, tetapi bukan sebagai API CKG (jawaban /ping tidak dikenali)")
         clinic = data.get("clinic")
         return MedisyPing(
             clinic_name=clinic.get("name") if isinstance(clinic, dict) else None,
@@ -197,7 +197,7 @@ class MedisyClient:
             return None
         email, password = (data.get("email"), data.get("password")) if isinstance(data, dict) else (None, None)
         if not isinstance(email, str) or not isinstance(password, str) or not email or not password:
-            raise MedisyUnavailableError("Medisy answered, but not with an ASIK login (unexpected /asik-credential body)")
+            raise MedisyUnavailableError("Medisy menjawab, tetapi tidak berisi akun ASIK (jawaban /asik-credential tidak dikenali)")
         return MedisyAsikCredential(email=email, password=password)
 
     def list_visits(self, day: date, *, ckg_only: bool = True) -> list[dict[str, Any]]:
@@ -213,7 +213,7 @@ class MedisyClient:
             items.extend(batch)
             if not batch or len(items) >= int(data.get("total", 0)):
                 return items
-        raise MedisyRequestError(f"more than {_MAX_PAGES} pages of visits for {day}", 200)
+        raise MedisyRequestError(f"lebih dari {_MAX_PAGES} halaman kunjungan untuk {day}", 200)
 
     def get_bundles(self, visit_ids: Iterable[int]) -> BundleBatch:
         """Full bundles for ``visit_ids`` (duplicates ignored), fetched in chunks of ``MAX_BATCH``
@@ -257,7 +257,7 @@ class MedisyClient:
         asked = set(chunk)
         returned = {b.get("visit", {}).get("id") for b in items}
         if not returned <= asked or len(items) + len(missing) != len(chunk):
-            raise MedisyUnavailableError("Medisy returned a different set of visits than requested")
+            raise MedisyUnavailableError("Medisy mengembalikan kunjungan yang berbeda dari yang diminta")
         return items, missing
 
     def _delay(self, attempt: int, retry_after: float | None = None) -> float:
@@ -273,7 +273,7 @@ class MedisyClient:
             except (httpx.TimeoutException, httpx.TransportError) as exc:
                 if attempt >= self._max_retries:
                     raise MedisyUnavailableError(
-                        f"cannot reach Medisy ({type(exc).__name__}) after {attempt + 1} attempts"
+                        f"tidak dapat terhubung ke Medisy ({type(exc).__name__}) setelah {attempt + 1} percobaan"
                     ) from exc
                 logger.warning("medisy %s %s: %s, retrying", method, path, type(exc).__name__)
                 self._sleep(self._delay(attempt))
@@ -309,18 +309,18 @@ class MedisyClient:
             try:
                 return resp.json()
             except ValueError as exc:
-                raise MedisyUnavailableError("Medisy answered with a body that is not JSON") from exc
+                raise MedisyUnavailableError("Medisy menjawab dengan isi yang bukan JSON") from exc
         detail = self._detail(resp)
         if code == 401:
-            raise MedisyAuthError("Medisy rejected the token (401)")
+            raise MedisyAuthError("Medisy menolak token (401)")
         if code == 403:
-            raise MedisyAuthError(f"Medisy refused this server ({detail})")
+            raise MedisyAuthError(f"Medisy menolak server ini ({detail})")
         if code == 404:
             raise MedisyNotFoundError(detail)
         if code == 429:
-            raise MedisyRateLimitedError("Medisy rate limit hit (429)", self._retry_after(resp))
+            raise MedisyRateLimitedError("Batas permintaan Medisy tercapai (429)", self._retry_after(resp))
         if 300 <= code < 400:
-            raise MedisyRequestError(f"unexpected redirect (HTTP {code}); redirects are not followed", code)
+            raise MedisyRequestError(f"pengalihan tidak terduga (HTTP {code}); pengalihan tidak diikuti", code)
         if code >= 500:
-            raise MedisyServerError(f"Medisy server error ({detail})", code)
+            raise MedisyServerError(f"Kesalahan server Medisy ({detail})", code)
         raise MedisyRequestError(detail, code)

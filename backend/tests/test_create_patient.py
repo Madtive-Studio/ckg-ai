@@ -119,14 +119,14 @@ def test_wali_block_own_nik_school_age_ok():
 def test_wali_block_under_6_needs_wali_even_with_own_nik():
     # 10 Jan 2022 → age 4 at exam. Own NIK, but ASIK mandates wali for <6 (live-verified).
     r = _wali_block_reason("3275041001220001", date(2022, 1, 10), _EXAM)
-    assert r is not None and "under 6" in r
+    assert r is not None and "di bawah 6 tahun" in r
 
 
 def test_wali_block_minor_recorded_under_guardian_nik():
     # A child (birth_date 15 May 2018, age 8) recorded under an ADULT's NIK (24 Jun 1999)
     # → NIK's DOB ≠ birth_date → guardian's NIK → blocked (registering by it mis-assigns).
     r = _wali_block_reason("1301112406990003", date(2018, 5, 15), _EXAM)
-    assert r is not None and "guardian" in r
+    assert r is not None and "NIK wali" in r
 
 
 def test_wali_block_adult_mismatch_not_gated():

@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { JOB_STATUS_LABEL } from "@/lib/source-names";
 import type { CronBackfillStatus } from "@/lib/api/types";
 
 const VARIANT: Record<
@@ -17,5 +18,5 @@ export function CronBackfillStatusBadge({
 }: {
   status: CronBackfillStatus;
 }) {
-  return <Badge variant={VARIANT[status]}>{status}</Badge>;
+  return <Badge variant={VARIANT[status]}>{JOB_STATUS_LABEL[status]}</Badge>;
 }

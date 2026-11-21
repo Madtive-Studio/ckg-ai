@@ -18,6 +18,7 @@ from app.api.deps import (
 from app.api.pagination import Page, PageParams, page_params, paginate
 from app.celery_app import celery_app
 from app.config import settings
+from app.core.labels import status_label
 from app.core.rate_limit import redis_client
 from app.crud import loop_config as config_crud
 from app.crud import loop_run as crud
@@ -128,12 +129,12 @@ def start_run(
         .where(Puskesmas.id == body.puskesmas_id)
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     puskesmas_name, epus_url, has_cred = row
     if not epus_url:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "puskesmas has no epus_url")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "URL Medisy puskesmas ini belum diisi")
     if not has_cred:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "epus credentials not set for this puskesmas")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kredensial Medisy puskesmas ini belum diisi")
 
     try:
         # Resolve the per-run PR decision NOW: the explicit dialog choice wins,
@@ -162,7 +163,7 @@ def start_run(
         celery_app.send_task("loop_agent.run_one", args=[str(run.id)])
     except Exception as e:
         crud.mark_failed(db, run, f"broker unreachable: {e}"[:2000], datetime.now(UTC))
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "loop broker unavailable") from e
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean agen loop sedang tidak tersedia") from e
     return _to_out(run, puskesmas_name)
 
 
@@ -284,7 +285,7 @@ def get_run(
         .where(LoopRun.id == run_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Loop run not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses agen loop tidak ditemukan")
     return _to_out(obj, obj.puskesmas.name)
 
 
@@ -314,14 +315,14 @@ def open_run_pr(
         .with_for_update()
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Loop run not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses agen loop tidak ditemukan")
     if obj.pr_url:
-        raise HTTPException(status.HTTP_409_CONFLICT, "run already has a PR")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Proses ini sudah memiliki PR")
     if obj.status not in (LoopRunStatus.CHANGES_READY, LoopRunStatus.NEEDS_REVIEW):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            f"run is {obj.status.value} — only changes_ready (or needs_review "
-            "without a PR) can open one",
+            f"Proses berstatus {status_label(obj.status.value)} — PR hanya bisa dibuka untuk "
+            "status perubahan siap (atau perlu ditinjau tanpa PR)",
         )
     puskesmas_name = obj.puskesmas.name
     try:
@@ -329,7 +330,7 @@ def open_run_pr(
     except RuntimeError as e:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(e)[:500]) from e
     if not pr_url:
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "GitHub returned no PR URL")
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "GitHub tidak mengembalikan URL PR")
     obj.pr_url = pr_url
     obj.status = LoopRunStatus.NEEDS_REVIEW
     db.commit()
@@ -346,7 +347,7 @@ def get_run_log(
 ) -> LoopRunLogOut:
     exists = db.scalar(select(LoopRun.id).where(LoopRun.id == run_id))
     if exists is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Loop run not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses agen loop tidak ditemukan")
     lines = redis_client().lrange(f"loop:run:{run_id}:log", -tail, -1) or []
     return LoopRunLogOut(lines=lines)
 
@@ -363,7 +364,7 @@ def get_run_events(
     persisted event lines after `after_seq`, in order."""
     exists = db.scalar(select(LoopRun.id).where(LoopRun.id == run_id))
     if exists is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Loop run not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses agen loop tidak ditemukan")
     rows = db.scalars(
         select(LoopRunEvent.text)
         .where(LoopRunEvent.loop_run_id == run_id, LoopRunEvent.seq > after_seq)
@@ -381,10 +382,10 @@ async def stream_run(
     db: Session = Depends(get_db),
 ) -> StreamingResponse:
     if principal.typ != "admin":
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin token required")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Hanya admin yang boleh mengakses")
     exists = db.scalar(select(LoopRun.id).where(LoopRun.id == run_id))
     if exists is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Loop run not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses agen loop tidak ditemukan")
 
     chan = f"loop:run:{run_id}:stream"
     log_key = f"loop:run:{run_id}:log"
@@ -453,9 +454,9 @@ def cancel_run(
         .where(LoopRun.id == run_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Loop run not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses agen loop tidak ditemukan")
     if obj.status not in (LoopRunStatus.PENDING, LoopRunStatus.RUNNING):
-        raise HTTPException(status.HTTP_409_CONFLICT, f"run is {obj.status.value}, cannot cancel")
+        raise HTTPException(status.HTTP_409_CONFLICT, f"Proses berstatus {status_label(obj.status.value)}, tidak bisa dibatalkan")
     puskesmas_name = obj.puskesmas.name
     crud.mark_cancelled(db, obj)
     # Redis cancel-flag: the task polls this each tick and docker-kills the

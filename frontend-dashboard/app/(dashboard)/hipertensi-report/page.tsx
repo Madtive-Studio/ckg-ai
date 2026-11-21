@@ -9,7 +9,7 @@ export default function HipertensiReportPage() {
       title="Registri Hipertensi CKG"
       description="Registri Hipertensi CKG (V8juni2026): identitas, hasil pemeriksaan TD pada tanggal berkunjung CKG, dan follow-up tekanan darah per bulan."
       showClearCache={false}
-      exportLabel="Export Registri Hipertensi CKG"
+      exportLabel="Unduh Registri Hipertensi CKG"
       exportFilenamePrefix="Registri Hipertensi CKG"
     />
   );

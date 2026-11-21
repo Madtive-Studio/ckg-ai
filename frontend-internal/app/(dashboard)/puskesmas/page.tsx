@@ -61,7 +61,7 @@ export default function PuskesmasPage() {
     <div className="space-y-6">
       <PageHeader
         title="Puskesmas"
-        description="Pusat kesehatan dan kredensial scraper-nya."
+        description="Pusat kesehatan dan kredensial pengambilan datanya."
         actions={
           <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />

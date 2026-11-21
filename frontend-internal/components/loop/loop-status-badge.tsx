@@ -19,17 +19,17 @@ const VARIANT: Record<
 };
 
 const LABEL: Record<LoopRunStatus, string> = {
-  pending: "pending",
-  running: "running",
-  covered: "covered",
-  no_data: "no data",
-  needs_review: "needs review",
-  merged: "merged",
-  pr_rejected: "pr rejected",
-  changes_ready: "changes ready",
-  bad_creds: "bad creds",
-  failed: "failed",
-  cancelled: "cancelled",
+  pending: "menunggu",
+  running: "berjalan",
+  covered: "tercakup",
+  no_data: "tidak ada data",
+  needs_review: "perlu ditinjau",
+  merged: "digabung",
+  pr_rejected: "PR ditolak",
+  changes_ready: "perubahan siap",
+  bad_creds: "kredensial salah",
+  failed: "gagal",
+  cancelled: "dibatalkan",
 };
 
 export function LoopStatusBadge({ status }: { status: LoopRunStatus }) {

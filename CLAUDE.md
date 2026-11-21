@@ -272,6 +272,25 @@ When a selected id may not be in the loaded pages (edit forms, persisted filters
 />
 ```
 
+### 7.15 UI language: Bahasa Indonesia only — and never "EPUS"
+
+Every string a user reads is **Bahasa Indonesia**: both apps, `frontend-shared/`, toasts,
+zod messages, backend `HTTPException` details, 422 validation text (translated in
+`backend/app/main.py`), and job-log / job-error lines the backend writes. New English UI
+text is a bug.
+
+- **The clinic source is Medisy.** API/DB values keep the old names (`epus`, `epus_url`,
+  `ScrapeKind.EPUS`) — never render them raw. Frontend: `SOURCE_NAME`, `SCRAPE_KIND_LABEL`,
+  `STEP_LABEL`, `JOB_STATUS_LABEL`, `GDP_PHASE_LABEL` in `frontend-internal/lib/source-names.ts`.
+  Backend messages: `status_label()` / `source_label()` in `backend/app/core/labels.py`.
+- **Glossary** (keep consistent): scrape → *ambil data*; merge → *gabung data*; sync →
+  *kirim ke ASIK*; job → *proses*; cron → *jadwal*; backfill → *proses rentang tanggal*;
+  Export → *Unduh*; Loading… → *Memuat…*. Accepted loanwords: Dashboard, Email, Token,
+  API key, Provider, Model, Cache, Log, PR.
+- **Exception:** the ASIK browser-scraper subprocess output (`scrapers/`) stays English —
+  the backend parses some of those lines.
+- Changing a quoted label means the chatbot packs change too (§10).
+
 ## 8. Never write N+1 queries
 
 An **N+1** is any code path where one logical operation issues `1 + N` round-trips that scale with input size: a parent fetch (1) plus a per-child fetch (N). The same shape shows up in background tasks that poll a database row each iteration of a long loop. Treat these as bugs, not optimizations — fix them at write time.

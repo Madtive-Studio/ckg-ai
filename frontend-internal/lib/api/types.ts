@@ -68,14 +68,14 @@ const _BASE_DOMAIN_RE =
 
 const baseDomain = z
   .string()
-  .min(1, "Required")
+  .min(1, "Wajib diisi")
   .regex(
     _BASE_DOMAIN_RE,
-    "Base domain only (e.g. 'domain.com'), no scheme/path",
+    "Hanya domain dasar (mis. 'domain.com'), tanpa http:// atau path",
   );
 
 export const PuskesmasCreate = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Nama wajib diisi"),
   epus_url: baseDomain,
   asik_url: baseDomain,
   asik_default_alamat: AsikDefaultAlamat.nullable().optional(),
@@ -83,7 +83,7 @@ export const PuskesmasCreate = z.object({
 export type PuskesmasCreateInput = z.infer<typeof PuskesmasCreate>;
 
 export const PuskesmasUpdate = z.object({
-  name: z.string().min(1, "Name is required").optional(),
+  name: z.string().min(1, "Nama wajib diisi").optional(),
   epus_url: baseDomain.optional(),
   asik_url: baseDomain.optional(),
   asik_default_alamat: AsikDefaultAlamat.nullable().optional(),
@@ -140,17 +140,17 @@ export const UserOut = z.object({
 export type User = z.infer<typeof UserOut>;
 
 export const UserCreate = z.object({
-  email: z.string().email(),
-  password: z.string().min(8).max(72),
-  full_name: z.string().min(1),
+  email: z.string().email("Email tidak valid"),
+  password: z.string().min(8, "Kata sandi minimal 8 karakter").max(72, "Kata sandi maksimal 72 karakter"),
+  full_name: z.string().min(1, "Nama wajib diisi"),
   puskesmas_id: z.string().uuid(),
 });
 export type UserCreateInput = z.infer<typeof UserCreate>;
 
 export const UserUpdate = z.object({
-  email: z.string().email().optional(),
-  password: z.string().min(8).max(72).optional().or(z.literal("")),
-  full_name: z.string().min(1).optional(),
+  email: z.string().email("Email tidak valid").optional(),
+  password: z.string().min(8, "Kata sandi minimal 8 karakter").max(72, "Kata sandi maksimal 72 karakter").optional().or(z.literal("")),
+  full_name: z.string().min(1, "Nama wajib diisi").optional(),
   puskesmas_id: z.string().uuid().optional(),
 });
 export type UserUpdateInput = z.infer<typeof UserUpdate>;
@@ -187,7 +187,7 @@ const usdPrice = z
   .nullish()
   .refine(
     (v) => v == null || v === "" || /^\d+(\.\d{1,2})?$/.test(String(v)),
-    { message: "max 2 decimal places" },
+    { message: "maksimal 2 angka desimal" },
   );
 
 export const LlmConfigCreate = z.object({
@@ -506,7 +506,7 @@ export const CronConfigCreate = z
   })
   // create_new runs AFTER the sync step, so it requires sync on — mirror backend.
   .refine((v) => !v.create_new || v.sync_mode !== "off", {
-    message: "Create-in-ASIK requires ASIK sync to be on",
+    message: "Membuat pasien di ASIK membutuhkan pengiriman ke ASIK aktif",
     path: ["create_new"],
   });
 export type CronConfigCreateInput = z.infer<typeof CronConfigCreate>;
@@ -578,26 +578,26 @@ export const CronBackfillCreate = z
     create_new: z.boolean().optional(),
   })
   .refine((v) => v.date_from <= v.date_to, {
-    message: "date_from must be <= date_to",
+    message: "Dari tanggal harus sama dengan atau sebelum Sampai tanggal",
     path: ["date_to"],
   })
   // create_new runs after sync, so it requires sync on — mirror backend.
   .refine((v) => !v.create_new || (v.sync_mode ?? "off") !== "off", {
-    message: "Create-in-ASIK requires ASIK sync to be on",
+    message: "Membuat pasien di ASIK membutuhkan pengiriman ke ASIK aktif",
     path: ["create_new"],
   })
   // Source "none" is sync-only over existing data: it can't scrape (mandiri),
   // can't skip merge, and needs sync on — mirror the backend validator.
   .refine((v) => v.source_scope !== "none" || !v.mandiri_only, {
-    message: "Source “None” cannot be combined with Pemeriksaan Mandiri",
+    message: "Sumber “Tidak ada” tidak bisa digabung dengan Pemeriksaan Mandiri",
     path: ["source_scope"],
   })
   .refine((v) => v.source_scope !== "none" || (v.sync_mode ?? "off") !== "off", {
-    message: "Source “None” requires ASIK sync to be on",
+    message: "Sumber “Tidak ada” membutuhkan pengiriman ke ASIK aktif",
     path: ["sync_mode"],
   })
   .refine((v) => v.source_scope !== "none" || v.merge_mode !== "no_merge", {
-    message: "Source “None” cannot use No merge",
+    message: "Sumber “Tidak ada” tidak bisa memakai Tanpa gabung",
     path: ["merge_mode"],
   });
 export type CronBackfillCreateInput = z.infer<typeof CronBackfillCreate>;
@@ -739,8 +739,8 @@ export type GdpReportJob = z.infer<typeof GdpReportJobOut>;
 
 export const GdpReportCreate = z.object({
   puskesmas_id: z.string().uuid({ message: "Pilih Puskesmas" }),
-  date_from: z.string().min(1, "Required"),
-  date_to: z.string().min(1, "Required"),
+  date_from: z.string().min(1, "Wajib diisi"),
+  date_to: z.string().min(1, "Wajib diisi"),
   skip_asik_detail: z.boolean(),
 });
 export type GdpReportCreateInput = z.infer<typeof GdpReportCreate>;

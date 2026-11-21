@@ -18,6 +18,7 @@ from app.api.deps import (
 from app.api.pagination import Page, PageParams, page_params, paginate
 from app.celery_app import celery_app
 from app.config import settings
+from app.core.labels import status_label
 from app.core.rate_limit import redis_client
 from app.crud import patient as patient_crud
 from app.crud import sync_job as crud
@@ -81,13 +82,13 @@ def _authorize(principal: Principal, puskesmas_id: uuid.UUID) -> None:
     # Called after the patient is fetched, so hide existence with a 404 that
     # matches the not-found case (no 403-vs-404 oracle on patient ids).
     if principal.typ == "user" and principal.puskesmas_id != puskesmas_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
 
 
 def _authorize_job(principal: Principal, job: SyncJob) -> None:
     # Same: a foreign job is indistinguishable from a nonexistent one.
     if principal.typ == "user" and job.puskesmas_id != principal.puskesmas_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
 
 
 def _trigger_kind(principal: Principal) -> tuple[uuid.UUID, TriggererType]:
@@ -117,7 +118,7 @@ def start_sync(
         .where(Patient.id == patient_id)
     )
     if patient is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
     _authorize(principal, patient.puskesmas_id)
     has_merged = patient.merged_data is not None
     # EPUS-only fallback is disabled by scope: sync requires matched + AI-merged data.
@@ -130,7 +131,7 @@ def start_sync(
     if not has_merged and not epus_only_eligible:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "Patient has no merged_data — sync requires matched + AI-merged data",
+            "Pasien belum memiliki data gabungan — pengiriman ke ASIK butuh data yang cocok dan sudah digabung AI",
         )
 
     row = db.execute(
@@ -141,14 +142,14 @@ def start_sync(
         ).where(Puskesmas.id == patient.puskesmas_id)
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     puskesmas_name, has_cred, base_url = row
     if not has_cred:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "ASIK credentials not set")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kredensial ASIK belum diisi")
     if not base_url:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "asik_url not set for this puskesmas",
+            "URL ASIK puskesmas ini belum diisi",
         )
 
     triggered_by_id, triggered_by_type = _trigger_kind(principal)
@@ -164,7 +165,7 @@ def start_sync(
         db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "sync already in progress for this patient",
+            "Pengiriman ke ASIK untuk pasien ini masih berjalan",
         ) from e
 
     try:
@@ -176,7 +177,7 @@ def start_sync(
     except Exception as e:
         crud.mark_failed(db, job, f"broker unreachable: {e}"[:2000], datetime.now(UTC))
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "sync broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean pengiriman ke ASIK sedang tidak tersedia"
         ) from e
     return _to_job_out(
         job,
@@ -210,7 +211,7 @@ def start_create(
         .where(Patient.id == patient_id)
     )
     if patient is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
     _authorize(principal, patient.puskesmas_id)
     if not (
         patient.match_status == MatchStatus.EPUS_ONLY
@@ -219,7 +220,7 @@ def start_create(
     ):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "Create requires an epus_only + Tandai-CKG patient with ePus data",
+            "Membuat pasien di ASIK hanya untuk pasien yang hanya ada di Medisy, bertanda Tandai-CKG, dan memiliki data Medisy",
         )
 
     row = db.execute(
@@ -231,19 +232,19 @@ def start_create(
         ).where(Puskesmas.id == patient.puskesmas_id)
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     puskesmas_name, has_cred, base_url, default_alamat = row
     if not has_cred:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "ASIK credentials not set")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kredensial ASIK belum diisi")
     if not base_url:
         raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, "asik_url not set for this puskesmas"
+            status.HTTP_400_BAD_REQUEST, "URL ASIK puskesmas ini belum diisi"
         )
     if not default_alamat and clinic_domicile(patient_crud.decrypt_field(patient, ScrapeKind.EPUS)) is None:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "the patient has no complete domicile in the clinic record and the puskesmas has no default ASIK alamat "
-            "configured — set it in the puskesmas form first",
+            "Domisili pasien di Medisy tidak lengkap dan puskesmas belum punya alamat bawaan ASIK "
+            "— isi dulu di formulir puskesmas",
         )
 
     triggered_by_id, triggered_by_type = _trigger_kind(principal)
@@ -259,7 +260,7 @@ def start_create(
         db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a sync or create is already in progress for this patient",
+            "Pengiriman atau pembuatan pasien di ASIK untuk pasien ini masih berjalan",
         ) from e
 
     try:
@@ -271,7 +272,7 @@ def start_create(
     except Exception as e:
         crud.mark_failed(db, job, f"broker unreachable: {e}"[:2000], datetime.now(UTC))
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "create broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean pembuatan pasien ASIK sedang tidak tersedia"
         ) from e
     return _to_job_out(
         job,
@@ -292,7 +293,7 @@ def list_jobs(
 ) -> Page[SyncJobOut]:
     if principal.typ == "user":
         if puskesmas_id is not None and puskesmas_id != principal.puskesmas_id:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
         puskesmas_id = principal.puskesmas_id
     stmt = (
         select(SyncJob)
@@ -347,7 +348,7 @@ def get_job(
         .where(SyncJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
     return _to_job_out(
         obj,
@@ -370,7 +371,7 @@ def get_job_log(
         .where(SyncJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
     lines = redis_client().lrange(f"sync:job:{job_id}:log", -tail, -1) or []
     return SyncJobLogOut(lines=lines)
@@ -389,7 +390,7 @@ async def stream_job(
         .where(SyncJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
 
     chan = f"sync:job:{job_id}:stream"
@@ -462,10 +463,10 @@ def cancel_job(
         .where(SyncJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj)
     if obj.status not in (SyncStatus.PENDING, SyncStatus.RUNNING):
-        raise HTTPException(status.HTTP_409_CONFLICT, f"job is {obj.status.value}, cannot cancel")
+        raise HTTPException(status.HTTP_409_CONFLICT, f"Proses berstatus {status_label(obj.status.value)}, tidak bisa dibatalkan")
     puskesmas_name = obj.puskesmas.name
     patient_name = obj.patient.nama
     patient_nik = obj.patient.nik

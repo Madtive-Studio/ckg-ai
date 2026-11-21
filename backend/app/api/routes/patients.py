@@ -27,7 +27,7 @@ def _authorize(principal: Principal, puskesmas_id: uuid.UUID) -> None:
     # 404 as a nonexistent one, so it can't be used to probe which patient ids
     # exist in other clinics (no 403-vs-404 existence oracle).
     if principal.typ == "user" and principal.puskesmas_id != puskesmas_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
 
 
 def _years_ago(d: date, years: int) -> date:
@@ -109,7 +109,7 @@ def list_patients(
         if puskesmas_id is None:
             puskesmas_id = principal.puskesmas_id
         elif puskesmas_id != principal.puskesmas_id:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
     stmt = _patient_list_stmt(
         puskesmas_id, match_status, filter_date, q, merged, min_age, max_age
     )
@@ -150,7 +150,7 @@ def get_patient(
         ).where(Patient.id == id)
     ).one_or_none()
     if row is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
     _authorize(principal, row.puskesmas_id)
     return PatientOut(**row._mapping)
 
@@ -173,7 +173,7 @@ def decrypt_patient(
         .where(Patient.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
     _authorize(principal, obj.puskesmas_id)
     # Rate-limit after authorize so unauth probes don't burn the requester's budget on foreign IDs.
     enforce_decrypt_rate_limit(principal.id, id)
@@ -208,12 +208,12 @@ def asik_preview(
         .where(Patient.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
     _authorize(principal, obj.puskesmas_id)
     if obj.scraped_epus_data is None:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "Patient has no scraped_epus_data to convert",
+            "Pasien belum memiliki data Medisy untuk dikonversi",
         )
     enforce_decrypt_rate_limit(principal.id, id)
     epus = crud.decrypt_field(obj, ScrapeKind.EPUS)
@@ -230,5 +230,5 @@ def delete_patient(
         select(Patient).options(load_only(Patient.id)).where(Patient.id == id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
     crud.soft_delete(db, obj)

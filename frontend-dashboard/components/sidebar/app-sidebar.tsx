@@ -63,7 +63,7 @@ const NAV: NavEntry[] = [
     ],
   },
   {
-    group: "Patients",
+    group: "Pasien",
     icon: HeartPulse,
     children: [
       { href: "/patients", label: "CKG Umum", icon: HeartPulse },

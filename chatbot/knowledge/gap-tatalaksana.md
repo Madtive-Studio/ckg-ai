@@ -63,7 +63,7 @@ Tiga penyaring di atas tabel:
   pelaporan: pasien yang masuk registri 2025 dan sampai sekarang belum diobati
   tetap berada di bawah 2025, bukan pindah ke tahun berjalan. Gunanya untuk
   memprioritaskan yang paling lama menunggu.
-- **Search Nama / NIK** — pencarian bebas, cocok sebagian nama atau sebagian NIK.
+- **Cari Nama / NIK** — pencarian bebas, cocok sebagian nama atau sebagian NIK.
 
 Daftarnya dibagi **20 pasien per halaman**, diurutkan dari **bulan masuk
 registri paling lama** lebih dulu.
@@ -99,7 +99,7 @@ laporan ikut benar setelah data diperbarui (paling lambat besok pagi).
 
 ## 7 · Export Excel
 
-Tombol **Export Gap Tatalaksana** mengunduh daftar ini sebagai file Excel.
+Tombol **Unduh Gap Tatalaksana** mengunduh daftar ini sebagai file Excel.
 Isinya **mengikuti penyaring yang sedang aktif** (puskesmas, tahun, pencarian),
 tetapi memuat **semua baris** yang cocok, bukan hanya halaman yang sedang
 tampil. Kolomnya sama dengan tabel, ditambah nomor urut.

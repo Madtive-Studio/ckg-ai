@@ -31,7 +31,7 @@ export default function MergeJobDetailPage({
   const handleCancel = async () => {
     try {
       await cancel.mutateAsync(id);
-      toast.success("Job cancelled");
+      toast.success("Proses dibatalkan");
     } catch (err) {
       toast.error(asApiError(err).message);
     }
@@ -48,16 +48,16 @@ export default function MergeJobDetailPage({
       <Button variant="ghost" size="sm" asChild className="h-8 -ml-2 px-2">
         <Link href="/merge-with-ai" prefetch={false}>
           <ArrowLeft className="h-4 w-4" />
-          Back
+          Kembali
         </Link>
       </Button>
 
       <PageHeader
-        title="Merge job"
+        title="Proses gabung data"
         description={
           job.data
             ? `${job.data.puskesmas_name} • ${job.data.date_filter ?? (job.data.patient_nik ? `NIK ${job.data.patient_nik}` : "—")}${job.data.force_remerge ? " • force" : ""}`
-            : "Loading…"
+            : "Memuat…"
         }
         actions={
           cancellable ? (
@@ -67,7 +67,7 @@ export default function MergeJobDetailPage({
               disabled={cancel.isPending}
             >
               <Ban className="h-4 w-4" />
-              Cancel
+              Batal
             </Button>
           ) : undefined
         }
@@ -84,7 +84,7 @@ export default function MergeJobDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-[var(--muted-foreground)]">Progress</CardTitle>
+            <CardTitle className="text-xs text-[var(--muted-foreground)]">Progres</CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
             {job.data
@@ -94,7 +94,7 @@ export default function MergeJobDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-[var(--muted-foreground)]">Succeeded</CardTitle>
+            <CardTitle className="text-xs text-[var(--muted-foreground)]">Berhasil</CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums text-emerald-600">
             {job.data?.succeeded_count ?? "—"}
@@ -102,7 +102,7 @@ export default function MergeJobDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-[var(--muted-foreground)]">Failed</CardTitle>
+            <CardTitle className="text-xs text-[var(--muted-foreground)]">Gagal</CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums text-[var(--destructive)]">
             {job.data?.failed_count ?? "—"}
@@ -110,7 +110,7 @@ export default function MergeJobDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-[var(--muted-foreground)]">Skipped</CardTitle>
+            <CardTitle className="text-xs text-[var(--muted-foreground)]">Dilewati</CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
             {job.data?.skipped_count ?? "—"}
@@ -118,7 +118,7 @@ export default function MergeJobDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-[var(--muted-foreground)]">CPU avg / peak</CardTitle>
+            <CardTitle className="text-xs text-[var(--muted-foreground)]">CPU rata-rata / puncak</CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
             {job.data?.cpu_avg_pct != null
@@ -133,7 +133,7 @@ export default function MergeJobDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-[var(--muted-foreground)]">RAM avg / peak</CardTitle>
+            <CardTitle className="text-xs text-[var(--muted-foreground)]">RAM rata-rata / puncak</CardTitle>
           </CardHeader>
           <CardContent className="text-xl font-semibold tabular-nums">
             {job.data?.mem_avg_mb != null
@@ -150,7 +150,7 @@ export default function MergeJobDetailPage({
 
       {job.data?.error_message && (
         <div className="rounded-md border border-[var(--destructive)]/40 bg-[var(--destructive)]/10 p-3 text-sm text-[var(--destructive)]">
-          <p className="font-medium">Error</p>
+          <p className="font-medium">Kesalahan</p>
           <p className="font-mono text-xs whitespace-pre-wrap">{job.data.error_message}</p>
         </div>
       )}
@@ -163,19 +163,19 @@ export default function MergeJobDetailPage({
 
       {job.data && (
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-          <Meta label="Started" value={fmt(job.data.started_at)} />
-          <Meta label="Finished" value={fmt(job.data.finished_at)} />
+          <Meta label="Dimulai" value={fmt(job.data.started_at)} />
+          <Meta label="Selesai" value={fmt(job.data.finished_at)} />
           <Meta
-            label="Duration"
+            label="Durasi"
             value={
               job.data.duration_seconds != null
                 ? `${job.data.duration_seconds.toFixed(1)}s`
                 : "—"
             }
           />
-          <Meta label="Triggered by" value={job.data.triggered_by_type} />
-          <Meta label="Force re-merge" value={job.data.force_remerge ? "yes" : "no"} />
-          <Meta label="Celery task" value={job.data.celery_task_id ?? "—"} />
+          <Meta label="Dipicu oleh" value={job.data.triggered_by_type} />
+          <Meta label="Gabung ulang paksa" value={job.data.force_remerge ? "ya" : "tidak"} />
+          <Meta label="ID tugas" value={job.data.celery_task_id ?? "—"} />
         </div>
       )}
     </div>

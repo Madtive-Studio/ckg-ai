@@ -5,7 +5,7 @@ format registri dirjen (dokumen *"Register Sheet Pasien HT, DM, Dislipidemia dan
 Obesitas"*, sheet **"Obesitas"**). Isinya: identitas pasien, hasil **pemeriksaan
 antropometri** (berat badan, tinggi badan, dan IMT) pada tanggal berkunjung CKG,
 dan follow-up **berat badan** pada **bulan kontrol (3–6 bulan setelah CKG)**.
-Bisa diexport ke **Excel** — di file export, rumus tertanam langsung di sel
+Bisa diunduh sebagai **Excel** (tombol **Unduh Registri …**) — di file unduhan, rumus tertanam langsung di sel
 (klik sel IMT atau Interpretasi untuk melihatnya), dan ada sheet **"Formula &
 Logika"** berisi penjelasan yang sama dengan kartu **"Cara Membaca Kertas Kerja
 Ini"** di halaman.
@@ -29,10 +29,10 @@ Kolom **"Follow-up"** di tabel utama berisi **angka** = jumlah baris Follow Up
 pasien itu — gabungan kunjungan yang ada hasil timbangnya **dan** bulan kontrol
 berstatus **Missed Visit**. Rinciannya muncul saat baris pasien diklik.
 
-Saat perhitungan pertama berjalan muncul tulisan **"Loading registri obesitas…"**
+Saat perhitungan pertama berjalan muncul tulisan **"Memuat registri obesitas…"**
 beserta bilah kemajuan; hasilnya lalu disimpan (cache ±30 jam) dan dihitung ulang
-otomatis tiap pagi. Keterangan **"Computed &lt;waktu&gt; · cached/fresh"**
-menunjukkan kapan angka itu dihitung.
+otomatis tiap pagi. Keterangan **"Dihitung &lt;waktu&gt; · dari cache/baru
+dihitung"** menunjukkan kapan angka itu dihitung.
 
 Format dirjen untuk registri Obesitas ini **berlaku mulai 1 Januari 2026** (catatan
 "cut off mulai 1 jan 2026" pada sheet aslinya). Tahun sebelumnya tetap bisa dipilih

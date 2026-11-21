@@ -20,6 +20,7 @@ from app.api.deps import (
 )
 from app.api.pagination import Page, PageParams, page_params
 from app.celery_app import celery_app
+from app.core.labels import status_label
 from app.core.rate_limit import redis_client
 from app.core.report_warm import make_progress_writer, read_progress, request_warm
 from app.crud import gdp_report_job as crud
@@ -264,14 +265,14 @@ def _authorize(principal: Principal, puskesmas_id: uuid.UUID) -> None:
     # dashboard endpoints): a user passing any non-own puskesmas_id gets 403
     # whether or not it exists, so there's no existence oracle to close here.
     if principal.typ == "user" and principal.puskesmas_id != puskesmas_id:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
 
 
 def _authorize_job(principal: Principal, puskesmas_id: uuid.UUID) -> None:
     # Object-level (run AFTER fetching a report job): a foreign job returns the
     # SAME 404 as a nonexistent one — no 403-vs-404 oracle on job ids.
     if principal.typ == "user" and principal.puskesmas_id != puskesmas_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
 
 
 @router.post(
@@ -294,17 +295,17 @@ def create_gdp_report(
         ).where(Puskesmas.id == body.puskesmas_id)
     ).one_or_none()
     if pk is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
     pk_name, has_asik, has_epus, asik_url, epus_url = pk
     if not (has_asik and has_epus):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "ASIK and EPUS credentials must both be set on the puskesmas",
+            "Kredensial ASIK dan Medisy puskesmas ini harus diisi keduanya",
         )
     if not (asik_url and epus_url):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "ASIK and EPUS base URLs must both be set on the puskesmas",
+            "URL ASIK dan Medisy puskesmas ini harus diisi keduanya",
         )
 
     triggered_by_id, triggered_by_type = _trigger_kind(principal)
@@ -322,7 +323,7 @@ def create_gdp_report(
         db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a GDP report job is already running for this puskesmas",
+            "Proses laporan GDP untuk puskesmas ini masih berjalan",
         ) from e
 
     try:
@@ -330,7 +331,7 @@ def create_gdp_report(
     except Exception as e:
         crud.mark_failed(db, job, f"broker unreachable: {e}", datetime.now(UTC))
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses sedang tidak tersedia"
         ) from e
 
     return gdp_report_to_out(job, pk_name)
@@ -346,7 +347,7 @@ def list_gdp_reports(
 ) -> Page[GdpReportJobOut]:
     if principal.typ == "user":
         if puskesmas_id is not None and puskesmas_id != principal.puskesmas_id:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Akses ditolak")
         puskesmas_id = principal.puskesmas_id
     stmt = (
         select(GdpReportJob)
@@ -495,7 +496,7 @@ def gdp_report_dashboard(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     cache_key = _dashboard_cache_key(puskesmas_id, year)
     rc = redis_client()
@@ -628,7 +629,7 @@ def export_gdp_dashboard(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     cache_key = _dashboard_cache_key(puskesmas_id, year)
     rc = redis_client()
@@ -696,7 +697,7 @@ def export_gdp_diagnose(
     _authorize(principal, puskesmas_id)
     pk_name = db.scalar(select(Puskesmas.name).where(Puskesmas.id == puskesmas_id))
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     cache_key = _dashboard_cache_key(puskesmas_id, year)
     rc = redis_client()
@@ -806,7 +807,7 @@ def _load_dashboard_cache(
     the /dashboard/summary and /dashboard/terkendali endpoints (GD Puasa + Hipertensi)."""
     _authorize(principal, puskesmas_id)
     if db.scalar(select(Puskesmas.id).where(Puskesmas.id == puskesmas_id)) is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     rc = redis_client()
     payload: dict | None = None
@@ -1027,7 +1028,7 @@ def get_gdp_report(
         .where(GdpReportJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj.puskesmas_id)
     return gdp_report_to_out(obj, obj.puskesmas.name)
 
@@ -1054,12 +1055,12 @@ def retry_gdp_report(
         .where(GdpReportJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj.puskesmas_id)
     if obj.status not in (GdpReportStatus.CANCELLED, GdpReportStatus.FAILED):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            f"job is {obj.status.value}, only cancelled/failed jobs can be retried",
+            f"Proses berstatus {status_label(obj.status.value)}; hanya proses yang gagal/dibatalkan yang bisa diulang",
         )
 
     pk_name = obj.puskesmas.name
@@ -1076,7 +1077,7 @@ def retry_gdp_report(
     except Exception as e:
         crud.mark_failed(db, obj, f"broker unreachable: {e}", datetime.now(UTC))
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses sedang tidak tersedia"
         ) from e
 
     db.refresh(obj)
@@ -1099,11 +1100,11 @@ def cancel_gdp_report(
         .where(GdpReportJob.id == job_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses tidak ditemukan")
     _authorize_job(principal, obj.puskesmas_id)
     if obj.status not in (GdpReportStatus.PENDING, GdpReportStatus.RUNNING):
         raise HTTPException(
-            status.HTTP_409_CONFLICT, f"job is {obj.status.value}, cannot cancel"
+            status.HTTP_409_CONFLICT, f"Proses berstatus {status_label(obj.status.value)}, tidak bisa dibatalkan"
         )
     pk_name = obj.puskesmas.name
     crud.mark_cancelled(db, obj)

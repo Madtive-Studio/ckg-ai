@@ -44,8 +44,8 @@ export default function DashboardHipertensiPage() {
         <div className="space-y-4">
           {data.computed_at && (
             <p className="text-xs text-[var(--muted-foreground)]">
-              Computed {format(parseISO(data.computed_at), "yyyy-MM-dd HH:mm")}
-              {data.cache_hit ? " · cached" : " · fresh"} · hasil di-cache ~30 jam,
+              Dihitung {format(parseISO(data.computed_at), "yyyy-MM-dd HH:mm")}
+              {data.cache_hit ? " · dari cache" : " · baru dihitung"} · hasil di-cache ~30 jam,
               dihitung ulang otomatis tiap pagi ~05.00 WIB.
             </p>
           )}

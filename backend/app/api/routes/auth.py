@@ -26,7 +26,7 @@ def user_login(
     ).one_or_none()
     if row is None or not verify_password(data.password, row.password_hash):
         record_failed_login_attempt(request, data.email)
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email atau kata sandi salah")
     return TokenResponse(access_token=create_access_token(row.id, "user"))
 
 
@@ -50,7 +50,7 @@ def user_me(
         .where(User.id == user_id)
     )
     if user is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not found")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Pengguna tidak ditemukan")
     return UserMeOut(
         id=user.id,
         email=user.email,

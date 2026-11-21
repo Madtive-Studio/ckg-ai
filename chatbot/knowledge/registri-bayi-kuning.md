@@ -5,7 +5,7 @@ Dua halaman di bawah menu **Registri PJB-K**: **Bayi Kuning - Ikterus** dan
 yang dinilai kuning (ikterus) pada pemeriksaan MTBM (Manajemen Terpadu Bayi
 Muda), mengikuti format dirjen "Register Sheet Pasien PJB, Ikterus" (sheet
 "Bayi Kuning_Ikterus" dan "Bayi Kuning_Ikterus Berat"). Bisa disaring per
-puskesmas + tahun + pencarian nama/NIK, dan diexport ke Excel.
+puskesmas + tahun + pencarian nama/NIK, dan diunduh sebagai Excel (tombol **Unduh Registri …**).
 
 ## Beda dua sheet
 
@@ -40,7 +40,7 @@ lain — tapi di sini artinya berbeda:
 - **Medisy** — klasifikasi diambil langsung dari isian klasifikasi di Medisy.
   Untuk data Medisy, tandanya selalu ini.
 - **Hitung** — klasifikasi yang dihitung sistem dari kuesioner. Hanya muncul
-  pada data lama (dari ePuskesmas) yang belum tergantikan.
+  pada data lama (dari sistem sebelum Medisy) yang belum tergantikan.
 
 Diagnosis selalu dari catatan klinik di Medisy.
 

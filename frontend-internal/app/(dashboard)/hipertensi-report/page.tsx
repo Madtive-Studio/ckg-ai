@@ -73,7 +73,7 @@ function HipertensiDiagnoseView() {
             onChange={(v) => setPuskesmasId(v ?? "")}
             useOptions={usePuskesmasOptions}
             selectedLabel={pkDetail.data?.name}
-            placeholder="Select a puskesmas…"
+            placeholder="Pilih puskesmas…"
           />
         </div>
         <div className="space-y-2">
@@ -92,9 +92,9 @@ function HipertensiDiagnoseView() {
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Search Nama / NIK</Label>
+          <Label>Cari Nama / NIK</Label>
           <Input
-            placeholder="Search…"
+            placeholder="Cari…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -103,8 +103,8 @@ function HipertensiDiagnoseView() {
 
       {!puskesmasId && (
         <EmptyState
-          title="Pick a puskesmas"
-          description="The registry groups one puskesmas at a time."
+          title="Pilih puskesmas"
+          description="Registri ditampilkan per satu puskesmas."
         />
       )}
       {diagnose.error && <ErrorState error={diagnose.error} />}
@@ -119,9 +119,9 @@ function HipertensiDiagnoseView() {
           </span>
           <span className="inline-flex items-center gap-2">
             <span>
-              Computed{" "}
+              Dihitung{" "}
               {format(parseISO(diagnose.data.computed_at!), "yyyy-MM-dd HH:mm")}
-              {diagnose.data.cache_hit ? " · cached" : " · fresh"}
+              {diagnose.data.cache_hit ? " · dari cache" : " · baru dihitung"}
             </span>
             <Button
               size="sm"
@@ -144,7 +144,7 @@ function HipertensiDiagnoseView() {
               ) : (
                 <Download className="h-3 w-3" />
               )}
-              Export Full Review Diagnose
+              Unduh Tinjauan Lengkap Diagnosis
             </Button>
           </span>
         </div>
@@ -178,14 +178,14 @@ export default function HipertensiReportPage() {
     <Tabs value={tab} onValueChange={(v) => setTab(v as "registri" | "diagnose")}>
       <TabsList>
         <TabsTrigger value="registri">Registri Hipertensi</TabsTrigger>
-        <TabsTrigger value="diagnose">Full Review Diagnose</TabsTrigger>
+        <TabsTrigger value="diagnose">Tinjauan Lengkap Diagnosis</TabsTrigger>
       </TabsList>
       <TabsContent value="registri">
         <HipertensiRegistryView
           title="Kertas Kerja Hipertensi"
           description="Registri Hipertensi (V8juni2026): identitas, hasil pemeriksaan TD pada tanggal berkunjung CKG, dan follow-up tekanan darah per bulan."
           showClearCache
-          exportLabel="Export Registri Hipertensi"
+          exportLabel="Unduh Registri Hipertensi"
           exportFilenamePrefix="Registri Hipertensi"
         />
       </TabsContent>

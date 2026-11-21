@@ -49,7 +49,7 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
     if (!cfg) return;
     try {
       await update.mutateAsync({ enabled: !cfg.enabled });
-      toast.success(cfg.enabled ? "Cron dinonaktifkan" : "Cron diaktifkan");
+      toast.success(cfg.enabled ? "Jadwal dinonaktifkan" : "Jadwal diaktifkan");
     } catch (err) {
       toast.error(asApiError(err).message);
     }
@@ -58,7 +58,7 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
   const onRunNow = async () => {
     try {
       const run = await runNow.mutateAsync();
-      toast.success("Cron dijalankan");
+      toast.success("Jadwal dijalankan");
       setRunNowOpen(false);
       router.push(`/cron-runs/${run.id}`);
     } catch (err) {
@@ -69,7 +69,7 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
   const onDelete = async () => {
     try {
       await del.mutateAsync();
-      toast.success("Cron dihapus");
+      toast.success("Jadwal dihapus");
       setDeleteOpen(false);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -80,7 +80,7 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Jadwal Cron</CardTitle>
+          <CardTitle className="text-base">Jadwal Otomatis</CardTitle>
           <CardDescription>Memuat…</CardDescription>
         </CardHeader>
       </Card>
@@ -92,15 +92,15 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
       <>
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Jadwal Cron</CardTitle>
+            <CardTitle className="text-base">Jadwal Otomatis</CardTitle>
             <CardDescription>
-              Belum ada cron harian untuk puskesmas ini.
+              Belum ada jadwal harian untuk puskesmas ini.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
               <Clock className="h-4 w-4" />
-              Atur cron
+              Atur jadwal
             </Button>
           </CardContent>
         </Card>
@@ -120,22 +120,22 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base">Jadwal Cron</CardTitle>
+              <CardTitle className="text-base">Jadwal Otomatis</CardTitle>
               <CardDescription>
                 Harian pukul {pad(cfg.hour)}:{pad(cfg.minute)} (Asia/Jakarta) ·{" "}
                 {offsetLabel(cfg.target_offset_days)} ·{" "}
                 {cfg.enabled ? "Aktif" : "Nonaktif"}
                 {cfg.merge_mode === "force_remerge"
-                  ? " · Merge ulang paksa"
+                  ? " · Gabung ulang paksa"
                   : cfg.merge_mode === "no_merge"
-                    ? " · Tanpa merge (scrape saja)"
+                    ? " · Tanpa gabung (ambil data saja)"
                     : ""}
                 {cfg.sync_mode !== "off"
                   ? cfg.sync_mode === "force_resync"
-                    ? " · Buat yang belum ada (paksa)"
-                    : " · Buat yang belum ada"
+                    ? " · Isi pemeriksaan ASIK (paksa)"
+                    : " · Isi pemeriksaan ASIK"
                   : ""}
-                {cfg.create_new ? " · Buat baru" : ""}
+                {cfg.create_new ? " · Buat pasien baru" : ""}
               </CardDescription>
             </div>
             <Button
@@ -176,7 +176,7 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
               onClick={() => setEditOpen(true)}
             >
               <Pencil className="h-4 w-4" />
-              Edit
+              Ubah
             </Button>
             <Button
               variant="outline"
@@ -200,8 +200,8 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Hapus jadwal cron?"
-        description="Jadwal akan berhenti berjalan. Riwayat cron-run yang ada tetap disimpan."
+        title="Hapus jadwal?"
+        description="Jadwal akan berhenti berjalan. Riwayat proses yang ada tetap disimpan."
         confirmLabel="Hapus"
         destructive
         loading={del.isPending}
@@ -211,13 +211,13 @@ export function CronConfigCard({ puskesmasId }: { puskesmasId: string }) {
       <ConfirmDialog
         open={runNowOpen}
         onOpenChange={setRunNowOpen}
-        title="Jalankan cron sekarang?"
-        description={`Ini akan memulai scrape ASIK + Medisy${
-          cfg.merge_mode === "no_merge" ? "" : " dan Merge"
+        title="Jalankan jadwal sekarang?"
+        description={`Ini akan memulai pengambilan data ASIK + Medisy${
+          cfg.merge_mode === "no_merge" ? "" : " dan gabung data"
         } untuk ${
           cfg.target_offset_days === 0 ? "hari ini" : "kemarin"
-        } sekarang juga. Memakan waktu scraper${
-          cfg.merge_mode === "no_merge" ? "" : " + LLM"
+        } sekarang juga. Memakan waktu pengambilan data${
+          cfg.merge_mode === "no_merge" ? "" : " + AI"
         }.`}
         confirmLabel="Jalankan sekarang"
         loading={runNow.isPending}

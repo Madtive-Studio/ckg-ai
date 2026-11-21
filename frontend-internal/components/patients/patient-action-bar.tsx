@@ -19,7 +19,7 @@ export function PatientActionBar({ patient }: { patient: Patient }) {
   const onMerge = async () => {
     try {
       const job = await startMerge.mutateAsync();
-      toast.success("Merge dimulai");
+      toast.success("Gabung data dimulai");
       router.push(`/merge-with-ai/${job.id}`);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -29,7 +29,7 @@ export function PatientActionBar({ patient }: { patient: Patient }) {
   const onRescrapeAsik = async () => {
     try {
       const job = await startScrape.mutateAsync({ kind: "asik" });
-      toast.success("Scrape ulang ASIK dimulai");
+      toast.success("Ambil ulang data ASIK dimulai");
       router.push(`/scrape-jobs/${job.id}`);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -39,7 +39,7 @@ export function PatientActionBar({ patient }: { patient: Patient }) {
   const onRescrapeEpus = async () => {
     try {
       const job = await startScrape.mutateAsync({ kind: "epus" });
-      toast.success("Scrape ulang Medisy dimulai");
+      toast.success("Ambil ulang data Medisy dimulai");
       router.push(`/scrape-jobs/${job.id}`);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -53,30 +53,30 @@ export function PatientActionBar({ patient }: { patient: Patient }) {
         variant="outline"
         onClick={onRescrapeAsik}
         disabled={startScrape.isPending}
-        title="Scrape ulang data ASIK pasien ini berdasarkan NIK"
+        title="Ambil ulang data ASIK pasien ini berdasarkan NIK"
       >
         <RefreshCw className="h-4 w-4" />
-        Scrape ulang ASIK
+        Ambil ulang ASIK
       </Button>
       <Button
         size="sm"
         variant="outline"
         onClick={onRescrapeEpus}
         disabled={startScrape.isPending}
-        title="Scrape ulang data Medisy pasien ini memakai tanggal filter-nya"
+        title="Ambil ulang data Medisy pasien ini memakai tanggal filternya"
       >
         <RefreshCw className="h-4 w-4" />
-        Scrape ulang Medisy
+        Ambil ulang Medisy
       </Button>
       <Button
         size="sm"
         variant="default"
         onClick={onMerge}
         disabled={!canMerge || startMerge.isPending}
-        title={canMerge ? "Jalankan ulang merge LLM untuk pasien ini" : "Butuh data ASIK dan Medisy hasil scrape sebelum merge"}
+        title={canMerge ? "Gabung ulang data pasien ini dengan AI" : "Butuh data ASIK dan Medisy yang sudah diambil sebelum digabung"}
       >
         <Sparkles className="h-4 w-4" />
-        Merge dengan AI
+        Gabung data dengan AI
       </Button>
     </div>
   );

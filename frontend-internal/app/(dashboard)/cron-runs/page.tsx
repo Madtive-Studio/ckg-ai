@@ -31,6 +31,7 @@ import { useCronRunsListStore } from "@/lib/stores/cron-runs-list-store";
 import { usePuskesmas, usePuskesmasOptions } from "@/lib/hooks/use-puskesmas";
 import { useCronRunList } from "@/lib/hooks/use-cron-runs";
 import type { CronRunStatus } from "@/lib/api/types";
+import { STEP_LABEL } from "@/lib/source-names";
 
 const STATUSES: CronRunStatus[] = [
   "pending",
@@ -63,8 +64,8 @@ export default function CronRunsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Cron Runs"
-        description="Riwayat cron terjadwal dan on-demand."
+        title="Jadwal & Rentang Tanggal"
+        description="Riwayat proses terjadwal dan yang dijalankan manual."
       />
 
       <CronBackfillListSection />
@@ -93,7 +94,7 @@ export default function CronRunsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">Semua status</SelectItem>
               {STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
@@ -113,10 +114,10 @@ export default function CronRunsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Puskesmas</TableHead>
-                  <TableHead>Target date</TableHead>
+                  <TableHead>Tanggal target</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Step</TableHead>
-                  <TableHead>Started</TableHead>
+                  <TableHead>Langkah</TableHead>
+                  <TableHead>Dimulai</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -132,9 +133,9 @@ export default function CronRunsPage() {
                     </TableCell>
                     <TableCell className="text-xs text-[var(--muted-foreground)] uppercase">
                       {r.status === "failed" && r.failed_step
-                        ? `${r.failed_step} (failed)`
+                        ? `${STEP_LABEL[r.failed_step]} (gagal)`
                         : r.current_step
-                          ? `${r.current_step} (try ${r.current_step_attempt})`
+                          ? `${STEP_LABEL[r.current_step]} (percobaan ${r.current_step_attempt})`
                           : "—"}
                     </TableCell>
                     <TableCell className="text-xs text-[var(--muted-foreground)]">
@@ -145,7 +146,7 @@ export default function CronRunsPage() {
                     <TableCell>
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/cron-runs/${r.id}`} prefetch={false}>
-                          Open
+                          Buka
                         </Link>
                       </Button>
                     </TableCell>
@@ -155,7 +156,7 @@ export default function CronRunsPage() {
             </Table>
             {runs.data.items.length === 0 && (
               <div className="p-6">
-                <EmptyState title="No cron runs" />
+                <EmptyState title="Belum ada proses terjadwal" />
               </div>
             )}
           </div>

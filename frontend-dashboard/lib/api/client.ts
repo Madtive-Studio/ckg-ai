@@ -41,7 +41,7 @@ export function asApiError(err: unknown): ApiError {
   if (err instanceof AxiosError) {
     const data = err.response?.data as { detail?: unknown } | undefined;
     const detail = data?.detail;
-    const raw = typeof detail === "string" ? detail : (err.message || "Request failed");
+    const raw = typeof detail === "string" ? detail : (err.response ? `Permintaan gagal (HTTP ${err.response.status})` : "Tidak dapat terhubung ke server");
     const messages = raw.split("; ").filter(Boolean);
     const fieldErrors: Record<string, string> = {};
     for (const m of messages) {
@@ -50,5 +50,5 @@ export function asApiError(err: unknown): ApiError {
     }
     return { status: err.response?.status ?? 0, message: messages.join("\n"), messages, fieldErrors };
   }
-  return { status: 0, message: "Unknown error", messages: ["Unknown error"], fieldErrors: {} };
+  return { status: 0, message: "Terjadi kesalahan yang tidak diketahui", messages: ["Terjadi kesalahan yang tidak diketahui"], fieldErrors: {} };
 }

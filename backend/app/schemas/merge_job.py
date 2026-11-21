@@ -29,20 +29,20 @@ class MergeStart(BaseModel):
         has_to = self.date_to is not None
         if has_single and (has_from or has_to):
             raise ValueError(
-                "provide either `date` or `date_from`+`date_to`, not both"
+                "Isi tanggal tunggal atau rentang tanggal, tidak keduanya"
             )
         if has_from != has_to:
             raise ValueError(
-                "`date_from` and `date_to` must be provided together"
+                "Dari tanggal dan Sampai tanggal harus diisi bersamaan"
             )
         if has_from and has_to:
             if self.date_from > self.date_to:
-                raise ValueError("`date_from` must be <= `date_to`")
+                raise ValueError("Dari tanggal harus sama dengan atau sebelum Sampai tanggal")
             span = (self.date_to - self.date_from).days + 1
             if span > MAX_MERGE_RANGE_DAYS:
                 raise ValueError(
-                    f"date range too large ({span} days); maximum is "
-                    f"{MAX_MERGE_RANGE_DAYS} days"
+                    f"Rentang tanggal terlalu panjang ({span} hari); maksimal "
+                    f"{MAX_MERGE_RANGE_DAYS} hari"
                 )
         return self
 

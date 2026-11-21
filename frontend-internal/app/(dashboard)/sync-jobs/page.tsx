@@ -62,8 +62,8 @@ export default function SyncJobsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Sync Jobs"
-        description="History of ASIK form-fill sync jobs."
+        title="Kirim ke ASIK"
+        description="Riwayat proses pengisian formulir ASIK."
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -74,8 +74,8 @@ export default function SyncJobsPage() {
             onChange={(v) => setPuskesmasId(v ?? "")}
             useOptions={usePuskesmasOptions}
             selectedLabel={pkDetail.data?.name}
-            placeholder="Select a puskesmas…"
-            allOptionLabel="All puskesmas"
+            placeholder="Pilih puskesmas…"
+            allOptionLabel="Semua puskesmas"
           />
         </div>
         <div className="space-y-2">
@@ -90,7 +90,7 @@ export default function SyncJobsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">Semua status</SelectItem>
               {STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
@@ -109,11 +109,11 @@ export default function SyncJobsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Patient</TableHead>
+                  <TableHead>Pasien</TableHead>
                   <TableHead>Puskesmas</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Forms</TableHead>
-                  <TableHead>Started</TableHead>
+                  <TableHead>Formulir</TableHead>
+                  <TableHead>Dimulai</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -141,7 +141,7 @@ export default function SyncJobsPage() {
                     <TableCell>
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/sync-jobs/${j.id}`} prefetch={false}>
-                          Open
+                          Buka
                         </Link>
                       </Button>
                     </TableCell>
@@ -151,7 +151,7 @@ export default function SyncJobsPage() {
             </Table>
             {jobs.data.items.length === 0 && (
               <div className="p-6">
-                <EmptyState title="No sync jobs" />
+                <EmptyState title="Belum ada proses kirim ke ASIK" />
               </div>
             )}
           </div>

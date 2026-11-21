@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, contains_eager, load_only
 from app.api.deps import get_current_admin_id, get_db
 from app.api.pagination import Page, PageParams, page_params, paginate
 from app.celery_app import celery_app
+from app.core.labels import status_label
 from app.core.rate_limit import redis_client
 from app.crud import cron_backfill as crud
 from app.crud.cron_run import cancel_cron_run_and_children
@@ -76,7 +77,7 @@ def create_backfill(
         select(Puskesmas.name).where(Puskesmas.id == body.puskesmas_id)
     )
     if pk_name is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
 
     # Mandiri-only backfill only ever touches ASIK (it patches the ASIK blob and
     # re-merges) — force the scope server-side regardless of what the client
@@ -100,8 +101,8 @@ def create_backfill(
     if any(scopes_conflict(effective_scope, s) for s in active_bf_scopes):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a backfill touching the same source is already in progress for "
-            "this puskesmas",
+            "Proses rentang tanggal dengan sumber yang sama masih berjalan "
+            "untuk puskesmas ini",
         )
 
     active_run_scopes = db.scalars(
@@ -115,8 +116,8 @@ def create_backfill(
     if any(scopes_conflict(effective_scope, s) for s in active_run_scopes):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a cron run touching the same source is already in progress for "
-            "this puskesmas",
+            "Proses terjadwal dengan sumber yang sama masih berjalan "
+            "untuk puskesmas ini",
         )
 
     try:
@@ -136,7 +137,7 @@ def create_backfill(
         db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "a backfill is already in progress for this puskesmas",
+            "Proses rentang tanggal untuk puskesmas ini masih berjalan",
         ) from e
 
     try:
@@ -149,7 +150,7 @@ def create_backfill(
             f"broker unreachable: {e}", datetime.now(UTC),
         )
         raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE, "cron broker unavailable"
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean proses terjadwal sedang tidak tersedia"
         ) from e
 
     return cron_backfill_to_out(bf, pk_name)
@@ -204,7 +205,7 @@ def get_backfill(
         .where(CronBackfill.id == backfill_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Backfill not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses rentang tanggal tidak ditemukan")
     return cron_backfill_to_out(obj, obj.puskesmas.name)
 
 
@@ -227,13 +228,13 @@ def cancel_backfill(
         .where(CronBackfill.id == backfill_id)
     )
     if obj is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Backfill not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses rentang tanggal tidak ditemukan")
     if obj.status not in (
         CronBackfillStatus.PENDING, CronBackfillStatus.RUNNING
     ):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            f"backfill is {obj.status.value}, cannot cancel",
+            f"Proses rentang tanggal berstatus {status_label(obj.status.value)}, tidak bisa dibatalkan",
         )
 
     pk_name = obj.puskesmas.name
@@ -289,7 +290,7 @@ def list_backfill_runs(
         select(CronBackfill.id).where(CronBackfill.id == backfill_id)
     )
     if bf_exists is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Backfill not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Proses rentang tanggal tidak ditemukan")
     stmt = (
         select(CronRun)
         .join(CronRun.puskesmas)

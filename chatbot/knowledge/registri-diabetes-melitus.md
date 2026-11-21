@@ -4,7 +4,7 @@ Kertas kerja diabetes melitus per **satu puskesmas + satu tahun pelaporan**,
 mengikuti format registri dirjen (dokumen *"Register Sheet Pasien HT, DM,
 Dislipidemia dan Obesitas"*, sheet **"Diabetes Melitus"**). Isinya: identitas
 pasien, hasil pemeriksaan **gula darah** pada tanggal berkunjung CKG, dan
-follow-up gula darah per bulan. Bisa diexport ke **Excel** — di file export,
+follow-up gula darah per bulan. Bisa diunduh sebagai **Excel** (tombol **Unduh Registri …**) — di file unduhan,
 rumus tertanam langsung di sel (klik sel Interpretasi untuk melihatnya), dan
 ada sheet **"Formula & Logika"** berisi penjelasan yang sama dengan kartu
 **"Cara Membaca Kertas Kerja Ini"** di halaman.
@@ -26,10 +26,10 @@ pasien itu — gabungan kunjungan yang ada hasil gula darahnya **dan** bulan
 **Missed Visit**. Jadi angka besar belum tentu sering kontrol; bisa jadi
 banyak bulan Missed Visit. Rinciannya muncul saat baris pasien diklik.
 
-Saat perhitungan pertama berjalan muncul tulisan **"Loading registri diabetes
+Saat perhitungan pertama berjalan muncul tulisan **"Memuat registri diabetes
 melitus…"** beserta bilah kemajuan; hasilnya lalu disimpan (cache ±30 jam) dan
-dihitung ulang otomatis tiap pagi. Keterangan **"Computed <waktu> ·
-cached/fresh"** menunjukkan kapan angka itu dihitung.
+dihitung ulang otomatis tiap pagi. Keterangan **"Dihitung <waktu> · dari
+cache/baru dihitung"** menunjukkan kapan angka itu dihitung.
 
 ## Inti — satu daftar, dua pertanyaan
 

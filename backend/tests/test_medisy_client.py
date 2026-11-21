@@ -108,7 +108,7 @@ def test_ping_parses_the_response():
 
 def test_ping_rejects_a_server_that_is_not_the_ckg_api():
     c, _ = _client(lambda r: _json({"hello": "world"}))
-    with pytest.raises(MedisyUnavailableError, match="not like a CKG API"):
+    with pytest.raises(MedisyUnavailableError, match="bukan sebagai API CKG"):
         c.ping()
 
 
@@ -127,7 +127,7 @@ def test_rooms_returns_the_items():
 
 
 @pytest.mark.parametrize("status, exc, text", [
-    (401, MedisyAuthError, "rejected the token"),
+    (401, MedisyAuthError, "menolak token"),
     (403, MedisyAuthError, "HTTPS is required"),
     (404, MedisyNotFoundError, "Visit not found"),
     (422, MedisyRequestError, "date is required"),
@@ -167,7 +167,7 @@ def test_detail_is_capped_and_non_string_detail_is_ignored():
 
 def test_a_body_that_is_not_json_is_unavailable():
     c, _ = _client(lambda r: httpx.Response(200, text="<html>maintenance</html>"))
-    with pytest.raises(MedisyUnavailableError, match="not JSON"):
+    with pytest.raises(MedisyUnavailableError, match="bukan JSON"):
         c.ping()
 
 
@@ -399,7 +399,7 @@ def test_get_bundles_a_failing_chunk_fails_the_whole_call():
 
 def test_get_bundles_rejects_a_response_for_visits_that_were_not_asked_for():
     c, _ = _client(lambda r: _json({"items": [_bundle(999)], "missing": []}))
-    with pytest.raises(MedisyUnavailableError, match="different set of visits"):
+    with pytest.raises(MedisyUnavailableError, match="kunjungan yang berbeda"):
         c.get_bundles([1])
 
 

@@ -9,10 +9,12 @@ from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.dialects import postgresql
 
 import app.api.routes.cron_run as routes
 from app.api.deps import get_current_admin_id, get_db
 from app.main import app
+from app.models.cron_backfill import CronBackfillStatus
 from app.models.cron_config import CronSourceScope
 from app.models.cron_run import CronRunStatus, CronStep
 from app.models.merge_job import MergeStatus
@@ -44,7 +46,8 @@ def api(monkeypatch):
     def fake_create(_db, **kw):
         new = _run(status=CronRunStatus.PENDING, failed_step=None, current_step=None, error_message=None,
                    asik_scrape_job_id=None, epus_scrape_job_id=None, merge_job_id=None, **{
-                       k: kw[k] for k in ("puskesmas_id", "target_date", "cron_config_id", "source_scope")})
+                       k: kw[k] for k in ("puskesmas_id", "target_date", "cron_config_id", "source_scope")},
+                   cron_backfill_id=kw.get("cron_backfill_id"))
         created.append(new)
         return new
 
@@ -120,6 +123,66 @@ def test_resume_refuses_a_cancelled_run(api):
     _scalars(db, old)
     r = client.post(f"/admin/cron-runs/{old.id}/resume")
     assert r.status_code == 409
+    assert sent == []
+
+
+def _both_scrapes_ok(db, old):
+    db.execute.return_value.all.return_value = [
+        (old.epus_scrape_job_id, ScrapeStatus.SUCCESS), (old.asik_scrape_job_id, ScrapeStatus.SUCCESS),
+    ]
+
+
+def test_resume_a_date_range_run_reactivates_the_range(api):
+    client, db, sent, created = api
+    bf_id = uuid.uuid4()
+    old = _run(cron_backfill_id=bf_id)
+    _both_scrapes_ok(db, old)
+    db.execute.return_value.rowcount = 1  # the conditional backfill UPDATE matched
+    bf = SimpleNamespace(id=bf_id, status=CronBackfillStatus.FAILED, failed_date=old.target_date)
+    _scalars(db, old, bf, None)  # load run, load backfill, no active run
+    r = client.post(f"/admin/cron-runs/{old.id}/resume")
+    assert r.status_code == 200, r.text
+    new = created[0]
+    assert new.cron_backfill_id == bf_id  # stays in the range, so finishing it moves on to the next date
+    assert new.asik_scrape_job_id == old.asik_scrape_job_id
+    sqls = [str(c.args[0].compile(dialect=postgresql.dialect())) for c in db.execute.call_args_list]
+    upd = next(q for q in sqls if q.startswith("UPDATE cron_backfills"))
+    assert "cron_backfills.status = %(status_1)s" in upd and "cron_backfills.failed_date" in upd
+    assert sent == [("cron.advance", [str(new.id), "merge"])]
+
+
+def test_resume_refuses_a_date_range_that_moved_on(api):
+    client, db, sent, created = api
+    old = _run(cron_backfill_id=uuid.uuid4())
+    _both_scrapes_ok(db, old)
+    bf = SimpleNamespace(id=old.cron_backfill_id, status=CronBackfillStatus.RUNNING, failed_date=None)
+    _scalars(db, old, bf)
+    r = client.post(f"/admin/cron-runs/{old.id}/resume")
+    assert r.status_code == 409
+    assert created == [] and sent == []
+
+
+def test_resume_does_not_dispatch_when_the_range_changed_meanwhile(api, monkeypatch):
+    client, db, sent, created = api
+    old = _run(cron_backfill_id=uuid.uuid4())
+    _both_scrapes_ok(db, old)
+    db.execute.return_value.rowcount = 0  # someone restarted / changed the range between check and update
+    failed: list = []
+    monkeypatch.setattr(routes.crud, "mark_failed", lambda _db, run, step, msg, _now: failed.append((run, step)))
+    bf = SimpleNamespace(id=old.cron_backfill_id, status=CronBackfillStatus.FAILED, failed_date=old.target_date)
+    _scalars(db, old, bf, None)
+    r = client.post(f"/admin/cron-runs/{old.id}/resume")
+    assert r.status_code == 409
+    assert sent == [] and failed == [(created[0], CronStep.MERGE)]
+
+
+def test_retry_of_a_date_range_run_is_still_refused(api):
+    client, db, sent, _ = api
+    old = _run(cron_backfill_id=uuid.uuid4())
+    _scalars(db, old)
+    r = client.post(f"/admin/cron-runs/{old.id}/retry")
+    assert r.status_code == 409
+    assert "Lanjutkan" in r.json()["detail"]
     assert sent == []
 
 

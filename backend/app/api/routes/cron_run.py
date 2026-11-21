@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, contains_eager, load_only
 
@@ -11,6 +11,7 @@ from app.api.pagination import Page, PageParams, page_params, paginate
 from app.celery_app import celery_app
 from app.core.labels import status_label, step_label
 from app.crud import cron_run as crud
+from app.models.cron_backfill import CronBackfill, CronBackfillStatus
 from app.models.cron_run import CronRun, CronRunStatus, CronStep
 from app.models.merge_job import MergeJob
 from app.models.puskesmas import Puskesmas
@@ -148,7 +149,7 @@ def cancel_run(
     return _to_out(obj, pk_name)
 
 
-def _load_restartable_run(db: Session, run_id: uuid.UUID) -> CronRun:
+def _load_restartable_run(db: Session, run_id: uuid.UUID, *, allow_backfill: bool = False) -> CronRun:
     obj = db.scalar(
         select(CronRun)
         .join(CronRun.puskesmas)
@@ -162,10 +163,11 @@ def _load_restartable_run(db: Session, run_id: uuid.UUID) -> CronRun:
             status.HTTP_409_CONFLICT,
             f"Proses terjadwal berstatus {status_label(obj.status.value)}; hanya proses yang gagal/dibatalkan yang bisa diulang",
         )
-    if obj.cron_backfill_id is not None:
+    if obj.cron_backfill_id is not None and not allow_backfill:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "Proses ini bagian dari proses rentang tanggal; buat proses rentang tanggal baru untuk melanjutkan",
+            "Proses ini bagian dari proses rentang tanggal; gunakan Lanjutkan dari langkah yang gagal, "
+            "atau buat proses rentang tanggal baru",
         )
     return obj
 
@@ -176,10 +178,13 @@ def _start_run(
     admin_id: uuid.UUID,
     first_step: CronStep,
     carried: dict[str, uuid.UUID] | None = None,
+    backfill_id: uuid.UUID | None = None,
 ) -> CronRunOut:
     """Create a fresh run for the same puskesmas / date / config and dispatch it at ``first_step``.
     ``carried`` pre-fills child job ids (epus_scrape_job_id / asik_scrape_job_id / merge_job_id) of steps
-    that already succeeded, so cron.advance's previous-step check passes and they are not run again."""
+    that already succeeded, so cron.advance's previous-step check passes and they are not run again.
+    With ``backfill_id`` the run stays bound to that date-range process, which is reactivated (it stopped
+    as failed on this date), so once this date finishes cron.advance moves the range on to the next date."""
     pk_name = obj.puskesmas.name
 
     # Pre-check is advisory (nice 409 message); the lane partial UNIQUE indexes
@@ -207,6 +212,7 @@ def _start_run(
             target_date=obj.target_date,
             cron_config_id=obj.cron_config_id,
             triggered_by_id=admin_id,
+            cron_backfill_id=backfill_id,
             source_scope=obj.source_scope,
         )
     except IntegrityError as e:
@@ -220,6 +226,31 @@ def _start_run(
             setattr(new_run, col, job_id)
         db.commit()
         db.refresh(new_run)
+    if backfill_id is not None:
+        # Conditional so a range that moved on (or was restarted) meanwhile is never hijacked. UPDATE is not
+        # auto-filtered for soft-delete (CLAUDE.md §6).
+        try:
+            reactivated = db.execute(
+                update(CronBackfill)
+                .where(
+                    CronBackfill.id == backfill_id,
+                    CronBackfill.status == CronBackfillStatus.FAILED,
+                    CronBackfill.failed_date == obj.target_date,
+                    CronBackfill.deleted_at.is_(None),
+                )
+                .values(
+                    status=CronBackfillStatus.RUNNING, failed_date=None, error_message=None,
+                    finished_at=None, current_cron_run_id=new_run.id,
+                )
+            ).rowcount
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            reactivated = 0
+        if not reactivated:
+            msg = "Proses rentang tanggal tidak bisa dilanjutkan (sudah berubah atau ada yang sedang berjalan)"
+            crud.mark_failed(db, new_run, first_step, msg, datetime.now(UTC))
+            raise HTTPException(status.HTTP_409_CONFLICT, msg)
     try:
         celery_app.send_task("cron.advance", args=[str(new_run.id), first_step.value])
     except Exception as e:
@@ -263,8 +294,9 @@ def resume_run(
     """Continue a failed run from the step that failed, reusing the jobs of the steps before it.
 
     The new run carries the earlier steps' (successful) child job ids, so only the failed step and the ones
-    after it run again — e.g. a run that failed at Gabung data does not re-scrape Medisy and ASIK."""
-    obj = _load_restartable_run(db, run_id)
+    after it run again — e.g. a run that failed at Gabung data does not re-scrape Medisy and ASIK. A run that is
+    part of a date-range process (backfill) resumes that range too, when the range stopped as failed on this date."""
+    obj = _load_restartable_run(db, run_id, allow_backfill=True)
     failed = obj.failed_step
     if obj.status != CronRunStatus.FAILED or failed is None:
         raise HTTPException(
@@ -302,7 +334,20 @@ def resume_run(
                 f"Langkah {step_label(step.value)} sebelumnya tidak berhasil; gunakan Coba lagi",
             )
 
-    return _start_run(db, obj, admin_id, failed, carried)
+    if obj.cron_backfill_id is not None:
+        bf = db.scalar(
+            select(CronBackfill)
+            .options(load_only(CronBackfill.id, CronBackfill.status, CronBackfill.failed_date))
+            .where(CronBackfill.id == obj.cron_backfill_id)
+        )
+        if bf is None or bf.status != CronBackfillStatus.FAILED or bf.failed_date != obj.target_date:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                "Proses rentang tanggal ini tidak sedang berhenti gagal di tanggal ini; "
+                "buat proses rentang tanggal baru untuk melanjutkan",
+            )
+
+    return _start_run(db, obj, admin_id, failed, carried, backfill_id=obj.cron_backfill_id)
 
 
 @router.get(

@@ -597,6 +597,31 @@ def _resolve_current_row(rows: list[dict], target: dict) -> dict | None:
     return matches[occurrence] if occurrence < len(matches) else None
 
 
+def _find_row_after_rerender(page: Page, target: dict, detail_url: str) -> tuple[list[dict], dict | None]:
+    """Re-enumerate until `target` is back, reloading the detail page once.
+
+    After a form's `go_back()` the URL is the detail page again but Vue is
+    still re-rendering, so one enumeration can see few or no rows — every
+    later form then read as "vanished" and nothing was submitted. Poll first,
+    then reload the detail page and poll again; only then is the row gone.
+    """
+    for reload in (False, True):
+        if reload:
+            try:
+                page.goto(detail_url, wait_until="domcontentloaded", timeout=_NAV_TIMEOUT_MS)
+            except Exception:
+                pass
+            close_popups(page, silent=True)
+        rows: list[dict] = []
+        for _ in range(10):
+            page.wait_for_timeout(1000)
+            rows = _stamp_occurrences(_enumerate_forms(page))
+            row = _resolve_current_row(rows, target)
+            if row is not None:
+                return rows, row
+    return rows, None
+
+
 def _flip_diperiksa_toggle(page: Page, kind: str, idx: int) -> bool:
     """Click the Diperiksa <label> for the idx-th nakes row (kind=nakes only).
 
@@ -2155,7 +2180,7 @@ def run(args) -> dict:
                 result["skipped"] = True
                 result["skip_reason"] = "year_mismatch"
                 result["error"] = (
-                    f"ASIK screening year(s) {row_years} != ePus year {epus_year} "
+                    f"ASIK screening year(s) {row_years} != Medisy year {epus_year} "
                     f"— different visit, skip"
                 )
                 console.print(f"  [yellow]{result['error']}[/yellow]")
@@ -2170,7 +2195,7 @@ def run(args) -> dict:
                 result["skip_reason"] = "ambiguous_multi_year"
                 result["error"] = (
                     f"NIK has ASIK screenings in multiple years {row_years} "
-                    f"(ePus {epus_year}) — cannot target one safely, skip"
+                    f"(Medisy {epus_year}) — cannot target one safely, skip"
                 )
                 console.print(f"  [yellow]{result['error']}[/yellow]")
                 return result
@@ -2190,7 +2215,7 @@ def run(args) -> dict:
                 return result
             console.print(
                 f"  [green]Patient found in: {patient_tab} "
-                f"(ASIK {row_years or ['?']} / ePus {epus_year})[/green]"
+                f"(ASIK {row_years or ['?']} / Medisy {epus_year})[/green]"
             )
 
             if not _click_mulai_by_name(page, expected_name):
@@ -2230,6 +2255,8 @@ def run(args) -> dict:
                     current_rows = _stamp_occurrences(_enumerate_forms(page))
                     dom_dirty = False
                 row = _resolve_current_row(current_rows, f)
+                if row is None:
+                    current_rows, row = _find_row_after_rerender(page, f, detail_url)
                 if row is None:
                     console.print(
                         f"      [red]row vanished after a re-render: "

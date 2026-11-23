@@ -73,3 +73,45 @@ def test_the_old_specific_search_response_still_wins_when_present():
               "body": {"data": [{"patient_nik": "3201000000000009", "screening_date": "2026-01-02", "patient_full_name": "LAMA"}]}}
     rows = sync._wait_search_rows(FakePage({"rows": [row("3201000000000001")]}), interceptor(legacy), 0)
     assert rows == [{"nik": "3201000000000009", "screening_date": "2026-01-02", "name": "LAMA"}]
+
+
+class RerenderPage:
+    """Detail page whose rows come back only after `empty_reads` enumerations (Vue still re-rendering)."""
+
+    def __init__(self, rows, empty_reads):
+        self.rows, self.empty_reads, self.reads, self.gotos = rows, empty_reads, 0, 0
+
+    def evaluate(self, script, *a):
+        self.reads += 1
+        return [] if self.reads <= self.empty_reads else [dict(r) for r in self.rows]
+
+    def wait_for_timeout(self, ms):
+        pass
+
+    def goto(self, url, **kw):
+        self.gotos += 1
+
+
+FORM = {"kind": "nakes", "layanan": "Tekanan Darah Dewasa Lansia", "parent_layanan": "Skrining", "idx": 3, "occurrence": 0}
+
+
+def test_row_found_once_the_page_finishes_rerendering(monkeypatch):
+    monkeypatch.setattr(sync, "close_popups", lambda *a, **k: None)
+    page = RerenderPage([FORM], empty_reads=3)
+    _, row = sync._find_row_after_rerender(page, FORM, "https://asik.example/detail")
+    assert row is not None and row["layanan"] == FORM["layanan"] and page.gotos == 0
+
+
+def test_row_found_after_reloading_the_detail_page(monkeypatch):
+    monkeypatch.setattr(sync, "close_popups", lambda *a, **k: None)
+    page = RerenderPage([FORM], empty_reads=12)
+    _, row = sync._find_row_after_rerender(page, FORM, "https://asik.example/detail")
+    assert row is not None and page.gotos == 1
+
+
+def test_row_really_gone_returns_none(monkeypatch):
+    monkeypatch.setattr(sync, "close_popups", lambda *a, **k: None)
+    other = dict(FORM, layanan="Pemeriksaan HIV")
+    page = RerenderPage([other], empty_reads=0)
+    _, row = sync._find_row_after_rerender(page, FORM, "https://asik.example/detail")
+    assert row is None and page.gotos == 1

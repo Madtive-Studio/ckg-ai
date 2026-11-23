@@ -894,7 +894,7 @@ _REASONING_EPUS_IMPLAUSIBLE = "Nilai Medisy tidak masuk akal secara fisik/klinis
 _REASONING_IDENTITAS_CONSISTENT = "Identitas pasien konsisten antara ASIK dan Medisy."
 _REASONING_IDENTITAS_SAME_MEANING = "Identitas pasien bermakna sama meskipun bentuk nilainya berbeda."
 _REASONING_IDENTITAS_ASIK_ONLY = "Identitas pasien hanya tersedia di ASIK."
-_REASONING_IDENTITAS_EPUS_ONLY = "Identitas pasien hanya tersedia di ePuskesmas."
+_REASONING_IDENTITAS_EPUS_ONLY = "Identitas pasien hanya tersedia di Medisy."
 
 
 def _fill_template_reasoning(merged: dict) -> dict:

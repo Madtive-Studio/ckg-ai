@@ -213,7 +213,7 @@ def _clinical_defaults_allowed(patient: Patient) -> bool:
 
 def _skip_message(reason: str, output: dict, filter_date) -> str:
     """User-facing (Bahasa Indonesia) text for a runner skip. The runner's own `error` is English and names the
-    clinic source "ePus" — fine for logs, never for the job error a user reads (CLAUDE.md §7.15)."""
+    clinic source "Medisy" — fine for logs, never for the job error a user reads (CLAUDE.md §7.15)."""
     tahun_asik = ", ".join(sorted({d[:4] for d in output.get("asik_screening_dates") or [] if d})) or "?"
     tahun = filter_date.year if filter_date else "?"
     return {

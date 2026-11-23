@@ -37,6 +37,8 @@ export const PatientOut = z.object({
   birth_date: z.string().nullable(),
   // epus_only + this true = a "create in ASIK" candidate.
   epus_tandai_ckg: z.boolean().nullable().optional(),
+  // At least one form already landed in ASIK through this app (gates "Kirim ulang"). Detail endpoint only.
+  ever_sent_to_asik: z.boolean().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });

@@ -12,6 +12,7 @@ import {
   getSyncJobLog,
   listSyncJobs,
   startCreateAsik,
+  startResendAsik,
   startSyncAsik,
   type SyncJobListQuery,
 } from "@/lib/api/sync";
@@ -79,6 +80,24 @@ export function useStartCreateAsik() {
   return useMutation({
     mutationFn: ({ patientId, headless = true }: { patientId: string; headless?: boolean }) =>
       startCreateAsik(patientId, headless),
+    onSuccess: (job) => {
+      qc.setQueryData(syncKeys.detail(job.id), job);
+      qc.setQueriesData<Page<SyncJob>>(
+        { queryKey: syncKeys.lists() },
+        (old) =>
+          old
+            ? { ...old, items: [job, ...old.items], total: old.total + 1 }
+            : old,
+      );
+    },
+  });
+}
+
+export function useStartResendAsik() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ patientId, headless = true }: { patientId: string; headless?: boolean }) =>
+      startResendAsik(patientId, headless),
     onSuccess: (job) => {
       qc.setQueryData(syncKeys.detail(job.id), job);
       qc.setQueriesData<Page<SyncJob>>(

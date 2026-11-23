@@ -38,6 +38,18 @@ export async function startCreateAsik(
   return SyncJobOut.parse(data);
 }
 
+// "Kirim ulang": refill a patient already sent to ASIK straight from Pelayanan, from its stored Medisy data
+// (no registration check, no re-fetch, no AI merge). Same SyncJob history/log UI (create.resend_one task).
+export async function startResendAsik(
+  patientId: string,
+  headless = true,
+): Promise<SyncJob> {
+  const { data } = await http.post(`/patients/${patientId}/resend-asik`, {
+    headless,
+  });
+  return SyncJobOut.parse(data);
+}
+
 export async function listSyncJobs(
   q: SyncJobListQuery,
 ): Promise<Page<SyncJob>> {

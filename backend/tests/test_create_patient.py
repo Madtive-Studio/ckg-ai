@@ -326,3 +326,49 @@ def test_skip_messages_users_read_are_indonesian_and_never_name_epus(reason):
     assert "epus" not in msg.lower() and "skip" not in msg.lower()
     if reason == "year_mismatch":
         assert "2025" in msg and "2026" in msg
+
+
+# --- "Kirim ulang": straight to Pelayanan from the stored Medisy data ---
+
+
+def _run_resend(monkeypatch, *, match_status, sync_status="success", forms_succeeded=2):
+    import app.tasks.create_patient as cp
+    from app.models.patient import MatchStatus
+
+    calls = {}
+
+    def fake_execute_sync(**kw):
+        calls["merged"] = kw["merged"]
+        return sync_status
+
+    monkeypatch.setattr(cp, "_run_register", lambda **k: calls.__setitem__("registered", True))
+    monkeypatch.setattr(cp, "clinic_to_asik", lambda epus: {"Gizi": {"Berat": 50}})
+    monkeypatch.setattr(cp, "_execute_sync", fake_execute_sync)
+    monkeypatch.setattr(cp, "_refresh_from_asik", lambda db, **k: calls.__setitem__("asik_read_back", True))
+
+    job = SimpleNamespace(id="00000000-0000-0000-0000-000000000002", forms_succeeded=forms_succeeded)
+    patient = SimpleNamespace(id="pt", match_status=MatchStatus(match_status))
+    rc = SimpleNamespace(rpush=lambda *a: None, ltrim=lambda *a: None, expire=lambda *a: None, publish=lambda *a: None)
+    status = cp.resend_one_patient(
+        _FakeDb(), job=job, patient=patient, epus={"x": 1}, base_url="https://a", creds={},
+        captcha_solver={}, headless=True, redis_client=rc, cancel_key_str="k",
+    )
+    return status, calls
+
+
+def test_resend_skips_registration_and_fills_from_stored_medisy(monkeypatch):
+    status, calls = _run_resend(monkeypatch, match_status="matched")
+    assert status == "success"
+    assert "registered" not in calls
+    assert calls["merged"] == {"Gizi": {"Berat": 50}}
+    assert "asik_read_back" not in calls          # already Cocok: nothing to pair
+
+
+def test_resend_of_a_medisy_only_patient_reads_it_back_from_asik(monkeypatch):
+    _, calls = _run_resend(monkeypatch, match_status="epus_only")
+    assert calls.get("asik_read_back") is True
+
+
+def test_resend_with_nothing_landed_does_not_read_back(monkeypatch):
+    _, calls = _run_resend(monkeypatch, match_status="epus_only", forms_succeeded=0)
+    assert "asik_read_back" not in calls

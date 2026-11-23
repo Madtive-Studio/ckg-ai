@@ -772,6 +772,53 @@ def create_one_patient(
     return outcome, status
 
 
+def resend_one_patient(
+    db: Session,
+    *,
+    job: "SyncJob",
+    patient: Patient,
+    epus: dict,
+    base_url: str,
+    creds: dict,
+    captcha_solver: dict[str, Any],
+    headless: bool,
+    redis_client: "redis.Redis",
+    cancel_key_str: str,
+    celery_task_id: str = "",
+) -> str:
+    """"Kirim ulang" for a patient already in ASIK: skip registration and fill the screening found in THIS faskes'
+    Pelayanan list (normal year gate) from the stored Medisy data, converted the same way as the create flow."""
+    log_key = _log_key(str(job.id))
+    chan = _stream_chan(str(job.id))
+    _log_line(
+        redis_client, log_key, chan,
+        "[kirim ulang] langsung mencari pasien di Pelayanan ASIK lalu mengisi dari data Medisy yang tersimpan",
+    )
+    merged = clinic_to_asik(epus)
+    forms_total = sum(
+        1 for v in (merged or {}).values()
+        if isinstance(v, dict) and any(x is not None and x != "" for x in v.values())
+    )
+    status = _execute_sync(
+        db=db,
+        redis_client=redis_client,
+        job=job,
+        patient=patient,
+        base_url_full=base_url,
+        creds=creds,
+        captcha_solver=captcha_solver,
+        merged=merged,
+        forms_total=forms_total,
+        headless=headless,
+        celery_task_id=celery_task_id,
+        cancel_key_str=cancel_key_str,
+    )
+    if status == "success" and (job.forms_succeeded or 0) > 0 and patient.match_status == MatchStatus.EPUS_ONLY:
+        _refresh_from_asik(db, job=job, patient=patient, headless=headless,
+                           redis_client=redis_client, log_key=log_key, chan=chan)
+    return status
+
+
 def _refresh_from_asik(
     db: Session,
     *,
@@ -1100,6 +1147,17 @@ def run_create_one(self, job_id: str, headless: bool = True) -> None:
     sync-jobs log/history UI as a normal sync). Mirrors sync.run_sync's entity-loading +
     error handling; the create+fill itself lives in `create_one_patient`, which never raises
     for a normal failure — it records it on the job."""
+    _run_one(self, job_id, headless, resend=False)
+
+
+@celery_app.task(bind=True, name="create.resend_one")
+def run_resend_one(self, job_id: str, headless: bool = True) -> None:
+    """Manual "Kirim ulang": a patient already sent to ASIK goes straight to Pelayanan and is refilled from its STORED
+    Medisy data (no registration / already_served check, no re-fetch from Medisy, no AI merge). Same job/log UI."""
+    _run_one(self, job_id, headless, resend=True)
+
+
+def _run_one(self, job_id: str, headless: bool, *, resend: bool) -> None:
     db = SessionLocal()
     redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
     chan = _stream_chan(job_id)
@@ -1127,7 +1185,11 @@ def run_create_one(self, job_id: str, headless: bool = True) -> None:
             sync_job_crud.mark_failed(db, job, "pasien tidak ditemukan", datetime.now(UTC))
             _publish_terminal(redis_client, chan, "__failed__")
             return
-        if not (
+        if resend and patient.scraped_epus_data is None:
+            sync_job_crud.mark_failed(db, job, "pasien belum memiliki data Medisy", datetime.now(UTC))
+            _publish_terminal(redis_client, chan, "__failed__")
+            return
+        if not resend and not (
             patient.match_status == MatchStatus.EPUS_ONLY
             and patient.epus_tandai_ckg
             and patient.scraped_epus_data is not None
@@ -1179,6 +1241,21 @@ def run_create_one(self, job_id: str, headless: bool = True) -> None:
             return
 
         captcha_solver = _build_captcha_solver(db)
+        if resend:
+            resend_one_patient(
+                db,
+                job=job,
+                patient=patient,
+                epus=epus,
+                base_url=base_url,
+                creds=creds,
+                captcha_solver=captcha_solver,
+                headless=headless,
+                redis_client=redis_client,
+                cancel_key_str=_sync_cancel_key(job_id),
+                celery_task_id=self.request.id or "",
+            )
+            return
         create_one_patient(
             db,
             job=job,

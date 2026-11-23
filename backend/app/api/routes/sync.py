@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, contains_eager, load_only
 
@@ -280,6 +280,76 @@ def start_create(
         patient_name=patient.nama,
         patient_nik=patient.nik,
     )
+
+
+@router.post(
+    "/patients/{patient_id}/resend-asik",
+    response_model=SyncJobOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def start_resend(
+    patient_id: uuid.UUID,
+    body: SyncStart = SyncStart(),
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
+) -> SyncJobOut:
+    """"Kirim ulang": refill a patient that already has a form in ASIK, straight from Pelayanan — no registration /
+    already_served check, from the STORED Medisy data (the user re-fetches Medisy from the puskesmas page beforehand)."""
+    patient = db.scalar(
+        select(Patient)
+        .options(load_only(Patient.id, Patient.puskesmas_id, Patient.nik, Patient.nama, Patient.scraped_epus_data))
+        .where(Patient.id == patient_id)
+    )
+    if patient is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pasien tidak ditemukan")
+    _authorize(principal, patient.puskesmas_id)
+    if patient.scraped_epus_data is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Pasien belum memiliki data Medisy")
+    ever_sent = db.scalar(
+        select(exists().where(SyncJob.patient_id == patient.id, SyncJob.forms_succeeded > 0))
+    )
+    if not ever_sent:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Kirim ulang hanya untuk pasien yang sudah pernah berhasil dikirim ke ASIK",
+        )
+
+    row = db.execute(
+        select(Puskesmas.name, Puskesmas.asik_cred.isnot(None), Puskesmas.asik_url)
+        .where(Puskesmas.id == patient.puskesmas_id)
+    ).one_or_none()
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Puskesmas tidak ditemukan")
+    puskesmas_name, has_cred, base_url = row
+    if not has_cred:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Kredensial ASIK belum diisi")
+    if not base_url:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "URL ASIK puskesmas ini belum diisi")
+
+    triggered_by_id, triggered_by_type = _trigger_kind(principal)
+    try:
+        job = crud.create(
+            db,
+            puskesmas_id=patient.puskesmas_id,
+            patient_id=patient.id,
+            triggered_by_id=triggered_by_id,
+            triggered_by_type=triggered_by_type,
+        )
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Pengiriman atau pembuatan pasien di ASIK untuk pasien ini masih berjalan",
+        ) from e
+
+    try:
+        celery_app.send_task("create.resend_one", args=[str(job.id)], kwargs={"headless": body.headless})
+    except Exception as e:
+        crud.mark_failed(db, job, f"broker unreachable: {e}"[:2000], datetime.now(UTC))
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE, "Antrean pengiriman ASIK sedang tidak tersedia"
+        ) from e
+    return _to_job_out(job, puskesmas_name=puskesmas_name, patient_name=patient.nama, patient_nik=patient.nik)
 
 
 @router.get("/sync/jobs", response_model=Page[SyncJobOut])

@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import Select, or_, select
+from sqlalchemy import Select, exists, or_, select
 from sqlalchemy.orm import Session, load_only
 
 from app.api.deps import (
@@ -16,6 +16,7 @@ from app.core.rate_limit import enforce_decrypt_rate_limit
 from app.crud import patient as crud
 from app.models.patient import MatchStatus, Patient
 from app.models.scrape_job import ScrapeKind
+from app.models.sync_job import SyncJob
 from app.schemas.patient import AsikPreviewOut, PatientDecryptedOut, PatientOut
 from app.services.clinic_source import clinic_to_asik
 
@@ -156,6 +157,9 @@ def get_patient(
             Patient.match_group_id,
             Patient.created_at,
             Patient.updated_at,
+            exists(
+                select(SyncJob.id).where(SyncJob.patient_id == Patient.id, SyncJob.forms_succeeded > 0)
+            ).label("ever_sent_to_asik"),
         ).where(Patient.id == id)
     ).one_or_none()
     if row is None:

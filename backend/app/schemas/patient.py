@@ -25,6 +25,8 @@ class PatientOut(BaseModel):
     # CKG "Tandai-CKG" flag (epus_only + this true = a create-in-ASIK candidate).
     epus_tandai_ckg: bool | None = None
     match_group_id: uuid.UUID | None = None
+    # At least one form of this patient landed in ASIK through this app (gates "Kirim ulang"). Detail endpoint only.
+    ever_sent_to_asik: bool = False
     created_at: datetime
     updated_at: datetime
 

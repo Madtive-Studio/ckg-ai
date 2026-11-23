@@ -1,12 +1,11 @@
-"""Medisy records never get an invented measurement / clinical answer for a required ASIK question (owner decision 2026-10-14).
+"""Safe defaults for required ASIK questions with no data.
 
-The legacy behaviour (EPUS lineage) is unchanged: the default map still fills required questions there.
+Since 2026-11-23 every record (Medisy, EPUS lineage, ASIK-only) gets the same default fills (owner decision: one rule for
+all clinic sources). The scraper's `clinical=False` mode (free-text placeholder only) is kept but no longer selected.
 """
 import os
 import sys
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import patch
 
 os.environ.setdefault("SCRAPER_SESSION_DIR", "/tmp/_asik_sync_test_session")
 ROOT = Path(__file__).resolve().parents[2] / "scrapers"
@@ -38,11 +37,8 @@ def test_medisy_mode_still_fills_a_free_text_placeholder():
     assert sync._resolve_default(TEXT, DEFAULTS, clinical=False) == "-"
 
 
-def test_only_a_medisy_record_turns_the_clinical_defaults_off():
-    medisy = {"api_version": 1, "visit": {}}
-    with patch.object(sync_task.patient_crud, "decrypt_field", return_value=medisy), patch.object(sync_task, "is_medisy_blob", return_value=True):
-        assert sync_task._clinical_defaults_allowed(SimpleNamespace()) is False
-    with patch.object(sync_task.patient_crud, "decrypt_field", return_value={"data_pasien": {}}):
-        assert sync_task._clinical_defaults_allowed(SimpleNamespace()) is True
-    with patch.object(sync_task.patient_crud, "decrypt_field", side_effect=ValueError("boom")):
-        assert sync_task._clinical_defaults_allowed(SimpleNamespace()) is True
+def test_every_record_gets_the_same_default_fills():
+    cfg = sync_task._build_config(
+        asik_creds={}, base_url="https://a", nik="1", merged_data={}, captcha_solver={},
+    )
+    assert cfg.get("clinical_defaults", True) is True  # the scraper reads a missing key as True

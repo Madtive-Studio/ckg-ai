@@ -2,13 +2,13 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, UserPlus } from "lucide-react";
+import { RefreshCw, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PatientActionBar } from "@/components/patients/patient-action-bar";
 import { PatientDetail } from "@shared/patients/components/patient-detail";
 import { usePatient } from "@shared/patients/use-patients";
-import { useStartCreateAsik, useStartSyncAsik } from "@/lib/hooks/use-sync";
+import { useStartCreateAsik, useStartResendAsik, useStartSyncAsik } from "@/lib/hooks/use-sync";
 import { asApiError } from "@/lib/api/client";
 
 export default function PatientDetailPage({
@@ -21,6 +21,7 @@ export default function PatientDetailPage({
   const router = useRouter();
   const startSync = useStartSyncAsik();
   const startCreate = useStartCreateAsik();
+  const startResend = useStartResendAsik();
 
   const handleSyncAsik = async () => {
     try {
@@ -36,6 +37,16 @@ export default function PatientDetailPage({
     try {
       const job = await startCreate.mutateAsync({ patientId: id });
       toast.success("Pendaftaran ke ASIK dimulai");
+      router.push(`/sync-jobs/${job.id}`);
+    } catch (err) {
+      toast.error(asApiError(err).message);
+    }
+  };
+
+  const handleResendAsik = async () => {
+    try {
+      const job = await startResend.mutateAsync({ patientId: id });
+      toast.success("Kirim ulang ke ASIK dimulai");
       router.push(`/sync-jobs/${job.id}`);
     } catch (err) {
       toast.error(asApiError(err).message);
@@ -59,7 +70,11 @@ export default function PatientDetailPage({
     p.match_status === "epus_only" &&
     p.epus_tandai_ckg === true &&
     p.has_epus_data &&
-    !p.has_merged_data;
+    !p.has_merged_data &&
+    p.ever_sent_to_asik !== true; // already in ASIK → "Kirim ulang", never register again
+  // Kirim ulang: already sent once → straight to Pelayanan from the stored Medisy data (re-fetch Medisy from the
+  // puskesmas page first if it changed).
+  const canResend = !!p && p.has_epus_data && p.ever_sent_to_asik === true;
 
   return (
     <PatientDetail
@@ -81,6 +96,18 @@ export default function PatientDetailPage({
               >
                 <Upload className="h-4 w-4" />
                 Kirim ke ASIK
+              </Button>
+            )}
+            {canResend && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleResendAsik}
+                disabled={startResend.isPending}
+                title="Kirim ulang data Medisy yang tersimpan ke ASIK: langsung ke halaman Pelayanan tanpa cek pendaftaran"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Kirim ulang
               </Button>
             )}
             {canCreate && (

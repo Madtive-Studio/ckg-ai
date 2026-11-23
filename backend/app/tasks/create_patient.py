@@ -602,8 +602,9 @@ def create_one_patient(
     Steps: mark job running → register into ASIK (register.py COMMIT, exam date =
     patient.filter_date) → on `created`, fill the exam via the existing `_execute_sync`
     (builds merged live from ePus via `epus_to_asik`, stamps `asik_synced_at`, logs
-    `asik_default_fills`, finalizes the job). Any non-`created` register outcome finalizes
-    the job FAILED with a clear reason and publishes the SSE terminal event itself (so a
+    `asik_default_fills`, finalizes the job). On `already_served`, the same fill runs against
+    the screening ASIK already holds, only when it is booked on exactly patient.filter_date.
+    Any other register outcome finalizes the job FAILED with a clear reason and publishes the SSE terminal event itself (so a
     watcher's stream closes). Returns (register_outcome, job_terminal_status).
 
     NOTE: deliberately bypasses `run_sync`'s `ALLOW_EPUS_ONLY_SYNC` gate — filling an
@@ -689,7 +690,7 @@ def create_one_patient(
             pass
         return "cancelled", "cancelled"
 
-    if outcome != "created":
+    if outcome not in ("created", "already_served"):
         reason = _REGISTER_FAIL_REASON.get(outcome) or out.get("error") or f"hasil {outcome}"
         _log_line(redis_client, log_key, chan, f"[buat] tidak dibuat — {outcome}: {reason}")
         sync_job_crud.mark_failed(db, job, f"{outcome}: {reason}"[:2000], datetime.now(UTC))
@@ -701,11 +702,20 @@ def create_one_patient(
 
     # Registered + attended → fill the exam via the existing sync machinery. It streams
     # to the SAME job log and finalizes the job (success/failed + SSE terminal event).
-    _log_line(
-        redis_client, log_key, chan,
-        f"[buat] terdaftar (tiket={out.get('ticket')} hadir={out.get('hadir')}) "
-        f"→ mengisi pemeriksaan lewat pengiriman ke ASIK",
-    )
+    # already_served → ASIK already holds this person: fill the screening found in THIS
+    # faskes' Pelayanan list, but only one booked on exactly the Medisy visit date.
+    if outcome == "created":
+        _log_line(
+            redis_client, log_key, chan,
+            f"[buat] terdaftar (tiket={out.get('ticket')} hadir={out.get('hadir')}) "
+            f"→ mengisi pemeriksaan lewat pengiriman ke ASIK",
+        )
+    else:
+        _log_line(
+            redis_client, log_key, chan,
+            f"[buat] {_REGISTER_FAIL_REASON['already_served']} → mencari di Pelayanan faskes ini "
+            f"dengan tanggal pemeriksaan {patient.filter_date.isoformat()} lalu mengisi dari sana",
+        )
     merged = clinic_to_asik(epus)
     forms_total = sum(
         1 for v in (merged or {}).values()
@@ -724,8 +734,17 @@ def create_one_patient(
         headless=headless,
         celery_task_id=celery_task_id,
         cancel_key_str=cancel_key_str,
+        require_exact_date=outcome == "already_served",
     )
-    return "created", status
+    if outcome == "already_served" and status == "failed":
+        # Keep the "already_served:" prefix: the batch treats it as terminal and must not re-pick the patient.
+        db.refresh(job, ["error_message"])
+        job.error_message = (
+            f"already_served: {_REGISTER_FAIL_REASON['already_served']}, tetapi tidak bisa diisi dari "
+            f"Pelayanan — {job.error_message or 'alasan tidak diketahui'}"
+        )[:2000]
+        db.commit()
+    return outcome, status
 
 
 def create_batch(

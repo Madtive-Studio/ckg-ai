@@ -150,6 +150,7 @@ def _build_config(
     default_values: dict[str, Any] | None = None,
     session_mode: str = "persistent",
     clinical_defaults: bool = True,
+    require_exact_date: bool = False,
 ) -> dict[str, Any]:
     return {
         "base_url": base_url,
@@ -171,6 +172,8 @@ def _build_config(
         # ASIK's patient list is date-range-scoped (default = current week). Without
         # this the sync searches the wrong week and never finds a past-date patient.
         "filter_date": filter_date,
+        # True = fill only an ASIK screening booked on exactly filter_date (the year is not enough).
+        "require_exact_date": require_exact_date,
         # {normalized_label: {value, kind}} — safe defaults for required questions
         # we have no data for (see app/services/asik_defaults.py).
         "default_values": default_values or {},
@@ -226,6 +229,7 @@ def _execute_sync(
     celery_task_id: str,
     cancel_key_str: str,
     session_mode: str = "persistent",
+    require_exact_date: bool = False,
 ) -> str:
     """Run the sync scraper subprocess for ONE patient's SyncJob and finalize it.
 
@@ -266,6 +270,7 @@ def _execute_sync(
                 default_values=build_default_values_map(),
                 session_mode=session_mode,
                 clinical_defaults=_clinical_defaults_allowed(patient),
+                require_exact_date=require_exact_date,
             )
             cfg_path.write_text(json.dumps(cfg))
             os.chmod(cfg_path, 0o600)

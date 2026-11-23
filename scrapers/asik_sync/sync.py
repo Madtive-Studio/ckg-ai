@@ -325,6 +325,13 @@ def _extract_search_rows(body) -> list[dict] | None:
     return out
 
 
+def _asik_date_skip(matched_rows: list[dict], filter_date: str | None) -> bool:
+    """True unless a matched row's screening_date is exactly ``filter_date``."""
+    return str(filter_date or "")[:10] not in {
+        r["screening_date"][:10] for r in matched_rows if r.get("screening_date")
+    }
+
+
 def _asik_year_skip(matched_rows: list[dict], filter_date: str | None) -> tuple[bool, list[str]]:
     """Decide the ASIK-year gate for a located patient.
 
@@ -1908,6 +1915,9 @@ def run(args) -> dict:
     # ASIK's list is date-range-scoped (default = current week); set it to the
     # patient's screening date so a past-date patient is actually found.
     filter_date = cfg.get("filter_date")
+    # Create flow after ASIK answered "sudah menerima layanan": fill only the
+    # screening booked on exactly this visit date, never another day's.
+    require_exact_date = bool(cfg.get("require_exact_date", False))
 
     OUTPUT_PATH = Path(args.output) if args.output else None
 
@@ -2185,6 +2195,15 @@ def run(args) -> dict:
                 result["error"] = (
                     "no screening_date on matched search row(s) — cannot verify "
                     "year, skip"
+                )
+                console.print(f"  [yellow]{result['error']}[/yellow]")
+                return result
+            if require_exact_date and _asik_date_skip(matched_rows, filter_date):
+                result["skipped"] = True
+                result["skip_reason"] = "date_mismatch"
+                result["error"] = (
+                    f"ASIK screening date(s) {result['asik_screening_dates']} != "
+                    f"ePus date {filter_date} — different visit, skip"
                 )
                 console.print(f"  [yellow]{result['error']}[/yellow]")
                 return result

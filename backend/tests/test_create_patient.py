@@ -204,3 +204,71 @@ def test_closest_option_accepts_only_a_very_close_unambiguous_spelling():
     assert _closest_option("Citarik", ["CITARIK", "CITARIKA"]) == "CITARIK"               # an identical spelling wins
     assert _closest_option("Citarik", ["CITARIKI", "CITARIKU"]) is None                   # two equally close options: ambiguous
     assert _closest_option("Pelabuhanratu", []) is None
+
+
+# --- already_served: fill the screening ASIK already holds, exact visit date only ---
+
+
+class _FakeDb:
+    def refresh(self, obj, attrs=None):
+        pass
+
+    def commit(self):
+        pass
+
+
+def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None):
+    import app.tasks.create_patient as cp
+
+    calls = {}
+    job = SimpleNamespace(id="00000000-0000-0000-0000-000000000001", error_message=None)
+
+    def fake_execute_sync(**kw):
+        calls["require_exact_date"] = kw["require_exact_date"]
+        job.error_message = sync_error
+        return sync_status
+
+    monkeypatch.setattr(cp.sync_job_crud, "mark_running", lambda *a, **k: None)
+    monkeypatch.setattr(cp.sync_job_crud, "mark_failed", lambda db, j, msg, at: setattr(j, "error_message", msg))
+    monkeypatch.setattr(cp, "_wali_block_reason", lambda *a: None)
+    monkeypatch.setattr(cp, "_build_step2", lambda *a: {"alamat": "x"})
+    monkeypatch.setattr(cp, "_build_register_config", lambda **k: {})
+    monkeypatch.setattr(cp, "_asik_session_dir", lambda pid: "/tmp/x")
+    monkeypatch.setattr(cp, "_run_register", lambda **k: {"outcome": register_outcome, "ticket": "T"})
+    monkeypatch.setattr(cp, "clinic_to_asik", lambda epus: {})
+    monkeypatch.setattr(cp, "_execute_sync", fake_execute_sync)
+
+    patient = SimpleNamespace(nik="3201000000000001", birth_date=date(1990, 1, 1), filter_date=date(2026, 11, 20))
+    rc = SimpleNamespace(rpush=lambda *a: None, ltrim=lambda *a: None, expire=lambda *a: None, publish=lambda *a: None)
+    result = cp.create_one_patient(
+        _FakeDb(), job=job, patient=patient, epus={}, puskesmas=SimpleNamespace(id="p"), base_url="https://a",
+        creds={}, captcha_solver={}, headless=True, redis_client=rc, cancel_key_str="k",
+    )
+    return result, calls, job
+
+
+def test_already_served_fills_from_pelayanan_on_the_exact_visit_date(monkeypatch):
+    result, calls, _ = _run_create(monkeypatch, register_outcome="already_served", sync_status="success")
+    assert result == ("already_served", "success")
+    assert calls["require_exact_date"] is True
+
+
+def test_already_served_that_cannot_be_filled_stays_terminal_for_the_batch(monkeypatch):
+    result, _, job = _run_create(monkeypatch, register_outcome="already_served", sync_status="failed",
+                                 sync_error="[SKIP:date_mismatch] different visit")
+    assert result == ("already_served", "failed")
+    assert job.error_message.startswith("already_served:")       # create_batch's terminal filter
+    assert "date_mismatch" in job.error_message
+
+
+def test_a_fresh_registration_still_fills_on_the_year_only(monkeypatch):
+    result, calls, _ = _run_create(monkeypatch, register_outcome="created", sync_status="success")
+    assert result == ("created", "success")
+    assert calls["require_exact_date"] is False
+
+
+def test_other_register_outcomes_never_fill(monkeypatch):
+    result, calls, job = _run_create(monkeypatch, register_outcome="dukcapil_invalid", sync_status="success")
+    assert result == ("dukcapil_invalid", "failed")
+    assert calls == {}
+    assert job.error_message.startswith("dukcapil_invalid:")

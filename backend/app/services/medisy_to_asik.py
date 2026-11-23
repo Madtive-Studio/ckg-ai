@@ -15,7 +15,7 @@ R-ZERO     Medisy's int-coded screenings (e.g. PUMA) are NULLABLE with DEFAULT 0
            an all-zero row emits nothing. Text-coded answers ("Ya"/"Tidak"/option text) and NULLable columns have no such problem.
 R-UNIFORM  The hypertension / diabetes / heart-risk questionnaires have a "check to all" button. When every answer of one row is
            identical, the row is treated as untrusted for the single-question mappings (history of hypertension, ...).
-R-DIAG     A diagnosis can only ever turn a result ON (HIV/hepatitis/syphilis "Reaktif", TB flag). The absence of a diagnosis is
+R-DIAG     A diagnosis can only ever turn a result ON (hepatitis/syphilis "Reaktif", TB flag; HIV reads the screening only). The absence of a diagnosis is
            never turned into "Non Reaktif" / "Tidak": absence of evidence is not a negative result.
 R-NOMATCH  No mapping where the two systems ask different questions. Medisy's mental-health screening is EPDS/SDQ, not PHQ-4;
            its smoking screening is the school-student survey, not the adult one; the eye table stores visus/pupil in scales that
@@ -175,7 +175,6 @@ def _has_icd(codes: set[str], prefixes: tuple[str, ...]) -> bool:
 _HT_ICD = ("I10", "I11", "I12", "I13", "I15")
 _DM_ICD = ("E10", "E11", "E12", "E13", "E14")
 _TB_ICD = ("A15", "A16", "A17", "A18", "A19")
-_HIV_ICD = ("B20", "B21", "B22", "B23", "B24")
 _SYPH_ICD = ("A50", "A51", "A52", "A53")
 _HEPB_ICD = ("B16", "B18.0", "B18.1")
 _HEPC_ICD = ("B17.1", "B18.2")
@@ -210,7 +209,6 @@ _LAB_CHOL = ("kolesterol total", "cholesterol total", "kolesterol", "cholesterol
 _LAB_HDL = ("hdl cholesterol", "hdl kolesterol", "hdl")
 _LAB_LDL = ("ldl cholesterol", "ldl kolesterol", "ldl")
 _LAB_TG = ("trigliserida", "trigliserid", "triglycerides")
-_LAB_HB = ("hemoglobin", "hb", "hb (hemoglobin)", "hemoglobin (hgb)", "hemoglobin [mass/volume] in blood")
 _LAB_CREAT = ("kreatinin", "creatinine")
 _LAB_UREUM = ("ureum", "urea")
 _LAB_EGFR = ("egfr", "e-lfg", "e-lfg (ckd-epi)")
@@ -517,12 +515,22 @@ def _map_tb_exam(scr: dict) -> dict[str, Any]:
     return out
 
 
-def _map_hiv(codes: set[str], labs: dict[str, str]) -> dict[str, Any]:
-    f = "Pemeriksaan HIV"
-    res = _lab_rapid(labs, ("anti hiv", "hiv", "rapid test hiv"), "Reaktif", "Non Reaktif")
-    if res is None and _has_icd(codes, _HIV_ICD):
-        res = "Reaktif"
-    return {_q(f, "Hasil Pemeriksaan Rapid Test HIV"): res} if res else {}
+def _anemia_hb(scr: dict) -> int | float | None:
+    """Hb (g/dL) from the Skrining Anemia (`hb_checkup`, free text). The catin form reads the screening only (owner decision
+    2026-11-23); the Skrining Catin itself has no Hb. Only a plausible 3-20 g/dL is sent: UAT holds 0, 123 and 800."""
+    hb = _num((scr.get("anemia") or {}).get("hb_checkup"))
+    return hb if hb is not None and 3 <= hb <= 20 else None
+
+
+def _map_hiv(scr: dict) -> dict[str, Any]:
+    """From the Skrining HIV only (owner decision 2026-11-23: no lab, no diagnosis). Medisy's form pre-checks "Non Reaktif" on
+    every result radio, so a saved screening says nothing until the test date is filled; R1 is stored as "<hasil> | <reagen>"."""
+    h = scr.get("hiv") or {}
+    if not str(h.get("tes_antibodi_tgl_tes") or "").strip():
+        return {}
+    r1 = str(h.get("tes_antibodi_hasil_R1") or "").split("|", 1)[0].strip()
+    res = {_norm("Reaktif"): "Reaktif", _norm("Non Reaktif"): "Non Reaktif"}.get(_norm(r1))
+    return {_q("Pemeriksaan HIV", "Hasil Pemeriksaan Rapid Test HIV"): res} if res else {}
 
 
 def _map_sifilis(codes: set[str], labs: dict[str, str]) -> dict[str, Any]:
@@ -1338,7 +1346,7 @@ def medisy_to_asik(bundle: dict) -> ASIK_Result:
 
     out.update(_map_tb_risk(scr))
     out[_F_TB_EXAM] = _map_tb_exam(scr)
-    out["Pemeriksaan HIV"] = _map_hiv(codes, labs)
+    out["Pemeriksaan HIV"] = _map_hiv(scr)
     out["Pemeriksaan Sifilis"] = _map_sifilis(codes, labs)
     out["Pemeriksaan Hepatitis"] = _map_hepatitis(codes, labs)
 
@@ -1382,7 +1390,7 @@ def medisy_to_asik(bundle: dict) -> ASIK_Result:
             out[_F_PAYUDARA] = _map_payudara(scr)
             out[_F_IVA] = _map_inspekulo_iva(scr)
         catin: dict[str, Any] = {}
-        _put(catin, _q("Pemeriksaan Calon Pengantin Perempuan", "Kadar Hemoglobin"), _lab_num(labs, _LAB_HB))
+        _put(catin, _q("Pemeriksaan Calon Pengantin Perempuan", "Kadar Hemoglobin"), _anemia_hb(scr))
         out["Pemeriksaan Calon Pengantin Perempuan"] = catin
         out[_F_TETANUS] = _map_tetanus(scr)
 
@@ -1428,7 +1436,7 @@ for _f, _p, _path in (
     (_F_KP, "Lingkungan dalam rumah yang tidak sehat", "screenings[kanker_paru].question8"),
     (_F_KP, "Pernah didiagnosis penyakit paru kronik?", "screenings[kanker_paru].question9"),
     ("Hasil Pemeriksaan - Skrining Jantung", "Hasil Pemeriksaan EKG", "screenings[risiko_jantung].kardiovaskular_ekg"),
-    ("Pemeriksaan HIV", "Hasil Pemeriksaan Rapid Test HIV", "lab[ANTI HIV].result (R-DIAG: or diagnoses B20-B24 -> Reaktif)"),
+    ("Pemeriksaan HIV", "Hasil Pemeriksaan Rapid Test HIV", "screenings[hiv].tes_antibodi_hasil_R1 (only when tes_antibodi_tgl_tes is filled)"),
     ("Pemeriksaan Sifilis", "Hasil Pemeriksaan Rapid Test Sifilis", "lab[sifilis].result (R-DIAG: or diagnoses A50-A53 -> Reaktif)"),
     ("Pemeriksaan Hepatitis", "Hasil Rapid Test Hepatitis B", "lab[HBsAg].result (R-DIAG: or diagnoses B16/B18.0/B18.1 -> Reaktif)"),
     ("Pemeriksaan Hepatitis", "Hasil Rapid Test Hepatitis C", "lab[Anti HCV].result (R-DIAG: or diagnoses B17.1/B18.2 -> Reaktif)"),
@@ -1441,7 +1449,7 @@ for _f, _p, _path in (
     (_F_FIBROSIS, "Nilai SGOT", "lab[SGOT].result"),
     (_F_FIBROSIS, "Pemeriksaan Trombosit", "lab[Trombosit].result"),
     (_F_KERUSAKAN_GINJAL, "Konsentrasi Albumin Urin", "lab[Microalbuminuria].result"),
-    ("Pemeriksaan Calon Pengantin Perempuan", "Kadar Hemoglobin", "lab[Hemoglobin].result"),
+    ("Pemeriksaan Calon Pengantin Perempuan", "Kadar Hemoglobin", "screenings[anemia].hb_checkup (3-20 g/dL only)"),
     (_F_BARTHEL, "Dapat mengendalikan rangsang buang air besar", "screenings[activity_living].question1"),
     (_F_BARTHEL, "Dapat mengendalikan rangsang berkemih", "screenings[activity_living].question2"),
     (_F_BARTHEL, "Membersihkan diri", "screenings[activity_living].question3"),

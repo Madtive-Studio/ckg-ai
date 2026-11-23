@@ -32,7 +32,7 @@ An eligible form that Medisy cannot fill is an empty `{}` shell so the convert p
 - **Zero hallucination.** Every emitted value traces to a bundle field (`MEDISY_BREADCRUMBS`). Not captured = absent (blank), never a default.
 - **R-ZERO.** Medisy's int-coded screenings (PUMA …) are NULLABLE with DEFAULT 0, so 0 means "No" *or* "never answered". A 1 is always trusted. A 0 becomes "Tidak" only when the same row has at least one positive answer; an all-zero row emits nothing. Text-coded answers have no such problem.
 - **R-UNIFORM.** The hipertensi / diabetes / risiko-jantung questionnaires have a "check to all" button. A row whose answers (≥ 4) are all identical is untrusted for single-question mappings (history of hypertension / diabetes).
-- **R-DIAG.** A diagnosis only turns a result ON (HIV/hepatitis/syphilis → "Reaktif", TB, DM). Absence of a diagnosis is never turned into "Non Reaktif" / "Tidak". A lab result, when present, wins over the diagnosis.
+- **R-DIAG.** A diagnosis only turns a result ON (hepatitis/syphilis → "Reaktif", TB, DM). Absence of a diagnosis is never turned into "Non Reaktif" / "Tidak". A lab result, when present, wins over the diagnosis.
 - **R-NOMATCH.** No mapping where the two systems ask different questions (see §4).
 - Latest screening entry wins (by `performed_at`).
 - Numbers: decimal comma/dot tolerated; option text matched after folding case, whitespace, dashes and commas — wording is never fuzzed.
@@ -48,8 +48,10 @@ See the generated table in §6 for the field-by-field source. Rules that need ex
 - **Mata** (`screenings[ptm_mata]`, the "Pemeriksaan Fisik" eye card): visus is entered as a Snellen fraction (`visus_<side>` / `visus_<side>_denominator`). The ratio decides: 6/12 (0.5) or better in every measured eye = Normal; worse in any eye = Curiga. Pupil: only Medisy's "Suspek Katarak" (`OV000393`) becomes "Curiga Katarak"; any other pupil entry or none stays blank (R-DIAG: no "Normal" is invented).
 - **PTM risk-factor questionnaire** (`programs.ptm_questionnaire`; the "Faktor Risiko Penyakit Tidak Menular" modal; SATUSEHAT Q0013 / Q0019 / Q0020, matched by answer CODE, the text is only a fallback): smoking status (1.4 Smoker → Ya, Non-smoker → Tidak; an ex-smoker counts as a non-smoker, as in the ePuskesmas converter; with no status, "never smoked" 1.1 = 0 → Tidak), exposure to smoke (1.5), lung-cancer questionnaire (Q0019 → the screening form, the table `screenings[kanker_paru]` wins on conflict, and 4 questions of "Penapisan Risiko Kanker Paru"), colorectal family history (Q0020 1.1), physical activity (1.10, **inherited rule**: insufficient → no moderate / vigorous exercise, sufficient → moderate "Ya", exactly what the ePuskesmas converter did with the same PTM question).
 - **TB:** cough "Tidak" → "Tidak batuk"; cough "Ya" → "Ya, lebih dari 2 minggu" (clinical sign-off 2026-10-05: Medisy has no duration column and a "Ya" means more than 2 weeks). Contact: only "Tidak Ada" is placed. The adult X-Ray form also takes BB turun, demam, berkeringat and the radiograph question.
-- **HIV / Sifilis / Hepatitis:** lab result first (`ANTI HIV`, `sifilis`, `HBsAg`, `Anti HCV`), else the ICD code → "Reaktif" (R-DIAG).
-- **Lab forms (≥ 40):** lipid, kidney (creatinine, urea, eGFR), microalbuminuria, SGOT + platelets; Hb only for the female catin form.
+- **HIV** (owner decision 2026-11-23): from the Skrining HIV only (`screenings[hiv]`), never from a lab result or a diagnosis. R1 (`tes_antibodi_hasil_R1`, stored as "<hasil> | <reagen>") → "Hasil Pemeriksaan Rapid Test HIV", and only when `tes_antibodi_tgl_tes` is filled: Medisy's form pre-checks "Non Reaktif" on every result radio, so a saved screening without a test date proves nothing. R2 / R3 / the final result exist in Medisy but their ASIK questions have not been seen on a live form yet, so they are not sent.
+- **Sifilis / Hepatitis:** lab result first (`sifilis`, `HBsAg`, `Anti HCV`), else the ICD code → "Reaktif" (R-DIAG).
+- **Lab forms (≥ 40):** lipid, kidney (creatinine, urea, eGFR), microalbuminuria, SGOT + platelets.
+- **Catin Hb** (owner decision 2026-11-23): from the Skrining Anemia only (`screenings[anemia].hb_checkup`, free text), never from a lab result; the Skrining Catin has no Hb. Only 3-20 g/dL is sent (UAT holds 0, 123 and 800).
 - **Kanker paru:** `screenings[kanker_paru]` answers; option q5 only where the meaning is identical.
 - **EKG:** `risiko_jantung.kardiovaskular_ekg`.
 - **SKILAS malnutrition:** SKILAS's own answers first; Medisy's nutrition screening (`screenings[gizi]`) fills the two matching questions only where unambiguous (sign-off 2026-10-05): weight loss none → Tidak, "not sure (clothes loose)" / 6 kg or more → Ya, "1-5 kg" blank (straddles the 3 kg line; Medisy asks about 6 months, SKILAS about 3); reduced intake from lack of appetite Ya → Ya, Tidak stays blank (SKILAS also asks about difficulty eating).
@@ -453,7 +455,7 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 
 | ASIK field | Medisy source |
 |---|---|
-| Hasil Pemeriksaan Rapid Test HIV | `lab[ANTI HIV].result (R-DIAG: or diagnoses B20-B24 -> Reaktif)` |
+| Hasil Pemeriksaan Rapid Test HIV | `screenings[hiv].tes_antibodi_hasil_R1 (only when tes_antibodi_tgl_tes is filled)` |
 
 ### Pemeriksaan Sifilis
 
@@ -532,7 +534,7 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 
 | ASIK field | Medisy source |
 |---|---|
-| Kadar Hemoglobin | `lab[Hemoglobin].result` |
+| Kadar Hemoglobin | `screenings[anemia].hb_checkup (3-20 g/dL only)` |
 
 ### Skrining Kanker Paru (Usia =>45 thn)
 

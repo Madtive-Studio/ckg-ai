@@ -228,18 +228,24 @@ def lab(test, result, unit=None):
 
 
 def test_a_diagnosis_only_turns_a_result_on_and_absence_is_never_a_negative():
-    assert medisy_to_asik(bundle())["Pemeriksaan HIV"] == {}
-    assert medisy_to_asik(bundle(diagnoses=[dx("B20")]))["Pemeriksaan HIV"] == {"Hasil Pemeriksaan Rapid Test HIV": "Reaktif"}
     assert medisy_to_asik(bundle(hist_dx=[dx("A51.0")]))["Pemeriksaan Sifilis"] == {"Hasil Pemeriksaan Rapid Test Sifilis": "Reaktif"}
     hep = medisy_to_asik(bundle(diagnoses=[dx("B18.2")]))["Pemeriksaan Hepatitis"]
     assert hep == {"Hasil Rapid Test Hepatitis C": "Anti HCV Reaktif"}
 
 
-def test_an_explicit_lab_result_beats_the_diagnosis_and_can_be_negative():
-    out = medisy_to_asik(bundle(lab=[lab("ANTI HIV", "NEGATIF")], diagnoses=[dx("B20")]))["Pemeriksaan HIV"]
-    assert out == {"Hasil Pemeriksaan Rapid Test HIV": "Non Reaktif"}
-    assert medisy_to_asik(bundle(lab=[lab("ANTI HIV", "POSITIF")]))["Pemeriksaan HIV"] == {
-        "Hasil Pemeriksaan Rapid Test HIV": "Reaktif"}
+def test_hiv_comes_from_the_skrining_hiv_only():
+    hiv = "Pemeriksaan HIV"
+    # neither a lab result nor a diagnosis fills it any more
+    assert medisy_to_asik(bundle(lab=[lab("ANTI HIV", "POSITIF")], diagnoses=[dx("B20")]))[hiv] == {}
+    tested = scr("hiv", tes_antibodi_tgl_tes="2026-09-02", tes_antibodi_hasil_R1="Reaktif | SD Bioline")
+    assert medisy_to_asik(bundle(screenings=[tested]))[hiv] == {"Hasil Pemeriksaan Rapid Test HIV": "Reaktif"}
+    negative = scr("hiv", tes_antibodi_tgl_tes="2026-09-02", tes_antibodi_hasil_R1="Non Reaktif | ")
+    assert medisy_to_asik(bundle(screenings=[negative]))[hiv] == {"Hasil Pemeriksaan Rapid Test HIV": "Non Reaktif"}
+
+
+def test_hiv_screening_without_a_test_date_is_the_form_default_and_is_not_sent():
+    untested = scr("hiv", tes_antibodi_hasil_R1="Non Reaktif | ")
+    assert medisy_to_asik(bundle(screenings=[untested]))["Pemeriksaan HIV"] == {}
 
 
 def test_lipid_labs_match_by_exact_name_and_hb_is_not_hba1c():
@@ -247,9 +253,15 @@ def test_lipid_labs_match_by_exact_name_and_hb_is_not_hba1c():
     out = medisy_to_asik(bundle(years=50, lab=[lab("KOLESTEROL TOTAL", "230"), lab("HDL CHOLESTEROL", "50"),
                                                lab("LDL CHOLESTEROL", "100,5"), lab("TRIGLISERIDA", "150")]))[L]
     assert out == {"Kolesterol Total": 230, "HDL": 50, "LDL": 100.5, "Trigliserida": 150}
-    cat = medisy_to_asik(bundle(gender="P", years=30, lab=[lab("HbA1c", "7"), lab("HEMOGLOBIN [MASS/VOLUME] IN BLOOD", "12")]))
-    assert cat["Pemeriksaan Calon Pengantin Perempuan"] == {"Kadar Hemoglobin": 12}
-    assert medisy_to_asik(bundle(gender="P", years=30, lab=[lab("HbA1c", "7")]))["Pemeriksaan Calon Pengantin Perempuan"] == {}
+
+
+def test_catin_hb_comes_from_the_skrining_anemia_only():
+    catin = "Pemeriksaan Calon Pengantin Perempuan"
+    assert medisy_to_asik(bundle(gender="P", years=30, lab=[lab("HEMOGLOBIN", "12")]))[catin] == {}
+    assert medisy_to_asik(bundle(gender="P", years=30, screenings=[scr("anemia", hb_checkup="11,5")]))[catin] == {
+        "Kadar Hemoglobin": 11.5}
+    for junk in ("0", "123", "800", "-"):
+        assert medisy_to_asik(bundle(gender="P", years=30, screenings=[scr("anemia", hb_checkup=junk)]))[catin] == {}
 
 
 def test_lab_forms_are_40_plus_and_the_kidney_form_carries_the_age():

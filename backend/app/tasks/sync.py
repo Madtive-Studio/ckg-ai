@@ -150,7 +150,6 @@ def _build_config(
     default_values: dict[str, Any] | None = None,
     session_mode: str = "persistent",
     clinical_defaults: bool = True,
-    require_exact_date: bool = False,
 ) -> dict[str, Any]:
     return {
         "base_url": base_url,
@@ -172,8 +171,6 @@ def _build_config(
         # ASIK's patient list is date-range-scoped (default = current week). Without
         # this the sync searches the wrong week and never finds a past-date patient.
         "filter_date": filter_date,
-        # True = fill only an ASIK screening booked on exactly filter_date (the year is not enough).
-        "require_exact_date": require_exact_date,
         # {normalized_label: {value, kind}} — safe defaults for required questions
         # we have no data for (see app/services/asik_defaults.py).
         "default_values": default_values or {},
@@ -214,6 +211,21 @@ def _clinical_defaults_allowed(patient: Patient) -> bool:
     return not is_medisy_blob(blob)
 
 
+def _skip_message(reason: str, output: dict, filter_date) -> str:
+    """User-facing (Bahasa Indonesia) text for a runner skip. The runner's own `error` is English and names the
+    clinic source "ePus" — fine for logs, never for the job error a user reads (CLAUDE.md §7.15)."""
+    tahun_asik = ", ".join(sorted({d[:4] for d in output.get("asik_screening_dates") or [] if d})) or "?"
+    tahun = filter_date.year if filter_date else "?"
+    return {
+        "not_found": "NIK tidak ditemukan di Pelayanan ASIK faskes ini",
+        "year_mismatch": f"pemeriksaan di ASIK tercatat tahun {tahun_asik}, berbeda dari tahun kunjungan Medisy {tahun}",
+        "ambiguous_multi_year": (
+            f"NIK punya pemeriksaan di ASIK pada beberapa tahun ({tahun_asik}), tidak bisa dipilih dengan aman"
+        ),
+        "no_screening_date": "tanggal pemeriksaan di ASIK tidak terbaca, sehingga tahunnya tidak bisa dicek",
+    }.get(reason, "dilewati")
+
+
 def _execute_sync(
     *,
     db,
@@ -229,7 +241,6 @@ def _execute_sync(
     celery_task_id: str,
     cancel_key_str: str,
     session_mode: str = "persistent",
-    require_exact_date: bool = False,
 ) -> str:
     """Run the sync scraper subprocess for ONE patient's SyncJob and finalize it.
 
@@ -270,7 +281,6 @@ def _execute_sync(
                 default_values=build_default_values_map(),
                 session_mode=session_mode,
                 clinical_defaults=_clinical_defaults_allowed(patient),
-                require_exact_date=require_exact_date,
             )
             cfg_path.write_text(json.dumps(cfg))
             os.chmod(cfg_path, 0o600)
@@ -571,7 +581,7 @@ def _execute_sync(
             # year_mismatch skip has patient_found=True).
             if output.get("skipped"):
                 reason = output.get("skip_reason") or "skipped"
-                detail = output.get("error") or reason
+                detail = _skip_message(reason, output, patient.filter_date)
                 sync_job_crud.mark_failed(
                     db, job, f"[SKIP:{reason}] {detail}"[:2000],
                     datetime.now(UTC),
@@ -587,7 +597,9 @@ def _execute_sync(
             if not output.get("patient_found"):
                 sync_job_crud.mark_failed(
                     db, job,
-                    output.get("error") or f"NIK {patient.nik} not found on ASIK",
+                    # The runner's English diagnosis stays in the log; the job error is what the user reads.
+                    "pencarian NIK di Pelayanan ASIK tidak bisa dipastikan (halaman ASIK tidak merespons "
+                    "seperti biasa) — coba kirim lagi",
                     datetime.now(UTC),
                     forms_succeeded=0, forms_failed=0, forms_skipped=0,
                     metrics=resource_metrics,

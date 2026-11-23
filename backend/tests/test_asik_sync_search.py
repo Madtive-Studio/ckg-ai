@@ -73,11 +73,3 @@ def test_the_old_specific_search_response_still_wins_when_present():
               "body": {"data": [{"patient_nik": "3201000000000009", "screening_date": "2026-01-02", "patient_full_name": "LAMA"}]}}
     rows = sync._wait_search_rows(FakePage({"rows": [row("3201000000000001")]}), interceptor(legacy), 0)
     assert rows == [{"nik": "3201000000000009", "screening_date": "2026-01-02", "name": "LAMA"}]
-
-
-def test_exact_date_gate_accepts_only_the_same_visit_date():
-    rows = [{"nik": "1", "screening_date": "2026-11-23"}]
-    assert sync._asik_date_skip(rows, "2026-11-20") is True                  # same year, different day
-    assert sync._asik_date_skip(rows + [{"nik": "1", "screening_date": "2026-11-20T00:00:00"}], "2026-11-20") is False
-    assert sync._asik_date_skip([{"nik": "1", "screening_date": None}], "2026-11-20") is True   # cannot verify -> skip
-    assert sync._asik_date_skip(rows, None) is True

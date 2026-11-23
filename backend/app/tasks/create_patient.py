@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any
 
 import redis
-from sqlalchemy import exists, func, or_, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, aliased, load_only
 
@@ -603,7 +603,8 @@ def create_one_patient(
     patient.filter_date) → on `created`, fill the exam via the existing `_execute_sync`
     (builds merged live from ePus via `epus_to_asik`, stamps `asik_synced_at`, logs
     `asik_default_fills`, finalizes the job). On `already_served`, the same fill runs against
-    the screening ASIK already holds, only when it is booked on exactly patient.filter_date.
+    the screening ASIK already holds in THIS faskes' Pelayanan list (same year gate as a normal sync:
+    ASIK's screening date is when the patient was registered, not when the exam took place).
     Any other register outcome finalizes the job FAILED with a clear reason and publishes the SSE terminal event itself (so a
     watcher's stream closes). Returns (register_outcome, job_terminal_status).
 
@@ -691,17 +692,8 @@ def create_one_patient(
         return "cancelled", "cancelled"
 
     if outcome not in ("created", "already_served"):
-        if outcome == "date_shifted":
-            reason = (
-                f"PERINGATAN: pasien sudah terdaftar di ASIK (tiket={out.get('ticket')}), tetapi ASIK mencatat "
-                f"tanggal pemeriksaan {out.get('booked_date')}, berbeda dari tanggal Medisy "
-                f"{patient.filter_date.isoformat()} — konfirmasi hadir dan pengisian dihentikan. "
-                f"Perbaiki tanggal pemeriksaan di ASIK secara manual."
-            )
-            _log_line(redis_client, log_key, chan, f"[buat] {reason}")
-        else:
-            reason = _REGISTER_FAIL_REASON.get(outcome) or out.get("error") or f"hasil {outcome}"
-            _log_line(redis_client, log_key, chan, f"[buat] tidak dibuat — {outcome}: {reason}")
+        reason = _REGISTER_FAIL_REASON.get(outcome) or out.get("error") or f"hasil {outcome}"
+        _log_line(redis_client, log_key, chan, f"[buat] tidak dibuat — {outcome}: {reason}")
         sync_job_crud.mark_failed(db, job, f"{outcome}: {reason}"[:2000], datetime.now(UTC))
         try:
             redis_client.publish(chan, "__failed__")
@@ -712,7 +704,7 @@ def create_one_patient(
     # Registered + attended → fill the exam via the existing sync machinery. It streams
     # to the SAME job log and finalizes the job (success/failed + SSE terminal event).
     # already_served → ASIK already holds this person: fill the screening found in THIS
-    # faskes' Pelayanan list, but only one booked on exactly the Medisy visit date.
+    # faskes' Pelayanan list (normal sync year gate).
     if outcome == "created":
         _log_line(
             redis_client, log_key, chan,
@@ -723,7 +715,7 @@ def create_one_patient(
         _log_line(
             redis_client, log_key, chan,
             f"[buat] {_REGISTER_FAIL_REASON['already_served']} → mencari di Pelayanan faskes ini "
-            f"dengan tanggal pemeriksaan {patient.filter_date.isoformat()} lalu mengisi dari sana",
+            f"lalu mengisi dari sana",
         )
     merged = clinic_to_asik(epus)
     forms_total = sum(
@@ -743,7 +735,6 @@ def create_one_patient(
         headless=headless,
         celery_task_id=celery_task_id,
         cancel_key_str=cancel_key_str,
-        require_exact_date=outcome == "already_served",
     )
     if outcome == "already_served" and status == "failed":
         # Keep the "already_served:" prefix: the batch treats it as terminal and must not re-pick the patient.
@@ -858,11 +849,7 @@ def create_batch(
     # every run. The manual single create (create.run_one) does not go through here.
     conds.append(~exists().where(
         SyncJob.patient_id == Patient.id,
-        or_(
-            SyncJob.error_message.like("already_served:%"),
-            # Registered on another day than the visit: needs a manual ASIK fix, never a re-run.
-            SyncJob.error_message.like("date_shifted:%"),
-        ),
+        SyncJob.error_message.like("already_served:%"),
         SyncJob.deleted_at.is_(None),
     ))
     patients = list(db.scalars(
@@ -878,7 +865,7 @@ def create_batch(
 
     tally = {
         "created": 0, "filled": 0, "fill_failed": 0,
-        "already_served": 0, "dukcapil_invalid": 0, "date_shifted": 0,
+        "already_served": 0, "dukcapil_invalid": 0,
         "cancelled": 0, "skipped_active_job": 0, "needs_wali": 0, "error": 0, "skipped_no_alamat": 0,
     }
     created_niks: list[str] = []
@@ -953,7 +940,7 @@ def create_batch(
             tally["created"] += 1
             created_niks.append(nik)
             tally["filled" if status == "success" else "fill_failed"] += 1
-        elif outcome in ("already_served", "dukcapil_invalid", "needs_wali", "date_shifted"):
+        elif outcome in ("already_served", "dukcapil_invalid", "needs_wali"):
             tally[outcome] += 1
         elif outcome == "cancelled":
             tally["cancelled"] += 1

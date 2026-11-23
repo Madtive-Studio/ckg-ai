@@ -206,7 +206,7 @@ def test_closest_option_accepts_only_a_very_close_unambiguous_spelling():
     assert _closest_option("Pelabuhanratu", []) is None
 
 
-# --- already_served: fill the screening ASIK already holds, exact visit date only ---
+# --- already_served: fill the screening ASIK already holds in this faskes' Pelayanan ---
 
 
 class _FakeDb:
@@ -224,7 +224,7 @@ def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None):
     job = SimpleNamespace(id="00000000-0000-0000-0000-000000000001", error_message=None)
 
     def fake_execute_sync(**kw):
-        calls["require_exact_date"] = kw["require_exact_date"]
+        calls["filled"] = True
         job.error_message = sync_error
         return sync_status
 
@@ -234,8 +234,7 @@ def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None):
     monkeypatch.setattr(cp, "_build_step2", lambda *a: {"alamat": "x"})
     monkeypatch.setattr(cp, "_build_register_config", lambda **k: {})
     monkeypatch.setattr(cp, "_asik_session_dir", lambda pid: "/tmp/x")
-    monkeypatch.setattr(cp, "_run_register",
-                        lambda **k: {"outcome": register_outcome, "ticket": "T", "booked_date": "2026-11-23"})
+    monkeypatch.setattr(cp, "_run_register", lambda **k: {"outcome": register_outcome, "ticket": "T"})
     monkeypatch.setattr(cp, "clinic_to_asik", lambda epus: {})
     monkeypatch.setattr(cp, "_execute_sync", fake_execute_sync)
 
@@ -248,24 +247,24 @@ def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None):
     return result, calls, job
 
 
-def test_already_served_fills_from_pelayanan_on_the_exact_visit_date(monkeypatch):
+def test_already_served_fills_from_pelayanan(monkeypatch):
     result, calls, _ = _run_create(monkeypatch, register_outcome="already_served", sync_status="success")
     assert result == ("already_served", "success")
-    assert calls["require_exact_date"] is True
+    assert calls == {"filled": True}
 
 
 def test_already_served_that_cannot_be_filled_stays_terminal_for_the_batch(monkeypatch):
     result, _, job = _run_create(monkeypatch, register_outcome="already_served", sync_status="failed",
-                                 sync_error="[SKIP:date_mismatch] different visit")
+                                 sync_error="[SKIP:year_mismatch] beda tahun")
     assert result == ("already_served", "failed")
     assert job.error_message.startswith("already_served:")       # create_batch's terminal filter
-    assert "date_mismatch" in job.error_message
+    assert "year_mismatch" in job.error_message
 
 
-def test_a_fresh_registration_still_fills_on_the_year_only(monkeypatch):
+def test_a_fresh_registration_fills(monkeypatch):
     result, calls, _ = _run_create(monkeypatch, register_outcome="created", sync_status="success")
     assert result == ("created", "success")
-    assert calls["require_exact_date"] is False
+    assert calls == {"filled": True}
 
 
 def test_other_register_outcomes_never_fill(monkeypatch):
@@ -275,22 +274,11 @@ def test_other_register_outcomes_never_fill(monkeypatch):
     assert job.error_message.startswith("dukcapil_invalid:")
 
 
-def test_a_registration_asik_moved_to_another_day_stops_before_any_fill(monkeypatch):
-    result, calls, job = _run_create(monkeypatch, register_outcome="date_shifted", sync_status="success")
-    assert result == ("date_shifted", "failed")
-    assert calls == {}                                               # no Pelayanan fill on the wrong date
-    assert job.error_message.startswith("date_shifted: PERINGATAN")  # create_batch's terminal filter
-    assert "2026-11-23" in job.error_message and "2026-11-20" in job.error_message
+@pytest.mark.parametrize("reason", ["not_found", "year_mismatch", "ambiguous_multi_year", "no_screening_date", "lain"])
+def test_skip_messages_users_read_are_indonesian_and_never_name_epus(reason):
+    from app.tasks.sync import _skip_message
 
-
-def test_terdaftar_row_exam_date_is_the_first_date_not_the_birth_date():
-    import sys
-    from pathlib import Path
-
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scrapers" / "asik_sync"))
-    from register import _row_exam_date
-
-    row = "1 23 Nov 2026 Alifa Junika Putri 28 Jun 2001 Perempuan Sudah Terdaftar 0800000000"
-    assert _row_exam_date(row) == "2026-11-23"
-    assert _row_exam_date("3 20 Agt 2026 Enda 13 Agt 1956 Laki-Laki") == "2026-08-20"
-    assert _row_exam_date("tidak ada tanggal") is None
+    msg = _skip_message(reason, {"asik_screening_dates": ["2025-11-23"], "error": "!= ePus year 2026"}, date(2026, 11, 20))
+    assert "epus" not in msg.lower() and "skip" not in msg.lower()
+    if reason == "year_mismatch":
+        assert "2025" in msg and "2026" in msg

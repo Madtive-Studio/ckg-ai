@@ -766,7 +766,57 @@ def create_one_patient(
             f"Pelayanan — {job.error_message or 'alasan tidak diketahui'}"
         )[:2000]
         db.commit()
+    if status == "success" and (job.forms_succeeded or 0) > 0:
+        _refresh_from_asik(db, job=job, patient=patient, headless=headless,
+                           redis_client=redis_client, log_key=log_key, chan=chan)
     return outcome, status
+
+
+def _refresh_from_asik(
+    db: Session,
+    *,
+    job: "SyncJob",
+    patient: Patient,
+    headless: bool,
+    redis_client: "redis.Redis",
+    log_key: str,
+    chan: str,
+) -> None:
+    """Read this patient back from ASIK once a form landed, so the row pairs with its ASIK twin and the patient list stops
+    showing "Hanya Medisy" (→ "Cocok"). Runs the existing per-NIK ASIK scrape INLINE: it reuses this puskesmas' one ASIK browser
+    session, which the create flow holds sequentially, so a queued task could collide with the next patient. Never raises —
+    the forms are already in ASIK; a failed read-back only leaves the status as it was."""
+    from app.crud import scrape_job as scrape_job_crud
+    from app.tasks.scrape import run_scrape
+
+    _log_line(redis_client, log_key, chan, "[buat] mengambil data ASIK pasien ini supaya statusnya menjadi Cocok")
+    try:
+        scrape_job = scrape_job_crud.create(
+            db,
+            puskesmas_id=job.puskesmas_id,
+            kind=ScrapeKind.ASIK,
+            date_filter=patient.filter_date.isoformat(),
+            triggered_by_id=job.triggered_by_id,
+            triggered_by_type=job.triggered_by_type,
+            patient_id=patient.id,
+        )
+    except IntegrityError:
+        db.rollback()
+        _log_line(redis_client, log_key, chan,
+                  "[buat] ambil data ASIK dilewati: ambil data ASIK lain untuk puskesmas ini masih berjalan")
+        return
+    try:
+        run_scrape.run(str(scrape_job.id), ScrapeKind.ASIK.value, headless)
+    except Exception as exc:
+        log.warning("ASIK read-back after create failed for patient %s: %s", patient.id, exc)
+    db.refresh(scrape_job, ["status", "error_message"])
+    db.refresh(patient, ["match_status"])
+    if patient.match_status == MatchStatus.MATCHED:
+        _log_line(redis_client, log_key, chan, "[buat] status pasien sekarang Cocok")
+    else:
+        detail = f" — {scrape_job.error_message[:300]}" if scrape_job.error_message else ""
+        _log_line(redis_client, log_key, chan,
+                  f"[buat] status pasien belum berubah (ambil data ASIK: {scrape_job.status.value}{detail})")
 
 
 def create_batch(

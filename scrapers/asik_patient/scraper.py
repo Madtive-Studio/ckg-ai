@@ -57,8 +57,11 @@ from helpers import (  # noqa: E402
     login,
     navigate_to_pelayanan,
     close_popups,
+    install_decoded_list_hook,
+    read_decoded_list,
+    reset_decoded_list,
 )
-from patient_scraper import scrape_patient_via_api, get_mitra_token  # noqa: E402
+from patient_scraper import open_detail_via_mulai, scrape_patient_via_api  # noqa: E402
 from sync import (  # noqa: E402
     _click_tab,
     _fill_search_input,
@@ -122,6 +125,7 @@ def _find_patient_tab_and_record(
     for tab_name, _key in _TABS:
         console.print(f"  Trying tab: {tab_name}")
         interceptor.clear()
+        reset_decoded_list(page)
         _click_tab(page, tab_name)
         page.wait_for_timeout(1500)
         # Tab switch can reset the dropdown back to Nama; re-select NIK
@@ -135,7 +139,9 @@ def _find_patient_tab_and_record(
         if not (badge == 1 or mulai == 1):
             continue
 
-        records = _specific_search_records(interceptor)
+        # Current ASIK answers the NIK search through the ENCODED list call; its rows are what the page itself decoded
+        # (same source asik_sync reads). The old specific-search response is kept for an older ASIK build.
+        records = _specific_search_records(interceptor) + read_decoded_list(page)
         match = next(
             (r for r in records if str(r.get("patient_nik") or "").strip() == nik),
             None,
@@ -210,6 +216,7 @@ def run(args) -> dict:
         page.set_default_timeout(cfg.get("timeout", 60000))
         interceptor = APIInterceptor(verbose=False)
         context.on("response", interceptor.on_response)
+        install_decoded_list_hook(context)
 
         try:
             captcha_duration = login(
@@ -244,9 +251,6 @@ def run(args) -> dict:
             result_key = _result_key_for_tab(tab_name or "")
             console.print(f"  [green]Patient found in: {tab_name}[/green]")
 
-            mitra = get_mitra_token(page.context, base_url)
-            console.print(f"  [dim]mitra token: {mitra[:24]}…[/dim]")
-
             reg_id = target.get("reg_id")
             faskes_code = target.get("faskes_code")
             screening_date = target.get("screening_date")
@@ -255,17 +259,21 @@ def run(args) -> dict:
                 f"({target.get('ticket_number','')})"
             )
 
+            # Current ASIK rejects a plain POST /detail-screening (400): the detail only comes from ASIK's own page,
+            # reached by clicking the row's "Mulai" (same as the daily scraper).
+            data = open_detail_via_mulai(page, ticket_number=target.get("ticket_number") or "", reg_id=reg_id)
             detail = scrape_patient_via_api(
                 page.context,
                 base_url=base_url,
                 faskes_code=faskes_code,
-                screening_date=screening_date,
+                screening_date=data.get("screening_date") or screening_date,
                 reg_id=reg_id,
-                mitra=mitra,
+                mitra="",
                 patient_label=label,
                 pelayanan_nakes_only=bool(cfg.get("pelayanan_nakes_only", False)),
                 include_blank_forms=bool(cfg.get("include_blank_forms", False)),
                 scrape_tatalaksana=bool(cfg.get("scrape_tatalaksana", True)),
+                detail=data,
             )
 
             if result_key:

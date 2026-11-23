@@ -24,6 +24,11 @@ sumber di bagian "Tentang Aplikasi Ini & Asal Data".)
   - **Hanya ASIK** — datanya baru ada di ASIK, belum cocok dengan Medisy.
   - **Cocok** — kunjungan yang sama ditemukan di **kedua** sumber (inilah
     calon **pasien CKG** yang masuk ke registri).
+  - Pasien **Hanya Medisy** yang dibuat dan dikirim ke ASIK lewat aplikasi ini
+    langsung diambil lagi data ASIK-nya begitu minimal satu formulir berhasil
+    terkirim, sehingga statusnya berubah menjadi **Cocok**. Bila pengambilan
+    data ASIK itu gagal, statusnya tetap dan berubah pada pengambilan data ASIK
+    berikutnya.
 - **Penggabungan** — apakah hasil gabungan (merge) sudah dibuat untuk pasien itu.
 - **Status CKG** — bawaannya **Sudah CKG**, jadi daftar awalnya hanya
   menampilkan kunjungan CKG:

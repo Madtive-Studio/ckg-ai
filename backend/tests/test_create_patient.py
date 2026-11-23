@@ -217,11 +217,11 @@ class _FakeDb:
         pass
 
 
-def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None):
+def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None, forms_succeeded=0):
     import app.tasks.create_patient as cp
 
     calls = {}
-    job = SimpleNamespace(id="00000000-0000-0000-0000-000000000001", error_message=None)
+    job = SimpleNamespace(id="00000000-0000-0000-0000-000000000001", error_message=None, forms_succeeded=forms_succeeded)
 
     def fake_execute_sync(**kw):
         calls["filled"] = True
@@ -242,6 +242,7 @@ def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None):
     monkeypatch.setattr(cp, "_record_llm_usage", lambda db, cfg_id, usage, **k: calls.setdefault("llm_logs", []).append((cfg_id, list(usage), k)))
     monkeypatch.setattr(cp, "clinic_to_asik", lambda epus: {})
     monkeypatch.setattr(cp, "_execute_sync", fake_execute_sync)
+    monkeypatch.setattr(cp, "_refresh_from_asik", lambda db, **k: calls.__setitem__("asik_read_back", True))
 
     patient = SimpleNamespace(id="pt", nik="3201000000000001", birth_date=date(1990, 1, 1), filter_date=date(2026, 11, 20))
     rc = SimpleNamespace(rpush=lambda *a: None, ltrim=lambda *a: None, expire=lambda *a: None, publish=lambda *a: None)
@@ -277,6 +278,18 @@ def test_other_register_outcomes_never_fill(monkeypatch):
     assert result == ("dukcapil_invalid", "failed")
     assert "filled" not in calls
     assert job.error_message.startswith("dukcapil_invalid:")
+
+
+@pytest.mark.parametrize("outcome", ["created", "already_served"])
+def test_a_send_that_landed_a_form_reads_the_patient_back_from_asik(monkeypatch, outcome):
+    _, calls, _ = _run_create(monkeypatch, register_outcome=outcome, sync_status="success", forms_succeeded=2)
+    assert calls.get("asik_read_back") is True
+
+
+@pytest.mark.parametrize("sync_status,forms_succeeded", [("success", 0), ("failed", 2)])
+def test_no_read_back_when_nothing_landed(monkeypatch, sync_status, forms_succeeded):
+    _, calls, _ = _run_create(monkeypatch, register_outcome="created", sync_status=sync_status, forms_succeeded=forms_succeeded)
+    assert "asik_read_back" not in calls
 
 
 @pytest.mark.parametrize("outcome", ["created", "already_served", "dukcapil_invalid"])

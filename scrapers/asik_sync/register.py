@@ -1314,10 +1314,18 @@ def _search_terdaftar_by_nik(page: Page, nik: str) -> None:
         console.print(f"    [yellow]Terdaftar NIK-search (fallback) failed: {exc}[/yellow]")
 
 
+def _row_exam_date(row_text: str) -> str | None:
+    """ISO date of the FIRST 'DD Mon YYYY' in a Terdaftar row — the Tanggal Pemeriksaan
+    column comes before Tanggal Lahir ('1 23 Nov 2026 Alifa … 28 Jun 2001 …')."""
+    m = re.search(r"\b(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\b", row_text or "")
+    month = _exam_month_num(m.group(2)) if m else None
+    return f"{m.group(3)}-{month:02d}-{int(m.group(1)):02d}" if month else None
+
+
 def _konfirmasi_hadir(
     page: Page, base_url: str, nama: str, nik: str, ticket: str | None,
     exam_date: str | None = None,
-) -> bool:
+) -> tuple[bool, str | None]:
     """Mark the just-registered patient 'hadir' so they surface in /ckg-pelayanan
     'Belum Pemeriksaan', where the existing sync.py fill picks them up.
 
@@ -1331,7 +1339,9 @@ def _konfirmasi_hadir(
     first; the day's registrations then render directly and we locate the row by name
     (the list shows Nama/Tgl Lahir but no NIK). A NIK search narrows a paginated day.
     On the row: 'Konfirmasi Hadir' → the 'Tandai Hadir?' popup → tick consent #verify →
-    'Hadir' (the popup's confirm; NOT 'Konfirmasi Hadir'). Returns True on apparent success."""
+    'Hadir' (the popup's confirm; NOT 'Konfirmasi Hadir'). Returns (hadir, booked_date):
+    booked_date is the row's Tanggal Pemeriksaan (None when unreadable). When it differs
+    from `exam_date`, ASIK booked another day, so we stop WITHOUT marking hadir."""
     try:
         # Fresh load ⇒ clean state (no post-commit modal backdrop over the datepicker).
         page.goto(base_url + REGISTER_PATH, wait_until="domcontentloaded")
@@ -1355,16 +1365,24 @@ def _konfirmasi_hadir(
                 f"(date filter={exam_date}, nik={nik})[/yellow]"
             )
             _dump_terdaftar(page)
-            return False
+            return False, None
+        booked = _row_exam_date(row.first.inner_text())
+        if exam_date and booked and booked != exam_date:
+            console.print(
+                f"    [bold red]ASIK booked Tanggal Pemeriksaan {booked}, not the requested "
+                f"{exam_date} — NOT marking hadir, stopping[/bold red]"
+            )
+            _dump_terdaftar(page)
+            return False, booked
         # Already attended? Then we're done.
         if row.filter(has_text=re.compile("Sudah Hadir", re.I)).count():
             console.print(f"    [green]row for '{nama}' already 'Sudah Hadir'[/green]")
-            return True
+            return True, booked
         btn = row.get_by_role("button", name=re.compile("Konfirmasi Hadir", re.I))
         if not btn.count():
             console.print("    [yellow]Konfirmasi Hadir: row found but no 'Konfirmasi Hadir' button[/yellow]")
             _dump_terdaftar(page)
-            return False
+            return False, booked
         btn.first.click()
         page.wait_for_timeout(1500)
         # 'Tandai Hadir?' popup: tick consent (#verify), then click the enabled 'Hadir'.
@@ -1374,13 +1392,13 @@ def _konfirmasi_hadir(
         hadir = page.get_by_role("button", name="Hadir", exact=True)
         if not hadir.count():
             console.print("    [yellow]'Hadir' confirm button not found in 'Tandai Hadir?' popup[/yellow]")
-            return False
+            return False, booked
         hadir.first.click()
         page.wait_for_timeout(1500)
-        return True
+        return True, booked
     except Exception as exc:
         console.print(f"[yellow]Konfirmasi Hadir failed: {exc}[/yellow]")
-        return False
+        return False, None
 
 
 # ---------------------------------------------------------------------------
@@ -1482,13 +1500,17 @@ def _register_flow(page: Page, base_url: str, reg: dict, dry_run_probe: bool):
                 outcome = "step2_filled"  # fill-only: nothing committed
             else:
                 ticket = _step3_select_and_commit(page, nik)
-                hadir = _konfirmasi_hadir(
+                hadir, booked = _konfirmasi_hadir(
                     page, base_url, reg["nama"], nik, ticket, reg.get("exam_date")
                 )
                 shot = _screenshot(page, nik) or shot
                 extra["ticket"] = ticket
                 extra["hadir"] = hadir
-                outcome = "created"
+                extra["booked_date"] = booked
+                # Registered, but ASIK moved the exam to another day (e.g. a full day's
+                # "Kuota Pemeriksaan Habis" → Lanjut): never fill a screening on the wrong date.
+                shifted = reg.get("exam_date") and booked and booked != reg.get("exam_date")
+                outcome = "date_shifted" if shifted else "created"
 
     return outcome, served_detail, step2_dom, shot, extra
 
@@ -1520,6 +1542,7 @@ def run(args) -> dict:
         "step2_dom": None,
         "ticket": None,
         "hadir": None,
+        "booked_date": None,
         "screenshot": None,
         "elapsed_seconds": 0.0,
         "captcha_seconds": 0.0,
@@ -1552,6 +1575,7 @@ def run(args) -> dict:
             result["step2_dom"] = step2_dom
             result["ticket"] = extra.get("ticket")
             result["hadir"] = extra.get("hadir")
+            result["booked_date"] = extra.get("booked_date")
             result["screenshot"] = shot
             return result
         except Exception as e:

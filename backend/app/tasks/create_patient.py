@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any
 
 import redis
-from sqlalchemy import exists, func, select
+from sqlalchemy import exists, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, aliased, load_only
 
@@ -691,8 +691,17 @@ def create_one_patient(
         return "cancelled", "cancelled"
 
     if outcome not in ("created", "already_served"):
-        reason = _REGISTER_FAIL_REASON.get(outcome) or out.get("error") or f"hasil {outcome}"
-        _log_line(redis_client, log_key, chan, f"[buat] tidak dibuat — {outcome}: {reason}")
+        if outcome == "date_shifted":
+            reason = (
+                f"PERINGATAN: pasien sudah terdaftar di ASIK (tiket={out.get('ticket')}), tetapi ASIK mencatat "
+                f"tanggal pemeriksaan {out.get('booked_date')}, berbeda dari tanggal Medisy "
+                f"{patient.filter_date.isoformat()} — konfirmasi hadir dan pengisian dihentikan. "
+                f"Perbaiki tanggal pemeriksaan di ASIK secara manual."
+            )
+            _log_line(redis_client, log_key, chan, f"[buat] {reason}")
+        else:
+            reason = _REGISTER_FAIL_REASON.get(outcome) or out.get("error") or f"hasil {outcome}"
+            _log_line(redis_client, log_key, chan, f"[buat] tidak dibuat — {outcome}: {reason}")
         sync_job_crud.mark_failed(db, job, f"{outcome}: {reason}"[:2000], datetime.now(UTC))
         try:
             redis_client.publish(chan, "__failed__")
@@ -849,7 +858,11 @@ def create_batch(
     # every run. The manual single create (create.run_one) does not go through here.
     conds.append(~exists().where(
         SyncJob.patient_id == Patient.id,
-        SyncJob.error_message.like("already_served:%"),
+        or_(
+            SyncJob.error_message.like("already_served:%"),
+            # Registered on another day than the visit: needs a manual ASIK fix, never a re-run.
+            SyncJob.error_message.like("date_shifted:%"),
+        ),
         SyncJob.deleted_at.is_(None),
     ))
     patients = list(db.scalars(
@@ -865,7 +878,7 @@ def create_batch(
 
     tally = {
         "created": 0, "filled": 0, "fill_failed": 0,
-        "already_served": 0, "dukcapil_invalid": 0,
+        "already_served": 0, "dukcapil_invalid": 0, "date_shifted": 0,
         "cancelled": 0, "skipped_active_job": 0, "needs_wali": 0, "error": 0, "skipped_no_alamat": 0,
     }
     created_niks: list[str] = []
@@ -940,7 +953,7 @@ def create_batch(
             tally["created"] += 1
             created_niks.append(nik)
             tally["filled" if status == "success" else "fill_failed"] += 1
-        elif outcome in ("already_served", "dukcapil_invalid", "needs_wali"):
+        elif outcome in ("already_served", "dukcapil_invalid", "needs_wali", "date_shifted"):
             tally[outcome] += 1
         elif outcome == "cancelled":
             tally["cancelled"] += 1

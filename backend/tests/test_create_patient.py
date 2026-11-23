@@ -234,7 +234,8 @@ def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None):
     monkeypatch.setattr(cp, "_build_step2", lambda *a: {"alamat": "x"})
     monkeypatch.setattr(cp, "_build_register_config", lambda **k: {})
     monkeypatch.setattr(cp, "_asik_session_dir", lambda pid: "/tmp/x")
-    monkeypatch.setattr(cp, "_run_register", lambda **k: {"outcome": register_outcome, "ticket": "T"})
+    monkeypatch.setattr(cp, "_run_register",
+                        lambda **k: {"outcome": register_outcome, "ticket": "T", "booked_date": "2026-11-23"})
     monkeypatch.setattr(cp, "clinic_to_asik", lambda epus: {})
     monkeypatch.setattr(cp, "_execute_sync", fake_execute_sync)
 
@@ -272,3 +273,24 @@ def test_other_register_outcomes_never_fill(monkeypatch):
     assert result == ("dukcapil_invalid", "failed")
     assert calls == {}
     assert job.error_message.startswith("dukcapil_invalid:")
+
+
+def test_a_registration_asik_moved_to_another_day_stops_before_any_fill(monkeypatch):
+    result, calls, job = _run_create(monkeypatch, register_outcome="date_shifted", sync_status="success")
+    assert result == ("date_shifted", "failed")
+    assert calls == {}                                               # no Pelayanan fill on the wrong date
+    assert job.error_message.startswith("date_shifted: PERINGATAN")  # create_batch's terminal filter
+    assert "2026-11-23" in job.error_message and "2026-11-20" in job.error_message
+
+
+def test_terdaftar_row_exam_date_is_the_first_date_not_the_birth_date():
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scrapers" / "asik_sync"))
+    from register import _row_exam_date
+
+    row = "1 23 Nov 2026 Alifa Junika Putri 28 Jun 2001 Perempuan Sudah Terdaftar 0800000000"
+    assert _row_exam_date(row) == "2026-11-23"
+    assert _row_exam_date("3 20 Agt 2026 Enda 13 Agt 1956 Laki-Laki") == "2026-08-20"
+    assert _row_exam_date("tidak ada tanggal") is None

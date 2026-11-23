@@ -226,6 +226,66 @@ def _skip_message(reason: str, output: dict, filter_date) -> str:
     }.get(reason, "dilewati")
 
 
+def _record_llm_usage(db, llm_config_id_str: str | None, usage: list[dict], *, patient_id, puskesmas_id) -> None:
+    """Write one `llm_logs` row per `LLM_USAGE:` marker an ASIK subprocess printed (captcha solves).
+    Never raises — a logging failure must not fail the sync/register it belongs to."""
+    if not llm_config_id_str or not usage:
+        return
+    try:
+        llm_cfg_uuid = uuid.UUID(llm_config_id_str)
+        pricing_row = db.scalar(
+            select(LlmConfig)
+            .options(load_only(
+                LlmConfig.id,
+                LlmConfig.input_price_per_1m,
+                LlmConfig.output_price_per_1m,
+            ))
+            .where(LlmConfig.id == llm_cfg_uuid)
+        )
+        in_rate = pricing_row.input_price_per_1m if pricing_row else None
+        out_rate = pricing_row.output_price_per_1m if pricing_row else None
+        for u in usage:
+            model = u.get("model")
+            if not model:
+                log.warning("sync llm_log missing model; skipping: %r", u)
+                continue
+            in_tok = u.get("input_tokens")
+            out_tok = u.get("output_tokens")
+            prompt_cost = _calc_cost(in_tok, in_rate)
+            completion_cost = _calc_cost(out_tok, out_rate)
+            total_cost = (
+                prompt_cost + completion_cost
+                if prompt_cost is not None and completion_cost is not None
+                else None
+            )
+            try:
+                with db.begin_nested():
+                    llm_log_crud.record(
+                        db,
+                        llm_config_id=llm_cfg_uuid,
+                        source=u.get("source", "asik_sync_captcha"),
+                        model=model,
+                        success=bool(u.get("success")),
+                        patient_id=patient_id,
+                        puskesmas_id=puskesmas_id,
+                        input_tokens=in_tok,
+                        output_tokens=out_tok,
+                        total_tokens=u.get("total_tokens"),
+                        reasoning_tokens=u.get("reasoning_tokens"),
+                        prompt_cost=prompt_cost,
+                        completion_cost=completion_cost,
+                        total_cost=total_cost,
+                        latency_ms=u.get("latency_ms"),
+                        error=u.get("error"),
+                    )
+            except Exception as exc:
+                log.warning("failed to write sync llm_log row: %s", exc)
+        db.commit()
+    except Exception as exc:
+        log.warning("failed to write sync llm_logs batch: %s", exc)
+        db.rollback()
+
+
 def _execute_sync(
     *,
     db,
@@ -367,60 +427,10 @@ def _execute_sync(
             usage_snapshot = list(usage_buffer)
             duration = time.monotonic() - t0
 
-            if llm_config_id_str and usage_snapshot:
-                try:
-                    llm_cfg_uuid = uuid.UUID(llm_config_id_str)
-                    pricing_row = db.scalar(
-                        select(LlmConfig)
-                        .options(load_only(
-                            LlmConfig.id,
-                            LlmConfig.input_price_per_1m,
-                            LlmConfig.output_price_per_1m,
-                        ))
-                        .where(LlmConfig.id == llm_cfg_uuid)
-                    )
-                    in_rate = pricing_row.input_price_per_1m if pricing_row else None
-                    out_rate = pricing_row.output_price_per_1m if pricing_row else None
-                    for u in usage_snapshot:
-                        model = u.get("model")
-                        if not model:
-                            log.warning("sync llm_log missing model; skipping: %r", u)
-                            continue
-                        in_tok = u.get("input_tokens")
-                        out_tok = u.get("output_tokens")
-                        prompt_cost = _calc_cost(in_tok, in_rate)
-                        completion_cost = _calc_cost(out_tok, out_rate)
-                        total_cost = (
-                            prompt_cost + completion_cost
-                            if prompt_cost is not None and completion_cost is not None
-                            else None
-                        )
-                        try:
-                            with db.begin_nested():
-                                llm_log_crud.record(
-                                    db,
-                                    llm_config_id=llm_cfg_uuid,
-                                    source=u.get("source", "asik_sync_captcha"),
-                                    model=model,
-                                    success=bool(u.get("success")),
-                                    patient_id=job.patient_id,
-                                    puskesmas_id=job.puskesmas_id,
-                                    input_tokens=in_tok,
-                                    output_tokens=out_tok,
-                                    total_tokens=u.get("total_tokens"),
-                                    reasoning_tokens=u.get("reasoning_tokens"),
-                                    prompt_cost=prompt_cost,
-                                    completion_cost=completion_cost,
-                                    total_cost=total_cost,
-                                    latency_ms=u.get("latency_ms"),
-                                    error=u.get("error"),
-                                )
-                        except Exception as exc:
-                            log.warning("failed to write sync llm_log row: %s", exc)
-                    db.commit()
-                except Exception as exc:
-                    log.warning("failed to write sync llm_logs batch: %s", exc)
-                    db.rollback()
+            _record_llm_usage(
+                db, llm_config_id_str, usage_snapshot,
+                patient_id=job.patient_id, puskesmas_id=job.puskesmas_id,
+            )
 
             if cancelled:
                 try:

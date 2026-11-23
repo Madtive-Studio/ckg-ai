@@ -597,6 +597,30 @@ def _resolve_current_row(rows: list[dict], target: dict) -> dict | None:
     return matches[occurrence] if occurrence < len(matches) else None
 
 
+def _enumerate_forms_settled(page: Page, detail_url: str) -> list[dict]:
+    """The detail page's form rows once they have rendered (reloading the page once).
+
+    The rows arrive after the URL does, so an immediate enumeration can read 0 forms
+    and the patient would "finish" with nothing tried. Wait until two consecutive
+    reads agree on a non-zero count.
+    """
+    for reload in (False, True):
+        if reload:
+            try:
+                page.goto(detail_url, wait_until="domcontentloaded", timeout=_NAV_TIMEOUT_MS)
+            except Exception:
+                pass
+            close_popups(page, silent=True)
+        previous = -1
+        for _ in range(15):
+            forms = _enumerate_forms(page)
+            if forms and len(forms) == previous:
+                return _stamp_occurrences(forms)
+            previous = len(forms)
+            page.wait_for_timeout(1000)
+    return []
+
+
 def _find_row_after_rerender(page: Page, target: dict, detail_url: str) -> tuple[list[dict], dict | None]:
     """Re-enumerate until `target` is back, reloading the detail page once.
 
@@ -2239,8 +2263,12 @@ def run(args) -> dict:
                     close_popups(page, silent=True)
                     page.wait_for_timeout(1500)
 
-            forms = _stamp_occurrences(_enumerate_forms(page))
+            forms = _enumerate_forms_settled(page, detail_url)
             console.print(f"  Detected {len(forms)} forms on detail page")
+            if not forms:
+                raise RuntimeError(
+                    "no form rows rendered on the patient's detail page (even after a reload) — nothing was filled"
+                )
 
             # `forms` is the work list; `current_rows` is where those rows live
             # RIGHT NOW. They diverge as soon as a submit re-renders the page,

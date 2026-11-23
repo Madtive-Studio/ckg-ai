@@ -115,3 +115,16 @@ def test_row_really_gone_returns_none(monkeypatch):
     page = RerenderPage([other], empty_reads=0)
     _, row = sync._find_row_after_rerender(page, FORM, "https://asik.example/detail")
     assert row is None and page.gotos == 1
+
+
+def test_initial_enumeration_waits_for_the_rows_to_render(monkeypatch):
+    monkeypatch.setattr(sync, "close_popups", lambda *a, **k: None)
+    page = RerenderPage([FORM, dict(FORM, layanan="Pemeriksaan HIV")], empty_reads=4)
+    forms = sync._enumerate_forms_settled(page, "https://asik.example/detail")
+    assert len(forms) == 2 and page.gotos == 0
+
+
+def test_initial_enumeration_reloads_once_then_gives_up_empty(monkeypatch):
+    monkeypatch.setattr(sync, "close_popups", lambda *a, **k: None)
+    page = RerenderPage([FORM], empty_reads=10**6)
+    assert sync._enumerate_forms_settled(page, "https://asik.example/detail") == [] and page.gotos == 1

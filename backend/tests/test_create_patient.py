@@ -234,15 +234,20 @@ def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None):
     monkeypatch.setattr(cp, "_build_step2", lambda *a: {"alamat": "x"})
     monkeypatch.setattr(cp, "_build_register_config", lambda **k: {})
     monkeypatch.setattr(cp, "_asik_session_dir", lambda pid: "/tmp/x")
-    monkeypatch.setattr(cp, "_run_register", lambda **k: {"outcome": register_outcome, "ticket": "T"})
+    def fake_run_register(**k):
+        k["usage_buffer"].append({"source": "asik_captcha", "model": "m"})  # the register login solved a captcha
+        return {"outcome": register_outcome, "ticket": "T"}
+
+    monkeypatch.setattr(cp, "_run_register", fake_run_register)
+    monkeypatch.setattr(cp, "_record_llm_usage", lambda db, cfg_id, usage, **k: calls.setdefault("llm_logs", []).append((cfg_id, list(usage), k)))
     monkeypatch.setattr(cp, "clinic_to_asik", lambda epus: {})
     monkeypatch.setattr(cp, "_execute_sync", fake_execute_sync)
 
-    patient = SimpleNamespace(nik="3201000000000001", birth_date=date(1990, 1, 1), filter_date=date(2026, 11, 20))
+    patient = SimpleNamespace(id="pt", nik="3201000000000001", birth_date=date(1990, 1, 1), filter_date=date(2026, 11, 20))
     rc = SimpleNamespace(rpush=lambda *a: None, ltrim=lambda *a: None, expire=lambda *a: None, publish=lambda *a: None)
     result = cp.create_one_patient(
         _FakeDb(), job=job, patient=patient, epus={}, puskesmas=SimpleNamespace(id="p"), base_url="https://a",
-        creds={}, captcha_solver={}, headless=True, redis_client=rc, cancel_key_str="k",
+        creds={}, captcha_solver={"llm_config_id": "cfg"}, headless=True, redis_client=rc, cancel_key_str="k",
     )
     return result, calls, job
 
@@ -250,7 +255,7 @@ def _run_create(monkeypatch, *, register_outcome, sync_status, sync_error=None):
 def test_already_served_fills_from_pelayanan(monkeypatch):
     result, calls, _ = _run_create(monkeypatch, register_outcome="already_served", sync_status="success")
     assert result == ("already_served", "success")
-    assert calls == {"filled": True}
+    assert calls["filled"] is True
 
 
 def test_already_served_that_cannot_be_filled_stays_terminal_for_the_batch(monkeypatch):
@@ -264,14 +269,40 @@ def test_already_served_that_cannot_be_filled_stays_terminal_for_the_batch(monke
 def test_a_fresh_registration_fills(monkeypatch):
     result, calls, _ = _run_create(monkeypatch, register_outcome="created", sync_status="success")
     assert result == ("created", "success")
-    assert calls == {"filled": True}
+    assert calls["filled"] is True
 
 
 def test_other_register_outcomes_never_fill(monkeypatch):
     result, calls, job = _run_create(monkeypatch, register_outcome="dukcapil_invalid", sync_status="success")
     assert result == ("dukcapil_invalid", "failed")
-    assert calls == {}
+    assert "filled" not in calls
     assert job.error_message.startswith("dukcapil_invalid:")
+
+
+@pytest.mark.parametrize("outcome", ["created", "already_served", "dukcapil_invalid"])
+def test_register_captcha_is_written_to_llm_logs(monkeypatch, outcome):
+    _, calls, _ = _run_create(monkeypatch, register_outcome=outcome, sync_status="success")
+    assert calls["llm_logs"] == [("cfg", [{"source": "asik_captcha", "model": "m"}], {"patient_id": "pt", "puskesmas_id": "p"})]
+
+
+def test_probe_mode_register_collects_llm_usage_markers(monkeypatch, tmp_path):
+    import app.tasks.create_patient as cp
+
+    stdout = 'Step 1: Login\nLLM_USAGE: {"source":"asik_captcha","model":"m","success":true}\nLLM_USAGE: {broken\nLogin successful\n'
+
+    class FakeProc:
+        returncode = 0
+
+        def communicate(self, timeout=None):
+            return stdout, None
+
+    monkeypatch.setattr(cp.subprocess, "Popen", lambda *a, **k: FakeProc())
+    monkeypatch.setattr(cp, "_build_subprocess_env", lambda *a: {})
+    monkeypatch.setattr(cp, "_read_register_output", lambda p: {"outcome": "would_create"})
+    usage: list = []
+    out = cp._run_register(cfg={}, session_dir=tmp_path, timeout=5, usage_buffer=usage)
+    assert out == {"outcome": "would_create"}
+    assert usage == [{"source": "asik_captcha", "model": "m", "success": True}]
 
 
 @pytest.mark.parametrize("reason", ["not_found", "year_mismatch", "ambiguous_multi_year", "no_screening_date", "lain"])

@@ -58,10 +58,11 @@ from app.tasks.scrape import (
     _asik_session_dir,
     _build_captcha_solver,
     _build_subprocess_env,
+    _LLM_USAGE_PREFIX,
     _drain_to_redis,
 )
 from app.tasks.sync import _cancel_key as _sync_cancel_key
-from app.tasks.sync import _execute_sync, _log_key, _stream_chan
+from app.tasks.sync import _execute_sync, _log_key, _record_llm_usage, _stream_chan
 
 log = logging.getLogger(__name__)
 
@@ -303,6 +304,7 @@ def _run_register(
     log_key: str | None = None,
     stream_chan: str | None = None,
     cancel_key_str: str | None = None,
+    usage_buffer: list | None = None,
 ) -> dict[str, Any]:
     """Run the `register.py` scraper subprocess for ONE patient and return its
     parsed output.json. Never raises: a launch/exit/timeout/parse failure comes
@@ -314,8 +316,11 @@ def _run_register(
     - STREAMED (redis_client + log_key given): drain stdout LIVE to the SyncJob log
       (RPUSH log_key + PUBLISH stream_chan via `_drain_to_redis`) and poll
       `cancel_key_str` so the register phase shows in the same live log as the fill.
-    Both kill a hung Chromium subprocess at the wall-clock timeout.
+    Both kill a hung Chromium subprocess at the wall-clock timeout. Captcha `LLM_USAGE:` markers are
+    appended to `usage_buffer` (when given) in both modes, so the caller can write them to `llm_logs`.
     """
+    if usage_buffer is None:
+        usage_buffer = []
     streaming = redis_client is not None and log_key is not None
     with tempfile.TemporaryDirectory(prefix="create-asik-") as tmp:
         tmp_path = Path(tmp)
@@ -363,6 +368,12 @@ def _run_register(
                     "outcome": "error",
                     "error": f"register subprocess exceeded {timeout}s wall clock — killed",
                 }
+            for line in (stdout or "").splitlines():
+                if line.startswith(_LLM_USAGE_PREFIX):
+                    try:
+                        usage_buffer.append(json.loads(line[len(_LLM_USAGE_PREFIX):].strip()))
+                    except json.JSONDecodeError:
+                        pass
             if stdout:
                 log.debug("register stdout:\n%s", stdout)
             if proc.returncode != 0:
@@ -375,7 +386,7 @@ def _run_register(
         # ~2s so a ~90s register doesn't hammer Redis).
         drain = threading.Thread(
             target=_drain_to_redis,
-            args=(proc.stdout, redis_client, log_key, stream_chan, []),
+            args=(proc.stdout, redis_client, log_key, stream_chan, usage_buffer),
             daemon=True,
         )
         drain.start()
@@ -524,7 +535,12 @@ def probe_batch(
             continue
 
         log.info("probe %d/%d NIK=%s → register (dry_run=%s)", i, total, nik, dry_run)
-        out = _run_register(cfg=cfg, session_dir=session_dir, timeout=timeout)
+        usage: list[dict] = []
+        out = _run_register(cfg=cfg, session_dir=session_dir, timeout=timeout, usage_buffer=usage)
+        _record_llm_usage(
+            db, captcha_solver.get("llm_config_id"), usage,
+            patient_id=patient.id, puskesmas_id=puskesmas_id,
+        )
         outcome = out.get("outcome") or "error"
 
         if outcome == "would_create":
@@ -671,6 +687,7 @@ def create_one_patient(
         f"[buat] mendaftarkan NIK {patient.nik} ke ASIK "
         f"(tanggal pemeriksaan {patient.filter_date.isoformat()})",
     )
+    usage: list[dict] = []
     out = _run_register(
         cfg=cfg,
         session_dir=session_dir,
@@ -679,6 +696,11 @@ def create_one_patient(
         log_key=log_key,
         stream_chan=chan,
         cancel_key_str=cancel_key_str,
+        usage_buffer=usage,
+    )
+    _record_llm_usage(
+        db, captcha_solver.get("llm_config_id"), usage,
+        patient_id=patient.id, puskesmas_id=puskesmas.id,
     )
     outcome = out.get("outcome") or "error"
 

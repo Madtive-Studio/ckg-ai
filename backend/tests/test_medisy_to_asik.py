@@ -114,6 +114,29 @@ def test_marital_status_mapping_and_pregnancy_only_turns_on():
     assert "Status Perkawinan" not in medisy_to_asik(bundle(marital="-"))["Demografi Dewasa Laki-Laki"]
 
 
+HAMIL = "Apakah Anda sedang hamil?"
+
+
+@pytest.mark.parametrize(("screenings", "expected"), [
+    ([scr("pre_eklamsia", x=1)], "Ya"),                                      # pre-eclampsia is only screened in pregnancy
+    ([scr("tbc", ibu_hamil="Ya")], "Ya"),
+    ([scr("ims", anamnesa_status_kehamilan="Ya")], "Ya"),
+    ([scr("tbc", ibu_hamil="Tidak")], "Tidak"),                              # explicit answer -> Tidak
+    ([scr("ims", anamnesa_status_kehamilan="Tidak")], "Tidak"),
+    ([scr("tbc", ibu_hamil="Tidak"), scr("ims", anamnesa_status_kehamilan="Ya")], "Ya"),   # any Ya wins
+    ([scr("tbc", ibu_hamil=None), scr("hipertensi", x=1)], None),            # R-DIAG: no answer is not a "Tidak"
+])
+def test_pregnancy_from_screenings(screenings, expected):
+    f = medisy_to_asik(bundle(gender="P", years=30, screenings=screenings))["Demografi Dewasa Perempuan"]
+    assert f.get(HAMIL) == expected
+
+
+def test_pregnancy_question_only_for_women_under_60():
+    s = [scr("tbc", ibu_hamil="Ya")]
+    assert HAMIL not in medisy_to_asik(bundle(gender="L", years=30, screenings=s))["Demografi Dewasa Laki-Laki"]
+    assert HAMIL not in medisy_to_asik(bundle(gender="P", years=62, screenings=s))["Demografi Lansia"]
+
+
 # ───────────────────────────── R-UNIFORM / history ───────────────────────────
 
 

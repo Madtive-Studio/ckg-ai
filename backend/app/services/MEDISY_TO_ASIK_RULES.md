@@ -362,7 +362,7 @@ Generated from `MEDISY_BREADCRUMBS` (invariants in `tests/test_medisy_to_asik.py
 | ASIK field | Medisy source |
 |---|---|
 | Status Perkawinan | `patient.marital_status` |
-| Apakah Anda sedang hamil? | `programs.kia.hamil (an active record turns it on; absence is not 'Tidak')` |
+| Apakah Anda sedang hamil? | `Ya: programs.kia.hamil OR screenings[pre_eklamsia] OR screenings[tbc].ibu_hamil / screenings[ims].anamnesa_status_kehamilan = Ya; Tidak: only an explicit Tidak in those two; no data stays empty` |
 | Apakah Anda penyandang disabilitas? | `patient.disability (kk_pendaftaran.disabilitas)` |
 
 ### Demografi Dewasa Laki-Laki

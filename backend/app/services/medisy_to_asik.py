@@ -348,7 +348,17 @@ def _status_perkawinan(v: Any) -> str | None:
 _DISABILITAS = {_norm(o): o for o in ("Non disabilitas", "Penyandang disabilitas")}     # patient registration (kk_pendaftaran.disabilitas)
 
 
-def _map_demografi(b: dict, gender: str, years: int) -> tuple[str, dict[str, Any]]:
+def _hamil(b: dict, scr: dict) -> str | None:
+    """Pregnancy from every Medisy place that records it. "Ya" wins: an ANC record, a pre-eclampsia screening (only run on
+    pregnant women), or an explicit Ya in TBC / IMS. "Tidak" only from an explicit answer; no data stays empty (R-DIAG)."""
+    said = (_yatidak((scr.get("tbc") or {}).get("ibu_hamil")),
+            _yatidak((scr.get("ims") or {}).get("anamnesa_status_kehamilan")))
+    if _program_rows(b, "kia", "hamil") or "pre_eklamsia" in scr or "Ya" in said:
+        return "Ya"
+    return "Tidak" if "Tidak" in said else None
+
+
+def _map_demografi(b: dict, scr: dict, gender: str, years: int) -> tuple[str, dict[str, Any]]:
     kawin = _status_perkawinan((b.get("patient") or {}).get("marital_status"))
     if years >= 60:
         form = "Demografi Lansia"
@@ -358,9 +368,8 @@ def _map_demografi(b: dict, gender: str, years: int) -> tuple[str, dict[str, Any
     if kawin:
         out[_q(form, "Status Perkawinan")] = kawin
     _put(out, _q(form, "Apakah Anda penyandang disabilitas"), _DISABILITAS.get(_norm((b.get("patient") or {}).get("disability"))))
-    # R-DIAG: an active pregnancy record turns "hamil" ON; its absence is not a "Tidak".
-    if gender == "Perempuan" and years < 60 and _program_rows(b, "kia", "hamil"):
-        out[_q(form, "Apakah Anda sedang hamil?")] = "Ya"
+    if gender == "Perempuan" and years < 60:
+        _put(out, _q(form, "Apakah Anda sedang hamil?"), _hamil(b, scr))
     return form, out
 
 
@@ -1320,7 +1329,7 @@ def medisy_to_asik(bundle: dict) -> ASIK_Result:
     if years >= 40:
         out[_F_PPOK] = _map_ppok(scr, _was_resaved(bundle, "puma"))
 
-    demo_form, demo = _map_demografi(bundle, gender, years)
+    demo_form, demo = _map_demografi(bundle, scr, gender, years)
     out[demo_form] = demo
 
     telmat = _TELMAT_ADULT[0] if years >= 40 else _TELMAT_ADULT[1]
@@ -1513,7 +1522,9 @@ for _f in ("Gizi (BB - TB - Lingkar Perut) Laki-laki", "Gizi (BB - TB - Lingkar 
 for _f in ("Demografi Dewasa Laki-Laki", "Demografi Dewasa Perempuan", "Demografi Lansia"):
     _bc(_f, "Status Perkawinan", "patient.marital_status")
     _bc(_f, "Apakah Anda penyandang disabilitas", "patient.disability (kk_pendaftaran.disabilitas)")
-_bc("Demografi Dewasa Perempuan", "Apakah Anda sedang hamil?", "programs.kia.hamil (an active record turns it on; absence is not 'Tidak')")
+_bc("Demografi Dewasa Perempuan", "Apakah Anda sedang hamil?",
+    "Ya: programs.kia.hamil OR screenings[pre_eklamsia] OR screenings[tbc].ibu_hamil / screenings[ims].anamnesa_status_kehamilan"
+    " = Ya; Tidak: only an explicit Tidak in those two; no data stays empty")
 for _f in _TELMAT_ADULT:
     _bc(_f, "Apa Hasil Pemeriksaan Telinga Luar (serumen impaksi)?", "programs.ptm.fase_pendengaran.serumen_impeksi_right/left")
     _bc(_f, "Apa Hasil Pemeriksaan Telinga Luar (infeksi telinga)?", "programs.ptm.fase_pendengaran.omsk_congek_right_ear/left_ear")

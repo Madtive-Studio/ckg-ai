@@ -221,6 +221,11 @@ backend/.venv/bin/python .claude/skills/ckg-form-research/scripts/audit_uncovere
   and given an empty ASIK blob (never on a real DB); `verify_converter` still needs real ASIK data and LLM keys.
 - Known unverified: the form/label list was generated from the repo's canonical mapping, not a fresh live ASIK dump.
 - Open clinical questions and the "not mapped" list: `backend/app/services/MEDISY_TO_ASIK_RULES.md` §4–5.
+- 2026-11-23 "Apakah Anda sedang hamil?": Ya from KIA ANC / any pre_eklamsia row / tbc.ibu_hamil / ims.anamnesa_status_kehamilan;
+  Tidak only from an explicit Tidak in tbc/ims. Do NOT use `kk_kunjungan.cycle_selected` (siklus "Ibu Hamil, Bersalin & Nifas"):
+  it is the DEFAULT whenever Klaster 2 is picked (Cek.php `get_cycle_list`), so men/children land in it, and it is not in the
+  bundle. HIV form's `status_kehamilan` radio is never persisted (no column in `kk_skrining_hiv`). Local UAT: 27/235 women
+  18-59 get "Ya" (all already via ANC); 208 have no TBC row, so the new sources add nothing there yet.
 
 ### EPUS — known gaps (EPUS has no source for these; emitted as shells or null)
 
